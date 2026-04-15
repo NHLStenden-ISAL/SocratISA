@@ -1,0 +1,176 @@
+.survey-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.survey-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: var(--code-bg);
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent-bg);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cancel-survey {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text);
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+  z-index: 1001;
+}
+
+.cancel-survey:hover {
+  color: var(--accent-bg);
+  opacity: 0.8;
+}
+
+@media (min-width: 1200px) {
+  .cancel-survey {
+    right: calc(50% - 560px);
+  }
+}
+
+.survey-card-wrapper {
+  max-width: 600px;
+  width: 100%;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.survey-card {
+  text-align: center;
+}
+
+.step-indicator {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.survey-card h2 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  line-height: 1.1;
+}
+
+.survey-card .description {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+
+.input-area {
+  width: 100%;
+}
+
+.input-area input {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 2px solid var(--border);
+  padding: 12px 0;
+  font-size: 1.5rem;
+  font-family: var(--sans);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-area input:focus {
+  border-color: var(--accent-bg);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.option-btn {
+  padding: 24px;
+  border: 2px solid var(--border);
+  background: var(--code-bg);
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.option-btn:hover {
+  border-color: var(--accent-bg);
+  background: var(--bg);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.hint {
+  margin-top: 32px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  opacity: 0.4;
+}
+
+.survey-container.loading {
+  background: var(--bg);
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--code-bg);
+  border-top-color: var(--accent-bg);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .survey-card h2 {
+    font-size: 1.8rem;
+  }
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+}
