@@ -58,3 +58,18 @@
 .toggle-btn:hover {
   border-color: var(--accent);
 }
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 16px;
+  }
+  .status-indicator {
+    position: static;
+    margin-bottom: 8px;
+  }
+  .top-nav {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+}
