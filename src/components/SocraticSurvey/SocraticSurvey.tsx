@@ -45,14 +45,32 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (prompt: 
     if (step < QUESTIONS.length - 1) {
       setStep(step + 1);
     } else {
-      generatePrompt();
+      generatePrompt(newAnswers);
     }
   };
 
-  const generatePrompt = () => {
+  const generatePrompt = (finalAnswers: Record<string, string>) => {
     setIsGenerating(true);
     setTimeout(() => {
-      const prompt = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.";
+      const styleHints: Record<string, string> = {
+        'Visueel & Voorbeelden': 'Geef concrete voorbeelden en visuele verbeeldingen om concepten duidelijk te maken.',
+        'Stap-voor-stap': 'Breek complexe problemen op in kleine, logische stappen.',
+        'Conceptueel & Abstract': 'Focus op de diepere betekenis en verbanden tussen concepten.',
+        'Praktisch & Doen': 'Stel praktijkgerichte vragen en geef oefeningen.',
+      };
+
+      const styleHint = styleHints[finalAnswers.style] || 'Pas je uitleg aan op de leerstijl van de student.';
+
+      const prompt = `Je bent een Socratische tutor. De student leert over: "${finalAnswers.subject}".
+Het specifieke onderwerp is: "${finalAnswers.topic}".
+
+Jouw taak:
+  • Stel gerichte vragen om de student zelf tot inzichten te laten komen.
+  • Geef NOOIT directe antwoorden. Begeleid de student door vragen te stellen.
+  • Bevestig goede antwoorden en stuur bij als de student vastloopt.
+  • ${styleHint}
+
+Start met een vraag die de student aan het denken zet over het onderwerp.`;
       onComplete(prompt);
       setIsGenerating(false);
     }, 1500);
