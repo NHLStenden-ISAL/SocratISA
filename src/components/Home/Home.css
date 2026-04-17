@@ -1,7 +1,9 @@
 .article {
   max-width: 800px;
   margin: 40px auto;
-  line-height: 1.6;
+  line-height: 1.8;
+  word-spacing: 0.089m;
+  letter-spacing: 0.02em;
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -10,8 +12,8 @@
 }
 
 .article-text p {
-  margin-bottom: 20px;
-  font-size: 1.1rem;
+  margin-bottom: 28px;
+  font-size: 1.15rem;
 }
 
 .example-grid {
