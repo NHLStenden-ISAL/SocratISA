@@ -1,77 +1,76 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { SurveyAnswers } from '../../App';
 import './SocraticSurvey.css';
 
 interface Question {
   id: string;
-  question: string;
-  description: string;
-  options?: string[];
+  questionKey: string;
+  descriptionKey: string;
+  optionKeys?: string[];
   type: 'text' | 'select';
 }
 
-const QUESTIONS: Question[] = [
+const QUESTION_DEFS: Question[] = [
   {
     id: 'subject',
-    question: 'Wat ben je aan het leren?',
-    description: 'Bijvoorbeeld: "Lineaire Algebra".',
+    questionKey: 'survey_q_subject',
+    descriptionKey: 'survey_q_subject_desc',
     type: 'text'
   },
   {
     id: 'topic',
-    question: 'Wat wil je precies weten?',
-    description: 'Bijvoorbeeld: "Hoe werkt de stelling van Pythagoras?".',
+    questionKey: 'survey_q_topic',
+    descriptionKey: 'survey_q_topic_desc',
     type: 'text'
   },
   {
     id: 'style',
-    question: 'Wat is jouw leerstijl?',
-    description: 'Hoe leer je het liefst? Met veel voorbeelden, stap-voor-stap uitleg, of door uitgedaagd te worden?',
-    options: ['Visueel & Voorbeelden', 'Stap-voor-stap', 'Conceptueel & Abstract', 'Praktisch & Doen'],
+    questionKey: 'survey_q_style',
+    descriptionKey: 'survey_q_style_desc',
+    optionKeys: ['survey_option_visual', 'survey_option_step', 'survey_option_conceptual', 'survey_option_practical'],
     type: 'select'
   }
 ];
 
-export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (prompt: string) => void, onCancel: () => void }) => {
+export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers: SurveyAnswers) => void, onCancel: () => void }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const currentQuestion = QUESTIONS[step];
+  const currentQ = QUESTION_DEFS[step];
 
   const handleNext = (value: string) => {
-    const newAnswers = { ...answers, [currentQuestion.id]: value };
+    const newAnswers = { ...answers, [currentQ.id]: value };
     setAnswers(newAnswers);
-    
-    if (step < QUESTIONS.length - 1) {
+
+    if (step < QUESTION_DEFS.length - 1) {
       setStep(step + 1);
     } else {
-      generatePrompt(newAnswers);
+      finishSurvey(newAnswers);
     }
   };
 
-  const generatePrompt = (finalAnswers: Record<string, string>) => {
+  const handleOptionSelect = (key: string) => {
+    const newAnswers = { ...answers, [currentQ.id]: key };
+    setAnswers(newAnswers);
+
+    if (step < QUESTION_DEFS.length - 1) {
+      setStep(step + 1);
+    } else {
+      finishSurvey(newAnswers);
+    }
+  };
+
+  const finishSurvey = (finalAnswers: Record<string, string>) => {
     setIsGenerating(true);
     setTimeout(() => {
-      const styleHints: Record<string, string> = {
-        'Visueel & Voorbeelden': 'Geef concrete voorbeelden en visuele verbeeldingen om concepten duidelijk te maken.',
-        'Stap-voor-stap': 'Breek complexe problemen op in kleine, logische stappen.',
-        'Conceptueel & Abstract': 'Focus op de diepere betekenis en verbanden tussen concepten.',
-        'Praktisch & Doen': 'Stel praktijkgerichte vragen en geef oefeningen.',
-      };
-
-      const styleHint = styleHints[finalAnswers.style] || 'Pas je uitleg aan op de leerstijl van de student.';
-
-      const prompt = `Je bent een Socratische tutor. De student leert over: "${finalAnswers.subject}".
-Het specifieke onderwerp is: "${finalAnswers.topic}".
-
-Jouw taak:
-  • Stel gerichte vragen om de student zelf tot inzichten te laten komen.
-  • Geef NOOIT directe antwoorden. Begeleid de student door vragen te stellen.
-  • Bevestig goede antwoorden en stuur bij als de student vastloopt.
-  • ${styleHint}
-
-Start met een vraag die de student aan het denken zet over het onderwerp.`;
-      onComplete(prompt);
+      onComplete({
+        subject: finalAnswers.subject,
+        topic: finalAnswers.topic,
+        styleKey: finalAnswers.style,
+      });
       setIsGenerating(false);
     }, 1500);
   };
@@ -81,7 +80,7 @@ Start met een vraag die de student aan het denken zet over het onderwerp.`;
       <div className="survey-container loading">
         <div className="loading-content">
           <div className="spinner"></div>
-          <p>Socratische prompt wordt geformuleerd...</p>
+          <p>{t('survey_loading')}</p>
         </div>
       </div>
     );
@@ -90,28 +89,30 @@ Start met een vraag die de student aan het denken zet over het onderwerp.`;
   return (
     <div className="survey-container">
       <div className="survey-progress">
-        <div 
-          className="progress-bar" 
-          style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }}
+        <div
+          className="progress-bar"
+          style={{ width: `${((step + 1) / QUESTION_DEFS.length) * 100}%` }}
         ></div>
       </div>
-      
+
       <button className="cancel-survey" onClick={onCancel}>
         <i className="fas fa-times"></i>
       </button>
 
       <div className="survey-card-wrapper" key={step}>
         <div className="survey-card">
-          <span className="step-indicator">Vraag {step + 1} van {QUESTIONS.length}</span>
-          <h2>{currentQuestion.question}</h2>
-          <p className="description">{currentQuestion.description}</p>
+          <span className="step-indicator">
+            {t('survey_step', { current: step + 1, total: QUESTION_DEFS.length })}
+          </span>
+          <h2>{t(currentQ.questionKey)}</h2>
+          <p className="description">{t(currentQ.descriptionKey)}</p>
 
           <div className="input-area">
-            {currentQuestion.type === 'text' ? (
-              <input 
+            {currentQ.type === 'text' ? (
+              <input
                 autoFocus
-                type="text" 
-                placeholder="Typ je antwoord hier..."
+                type="text"
+                placeholder={t('survey_input_placeholder')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.currentTarget.value) {
                     handleNext(e.currentTarget.value);
@@ -120,21 +121,21 @@ Start met een vraag die de student aan het denken zet over het onderwerp.`;
               />
             ) : (
               <div className="options-grid">
-                {currentQuestion.options?.map(option => (
-                  <button 
-                    key={option} 
+                {currentQ.optionKeys?.map(key => (
+                  <button
+                    key={key}
                     className="option-btn"
-                    onClick={() => handleNext(option)}
+                    onClick={() => handleOptionSelect(key)}
                   >
-                    {option}
+                    {t(key)}
                   </button>
                 ))}
               </div>
             )}
           </div>
-          
-          {currentQuestion.type === 'text' && (
-            <div className="hint">Druk op Enter om verder te gaan</div>
+
+          {currentQ.type === 'text' && (
+            <div className="hint">{t('survey_input_hint')}</div>
           )}
         </div>
       </div>
