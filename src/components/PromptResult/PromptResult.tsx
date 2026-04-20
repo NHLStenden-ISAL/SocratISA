@@ -3,6 +3,7 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SurveyAnswers } from '../../App';
 import './PromptResult.css';
@@ -24,22 +25,89 @@ const STYLE_HINT_MAP: Record<string, string> = {
 
 /** Meestgebruikte AI-providers waar de prompt naar gekopieerd kan worden. */
 const PROVIDERS = [
-  { name: 'ChatGPT', url: 'https://chat.openai.com/', icon: 'fas fa-robot' },
-  { name: 'Claude', url: 'https://claude.ai/', icon: 'fas fa-brain' },
-  { name: 'Gemini', url: 'https://gemini.google.com/', icon: 'fas fa-stars' },
+  { name: 'ChatGPT', url: (q: string) => `https://chat.openai.com/?q=${encodeURIComponent(q)}` },
+  { name: 'Claude', url: (q: string) => `https://claude.ai/new?q=${encodeURIComponent(q)}` },
+  { name: 'Gemini', url: (q: string) => `https://gemini.google.com/app?q=${encodeURIComponent(q)}` },
 ];
 
 export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [isEditing, setIsEditing] = useState(false);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /** Bepaal de stijl-aanwijzing op basis van de gekozen leerstijl. */
   const styleHintKey = STYLE_HINT_MAP[answers.styleKey] || 'style_hint_default';
   /** Vul de prompt-template in met de survey antwoorden */
-  const prompt = t('prompt_template', {
+  const generatedPrompt = t('prompt_template', {
     subject: answers.subject,
     topic: answers.topic,
     styleHint: t(styleHintKey),
   });
+
+  /** Geef de bewerkte prompt terug als die er is, anders de gegenereerde prompt */
+  const prompt = edits[i18n.language] ?? generatedPrompt;
+  const setPrompt = (value: string) => setEdits(prev => ({ ...prev, [i18n.language]: value }));
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const showFeedback = (msg: string) => {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(null), 2000);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleDone = () => {
+    setIsEditing(false);
+  };
+
+  /** Kopieer naar klembord of open deelmenu op mobiel */
+  const handleCopy = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: prompt });
+      } else {
+        await navigator.clipboard.writeText(prompt);
+      }
+      showFeedback(t('result_copied'));
+    } catch {
+      try {
+        await navigator.clipboard.writeText(prompt);
+        showFeedback(t('result_copied'));
+      } catch {
+        showFeedback(t('result_copy_failed'));
+      }
+    }
+  };
+
+  /** Kopieer prompt en open provider met vooringevulde prompt */
+  const handleProvider = async (urlFn: (q: string) => string) => {
+    const url = urlFn(prompt);
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: prompt, url });
+        return;
+      }
+      await navigator.clipboard.writeText(prompt);
+      showFeedback(t('result_copied_provider'));
+    } catch {
+      try {
+        await navigator.clipboard.writeText(prompt);
+        showFeedback(t('result_copied_provider'));
+      } catch {
+        showFeedback(t('result_copy_failed'));
+      }
+    }
+    window.open(url, '_blank', 'noopener');
+  };
 
   return (
     <div className="result-container">
@@ -49,14 +117,32 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
         </div>
 
         <div className="prompt-display">
-          <div className="prompt-text">{prompt}</div>
+          {isEditing ? (
+            <textarea
+              ref={textareaRef}
+              className="prompt-textarea"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={Math.max(8, prompt.split('\n').length + 2)}
+            />
+          ) : (
+            <div className="prompt-text">{prompt}</div>
+          )}
         </div>
 
+        {feedback && <div className="copy-feedback">{feedback}</div>}
+
         <div className="prompt-actions">
-          <button className="action-btn secondary">
-            {t('result_edit')}
-          </button>
-          <button className="action-btn primary">
+          {isEditing ? (
+            <button className="action-btn secondary" onClick={handleDone}>
+              {t('result_done')}
+            </button>
+          ) : (
+            <button className="action-btn secondary" onClick={handleEdit}>
+              {t('result_edit')}
+            </button>
+          )}
+          <button className="action-btn primary" onClick={handleCopy}>
             {t('result_copy')}
           </button>
         </div>
@@ -65,9 +151,10 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
           <p className="provider-cta">{t('result_cta')}</p>
           <div className="provider-grid">
             {PROVIDERS.map(provider => (
-              <button 
-                key={provider.name} 
+              <button
+                key={provider.name}
                 className="provider-btn"
+                onClick={() => handleProvider(provider.url)}
               >
                 {provider.name}
               </button>

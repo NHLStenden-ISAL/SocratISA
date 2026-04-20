@@ -25,7 +25,7 @@
   background: var(--code-bg);
   border-radius: 8px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .prompt-text {
@@ -35,6 +35,30 @@
   color: var(--text);
   text-align: left;
   white-space: pre-wrap;
+}
+
+.prompt-textarea {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: vertical;
+  text-align: left;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+}
+
+.copy-feedback {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 12px;
+  animation: fadeIn 0.2s ease;
 }
 
 .prompt-actions {
@@ -50,7 +74,12 @@
   font-family: var(--sans);
   font-size: 0.9rem;
   font-weight: 600;
-  cursor: default;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.action-btn:active {
+  opacity: 0.8;
 }
 
 .action-btn.primary {
@@ -87,15 +116,28 @@
 }
 
 .provider-btn {
-  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
   border: 1px solid var(--border);
   background: var(--bg);
   border-radius: 6px;
   font-family: var(--sans);
   font-size: 0.85rem;
   font-weight: 500;
-  cursor: default;
+  cursor: pointer;
   color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.provider-btn:hover {
+  border-color: var(--accent);
+  background: var(--code-bg);
+}
+
+.provider-btn:active {
+  opacity: 0.8;
 }
 
 .result-footer {
@@ -126,11 +168,20 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 640px) {
   .provider-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
   .prompt-actions {
     flex-direction: column;
+  }
+  .provider-btn {
+    justify-content: center;
   }
 }
