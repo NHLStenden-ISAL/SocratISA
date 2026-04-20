@@ -5,15 +5,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { SurveyAnswers } from '../../App';
 import './PromptResult.css';
-
-/** Props voor survey antwoorden, retry en home opties. */
-interface PromptResultProps {
-  answers: SurveyAnswers;
-  onRetry: () => void;
-  onHome: () => void;
-}
 
 /** Koppelt survey-keuzes aan stijl-aanwijzingen voor de prompt-template. */
 const STYLE_HINT_MAP: Record<string, string> = {
@@ -30,8 +24,11 @@ const PROVIDERS = [
   { name: 'Gemini', url: (q: string) => `https://gemini.google.com/app?q=${encodeURIComponent(q)}` },
 ];
 
-export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) => {
+export const PromptResult = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
   const [isEditing, setIsEditing] = useState(false);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -164,10 +161,10 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
         </div>
 
         <div className="result-footer">
-          <button className="footer-btn" onClick={onRetry} aria-label={t('result_retry_aria')}>
+          <button className="footer-btn" onClick={() => navigate('/survey')} aria-label={t('result_retry_aria')}>
             <i className="fas fa-redo" aria-hidden="true"></i> {t('result_retry')}
           </button>
-          <button className="footer-btn" onClick={onHome} aria-label={t('result_home_aria')}>
+          <button className="footer-btn" onClick={() => navigate('/')} aria-label={t('result_home_aria')}>
             <i className="fas fa-home" aria-hidden="true"></i> {t('result_home')}
           </button>
         </div>

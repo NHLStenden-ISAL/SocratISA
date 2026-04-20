@@ -4,15 +4,12 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import './Home.css'
 
-/** Props om de Socratische vragenlijst te starten. */
-interface HomeProps {
-  onStartSurvey: () => void;
-}
-
-export const Home = ({ onStartSurvey }: HomeProps) => {
+export const Home = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="article">
@@ -98,7 +95,7 @@ export const Home = ({ onStartSurvey }: HomeProps) => {
       </section>
 
       <div className="button-container">
-        <button className="socratic-button" onClick={onStartSurvey} aria-label={t('home_cta_aria')}>
+        <button className="socratic-button" onClick={() => navigate('/survey')} aria-label={t('home_cta_aria')}>
           {t('home_cta')}
         </button>
       </div>

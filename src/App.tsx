@@ -1,15 +1,12 @@
 /**
- * App: hoofdcomponent van SocratISA.
- * Beheert de taal, het thema (icon-toggle) en de drie weergaven:
- * Hoofdpagina (Home), vragenlijst (SocraticSurvey) en prompt resultaat (PromptResult).
+ * App: layoutcomponent van SocratISA.
+ * Beheert de taal en het thema (icon-toggle) en rendert de actieve route via Outlet.
  */
 
 import './App.css'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Home } from './components/Home/Home'
-import { SocraticSurvey } from './components/SocraticSurvey/SocraticSurvey'
-import { PromptResult } from './components/PromptResult/PromptResult'
+import { Outlet, useLocation } from 'react-router-dom'
 
 /** Antwoorden van de Socratische vragenlijst. */
 export interface SurveyAnswers {
@@ -18,24 +15,19 @@ export interface SurveyAnswers {
   styleKey: string;
 }
 
-type View = 'content' | 'survey' | 'result'
+/** Mapping van routes naar paginatitels. */
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'SocratISA',
+}
 
 function App() {
   const { t, i18n } = useTranslation()
+  const location = useLocation()
   const [lang, setLang] = useState<'NL' | 'EN'>(
     () => (localStorage.getItem('lang') as 'NL' | 'EN') || 'NL'
   )
   const [theme, setTheme] = useState<'light' | 'dark'>(
     () => (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
-  )
-  const [view, setView] = useState<View>(
-    () => (localStorage.getItem('view') as View) || 'content'
-  )
-  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers | null>(
-    () => {
-      const stored = localStorage.getItem('surveyAnswers')
-      return stored ? JSON.parse(stored) : null
-    }
   )
 
   useEffect(() => {
@@ -48,17 +40,13 @@ function App() {
   }, [lang])
 
   useEffect(() => {
-    const titles: Record<View, string> = {
-      content: 'SocratISA',
-      survey: t('title_survey'),
-      result: t('title_result'),
+    const titles: Record<string, string> = {
+      ...PAGE_TITLES,
+      '/survey': t('title_survey'),
+      '/result': t('title_result'),
     }
-    document.title = titles[view]
-  }, [view, t])
-
-  useEffect(() => {
-    localStorage.setItem('view', view)
-  }, [view])
+    document.title = titles[location.pathname] || 'SocratISA'
+  }, [location.pathname, t])
 
   /** Toggle voor NL/EN taal, slaat keuze op in localStorage en update i18next. */
   const toggleLang = () => {
@@ -73,20 +61,13 @@ function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light')
   }
 
-  /** Sla antwoorden op en ga naar resultaat. */
-  const handleSurveyComplete = (answers: SurveyAnswers) => {
-    setSurveyAnswers(answers)
-    localStorage.setItem('surveyAnswers', JSON.stringify(answers))
-    setView('result')
-  }
-
   return (
     <div className="panel">
       <div className="status-indicator" role="status">
         <span className="status-dot" aria-hidden="true"></span>
         <span className="status-text">{t('status_online')}</span>
       </div>
-      
+
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
         <button className="toggle-btn" onClick={toggleLang} aria-label={t('aria_switch_lang', { lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
           {lang === 'NL' ? 'EN' : 'NL'}
@@ -97,27 +78,7 @@ function App() {
       </nav>
 
       <main id="main-content">
-        {view === 'survey' && (
-          <SocraticSurvey 
-            onComplete={handleSurveyComplete} 
-            onCancel={() => setView('content')} 
-          />
-        )}
-
-        {view === 'content' && (
-          <Home onStartSurvey={() => setView('survey')} />
-        )}
-
-        {view === 'result' && (
-          <PromptResult 
-            answers={surveyAnswers ?? { subject: '', topic: '', styleKey: '' }}
-            onRetry={() => setView('survey')}
-            onHome={() => {
-              setView('content')
-              localStorage.removeItem('surveyAnswers')
-            }}
-          />
-        )}
+        <Outlet />
       </main>
     </div>
   )

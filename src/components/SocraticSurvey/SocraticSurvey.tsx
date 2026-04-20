@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { SurveyAnswers } from '../../App';
 import './SocraticSurvey.css';
 
@@ -45,8 +46,9 @@ const QUESTION_DEFS: Question[] = [
   }
 ];
 
-export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers: SurveyAnswers) => void, onCancel: () => void }) => {
+export const SocraticSurvey = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -83,17 +85,17 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
 
   /**
    * Rondt de survey af: toont eerst een laad-indicator (1,5s)
-   * en geeft dan de antwoorden door aan onComplete.
+   * en navigeert dan naar het resultaat met de antwoorden als route state.
    */
   const finishSurvey = (finalAnswers: Record<string, string>) => {
     setIsGenerating(true);
     setTimeout(() => {
-      onComplete({
+      const answers: SurveyAnswers = {
         subject: finalAnswers.subject,
         topic: finalAnswers.topic,
         styleKey: finalAnswers.style,
-      });
-      setIsGenerating(false);
+      };
+      navigate('/result', { state: { answers } });
     }, 1500);
   };
 
@@ -124,7 +126,7 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
         ></div>
       </div>
 
-      <button className="cancel-survey" onClick={onCancel} aria-label={t('survey_cancel_label')}>
+      <button className="cancel-survey" onClick={() => navigate('/')} aria-label={t('survey_cancel_label')}>
         <i className="fas fa-times" aria-hidden="true"></i>
       </button>
 
