@@ -128,7 +128,17 @@
 
 @media (max-width: 640px) {
   .article {
-    margin: 20px auto;
+    margin: 8px auto 20px;
+  }
+  .article-text {
+    margin-bottom: 28px;
+  }
+  .article-text p {
+    font-size: 1rem;
+  }
+  .article h2 {
+    margin-top: 40px;
+    margin-bottom: 12px;
   }
   .example-grid,
   .pitfalls-grid {
@@ -137,5 +147,8 @@
   .example-box:hover,
   .pitfall-box:hover {
     transform: none;
+  }
+  .button-container {
+    margin: 28px 0;
   }
 }

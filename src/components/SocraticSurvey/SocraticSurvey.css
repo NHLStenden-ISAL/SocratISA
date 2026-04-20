@@ -4,6 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   background: var(--bg);
   z-index: 1000;
   display: flex;
@@ -11,6 +12,9 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overscroll-behavior: none;
 }
 
 .survey-progress {
@@ -30,26 +34,36 @@
 
 .cancel-survey {
   position: absolute;
-  top: 40px;
-  right: 40px;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
-  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   cursor: pointer;
   color: var(--text);
   opacity: 0.5;
   transition: opacity 0.2s, color 0.2s;
   z-index: 1001;
+  border-radius: 50%;
 }
 
-.cancel-survey:hover {
+.cancel-survey:hover,
+.cancel-survey:active {
   color: var(--accent-bg);
   opacity: 0.8;
+  background: var(--code-bg);
 }
 
 @media (min-width: 1200px) {
   .cancel-survey {
     right: calc(50% - 560px);
+    top: 40px;
+    right: 40px;
   }
 }
 
@@ -95,21 +109,51 @@
   width: 100%;
 }
 
-.input-area input {
+.text-input-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 2px solid var(--border);
+  transition: border-color 0.3s;
+}
+
+.text-input-form:focus-within {
+  border-color: var(--accent-bg);
+}
+
+.text-input-form input {
+  flex: 1;
   width: 100%;
   background: none;
   border: none;
-  border-bottom: 2px solid var(--border);
   padding: 12px 0;
   font-size: 1.5rem;
   font-family: var(--sans);
   text-align: center;
   outline: none;
-  transition: border-color 0.3s;
 }
 
-.input-area input:focus {
-  border-color: var(--accent-bg);
+.submit-btn {
+  background: var(--accent-bg);
+  color: #fff;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 0.2s, opacity 0.2s;
+  margin-bottom: 4px;
+}
+
+.submit-btn:hover,
+.submit-btn:active {
+  transform: scale(1.08);
+  opacity: 0.9;
 }
 
 .options-grid {
@@ -128,13 +172,19 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 48px;
 }
 
-.option-btn:hover {
+.option-btn:hover,
+.option-btn:active {
   border-color: var(--accent-bg);
   background: var(--bg);
   transform: translateY(-2px);
   box-shadow: var(--shadow);
+}
+
+.option-btn:active {
+  transform: translateY(0);
 }
 
 .hint {
@@ -167,10 +217,39 @@
 }
 
 @media (max-width: 640px) {
-  .survey-card h2 {
-    font-size: 1.8rem;
+  .survey-container {
+    padding: 16px;
   }
+
+  .survey-card h2 {
+    font-size: 1.6rem;
+  }
+
+  .survey-card .description {
+    font-size: 1rem;
+    margin-bottom: 28px;
+  }
+
+  .text-input-form input {
+    font-size: 1.2rem;
+  }
+
   .options-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .option-btn {
+    padding: 20px;
+    font-size: 1rem;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .submit-btn {
+    width: 40px;
+    height: 40px;
   }
 }

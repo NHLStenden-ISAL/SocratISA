@@ -109,16 +109,30 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
 
           <div className="input-area">
             {currentQ.type === 'text' ? (
-              <input
-                autoFocus
-                type="text"
-                placeholder={t('survey_input_placeholder')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.currentTarget.value) {
-                    handleNext(e.currentTarget.value);
-                  }
+              <form
+                className="text-input-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.currentTarget.querySelector('input');
+                  if (input?.value) handleNext(input.value);
                 }}
-              />
+              >
+                <input
+                  autoFocus
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  placeholder={t('survey_input_placeholder')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value) {
+                      handleNext(e.currentTarget.value);
+                    }
+                  }}
+                />
+                <button type="submit" className="submit-btn">
+                  <i className="fas fa-arrow-right"></i>
+                </button>
+              </form>
             ) : (
               <div className="options-grid">
                 {currentQ.optionKeys?.map(key => (
