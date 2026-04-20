@@ -74,27 +74,9 @@ export const PromptResult = () => {
     }
   };
 
-  /** Kopieer prompt en open provider met vooringevulde prompt */
-  const handleProvider = async (urlFn: (q: string) => string) => {
-    setIsCopying(true);
+  /** Open provider met vooringevulde prompt */
+  const handleProvider = (urlFn: (q: string) => string) => {
     const url = urlFn(prompt);
-    try {
-      if (navigator.share) {
-        await navigator.share({ text: prompt, url });
-        return;
-      }
-      await navigator.clipboard.writeText(prompt);
-      showFeedback(t('result_copied_provider'));
-    } catch {
-      try {
-        await navigator.clipboard.writeText(prompt);
-        showFeedback(t('result_copied_provider'));
-      } catch {
-        showFeedback(t('result_copy_failed'));
-      }
-    } finally {
-      setIsCopying(false);
-    }
     window.open(url, '_blank', 'noopener');
   };
 
@@ -144,7 +126,6 @@ export const PromptResult = () => {
                 key={provider.name}
                 className="provider-btn"
                 onClick={() => handleProvider(provider.buildUrl)}
-                disabled={isCopying}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}

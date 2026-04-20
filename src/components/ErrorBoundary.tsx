@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p>Something went wrong.</p>
           <button
             className="socratic-button"
-            onClick={() => window.location.assign('/')}
+            onClick={() => window.location.assign(import.meta.env.BASE_URL)}
           >
             Terug naar start
           </button>
