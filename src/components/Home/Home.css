@@ -101,19 +101,18 @@
 
 .socratic-button {
   padding: 14px 24px;
-  border: 1px solid #d14343;
+  border: 1px solid var(--accent-bg);
   border-radius: 8px;
-  background: #d14343;
+  background: var(--accent-bg);
   color: #fff;
   cursor: pointer;
   font-weight: 600;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .socratic-button:hover {
-  background: #b33838;
-  border-color: #b33838;
+  opacity: 0.85;
 }
 
 .button-container {

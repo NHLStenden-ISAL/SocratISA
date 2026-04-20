@@ -1,3 +1,12 @@
+@media (min-width: 1025px) {
+  html:has(.result-container) {
+    overflow: hidden;
+  }
+  html:has(.result-container) body {
+    overflow: hidden;
+  }
+}
+
 .result-container {
   max-width: 650px;
   margin: 40px auto;
@@ -128,7 +137,7 @@
   font-weight: 500;
   cursor: pointer;
   color: var(--text);
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, opacity 0.15s;
 }
 
 .provider-btn:hover {
@@ -149,7 +158,8 @@
 .footer-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--text);
+  opacity: 0.5;
   font-family: var(--sans);
   font-size: 0.8rem;
   cursor: pointer;

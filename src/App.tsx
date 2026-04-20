@@ -5,7 +5,7 @@
  */
 
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Home } from './components/Home/Home'
 import { SocraticSurvey } from './components/SocraticSurvey/SocraticSurvey'
@@ -18,13 +18,34 @@ export interface SurveyAnswers {
   styleKey: string;
 }
 
+type View = 'content' | 'survey' | 'result'
+
 function App() {
   const { t, i18n } = useTranslation()
-  const [lang, setLang] = useState<'NL' | 'EN'>(() => (localStorage.getItem('lang') as 'NL' | 'EN') || 'NL')
-  /** Toggle voor de Licht/Donker thema. */
-  const [icon, setIcon] = useState<'sun' | 'moon'>('sun')
-  const [view, setView] = useState<'content' | 'survey' | 'result'>('content')
-  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers | null>(null)
+  const [lang, setLang] = useState<'NL' | 'EN'>(
+    () => (localStorage.getItem('lang') as 'NL' | 'EN') || 'NL'
+  )
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    () => (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+  )
+  const [view, setView] = useState<View>(
+    () => (localStorage.getItem('view') as View) || 'content'
+  )
+  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers | null>(
+    () => {
+      const stored = localStorage.getItem('surveyAnswers')
+      return stored ? JSON.parse(stored) : null
+    }
+  )
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem('view', view)
+  }, [view])
 
   /** Toggle voor NL/EN taal, slaat keuze op in localStorage en update i18next. */
   const toggleLang = () => {
@@ -34,9 +55,15 @@ function App() {
     localStorage.setItem('lang', newLang)
   }
 
+  /** Toggle voor Licht/Donker thema. */
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
+
   /** Sla antwoorden op en ga naar resultaat. */
   const handleSurveyComplete = (answers: SurveyAnswers) => {
     setSurveyAnswers(answers)
+    localStorage.setItem('surveyAnswers', JSON.stringify(answers))
     setView('result')
   }
 
@@ -51,12 +78,11 @@ function App() {
         <button className="toggle-btn" onClick={toggleLang}>
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
-        <button className="toggle-btn" onClick={() => setIcon(i => i === 'sun' ? 'moon' : 'sun')}>
-          <i className={icon === 'sun' ? 'fas fa-moon' : 'fas fa-sun'}></i>
+        <button className="toggle-btn" onClick={toggleTheme}>
+          <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
         </button>
       </div>
 
-      {/* Eén tegelijk tonen: survey boven content, resultaat boven alles */}
       {view === 'survey' && (
         <SocraticSurvey 
           onComplete={handleSurveyComplete} 
@@ -68,11 +94,14 @@ function App() {
         <Home onStartSurvey={() => setView('survey')} />
       )}
 
-      {view === 'result' && surveyAnswers && (
+      {view === 'result' && (
         <PromptResult 
-          answers={surveyAnswers}
+          answers={surveyAnswers ?? { subject: '', topic: '', styleKey: '' }}
           onRetry={() => setView('survey')}
-          onHome={() => setView('content')}
+          onHome={() => {
+            setView('content')
+            localStorage.removeItem('surveyAnswers')
+          }}
         />
       )}
     </div>

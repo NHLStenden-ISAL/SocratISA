@@ -31,6 +31,21 @@
   }
 }
 
+html[data-theme="dark"] {
+  --text: #e0e0e0;
+  --text-h: #f0f0f0;
+  --bg: #1a1a2e;
+  --border: #2a2a4a;
+  --code-bg: #16213e;
+  --accent: #4da6ff;
+  --accent-bg: #ff4d4d;
+  --accent-border: #ff4d4d;
+  --social-bg: rgba(22, 33, 62, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.3) 0 10px 15px -3px, rgba(0, 0, 0, 0.2) 0 4px 6px -2px;
+  color-scheme: dark;
+}
+
 #root {
   width: 100%;
   max-width: 1126px;
@@ -93,3 +108,5 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+
