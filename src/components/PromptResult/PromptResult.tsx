@@ -130,19 +130,19 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
           )}
         </div>
 
-        {feedback && <div className="copy-feedback">{feedback}</div>}
+        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
 
         <div className="prompt-actions">
           {isEditing ? (
-            <button className="action-btn secondary" onClick={handleDone}>
+            <button className="action-btn secondary" onClick={handleDone} aria-label={t('result_done_aria')}>
               {t('result_done')}
             </button>
           ) : (
-            <button className="action-btn secondary" onClick={handleEdit}>
+            <button className="action-btn secondary" onClick={handleEdit} aria-label={t('result_edit_aria')}>
               {t('result_edit')}
             </button>
           )}
-          <button className="action-btn primary" onClick={handleCopy}>
+          <button className="action-btn primary" onClick={handleCopy} aria-label={t('result_copy_aria')}>
             {t('result_copy')}
           </button>
         </div>
@@ -155,6 +155,7 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
                 key={provider.name}
                 className="provider-btn"
                 onClick={() => handleProvider(provider.url)}
+                aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}
               </button>
@@ -163,11 +164,11 @@ export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) =>
         </div>
 
         <div className="result-footer">
-          <button className="footer-btn" onClick={onRetry}>
-            <i className="fas fa-redo"></i> {t('result_retry')}
+          <button className="footer-btn" onClick={onRetry} aria-label={t('result_retry_aria')}>
+            <i className="fas fa-redo" aria-hidden="true"></i> {t('result_retry')}
           </button>
-          <button className="footer-btn" onClick={onHome}>
-            <i className="fas fa-home"></i> {t('result_home')}
+          <button className="footer-btn" onClick={onHome} aria-label={t('result_home_aria')}>
+            <i className="fas fa-home" aria-hidden="true"></i> {t('result_home')}
           </button>
         </div>
       </div>

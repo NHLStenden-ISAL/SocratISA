@@ -44,6 +44,10 @@ function App() {
   }, [theme])
 
   useEffect(() => {
+    document.documentElement.lang = lang.toLowerCase()
+  }, [lang])
+
+  useEffect(() => {
     localStorage.setItem('view', view)
   }, [view])
 
@@ -69,41 +73,44 @@ function App() {
 
   return (
     <div className="panel">
-      <div className="status-indicator">
-        <span className="status-dot"></span>
+      <a href="#main-content" className="skip-link">{t('skip_to_content')}</a>
+      <div className="status-indicator" role="status">
+        <span className="status-dot" aria-hidden="true"></span>
         <span className="status-text">{t('status_online')}</span>
       </div>
       
-      <div className="top-nav">
-        <button className="toggle-btn" onClick={toggleLang}>
+      <nav className="top-nav" aria-label={t('nav_controls_label')}>
+        <button className="toggle-btn" onClick={toggleLang} aria-label={t('aria_switch_lang', { lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
-        <button className="toggle-btn" onClick={toggleTheme}>
-          <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
+        <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
+          <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'} aria-hidden="true"></i>
         </button>
-      </div>
+      </nav>
 
-      {view === 'survey' && (
-        <SocraticSurvey 
-          onComplete={handleSurveyComplete} 
-          onCancel={() => setView('content')} 
-        />
-      )}
+      <main id="main-content">
+        {view === 'survey' && (
+          <SocraticSurvey 
+            onComplete={handleSurveyComplete} 
+            onCancel={() => setView('content')} 
+          />
+        )}
 
-      {view === 'content' && (
-        <Home onStartSurvey={() => setView('survey')} />
-      )}
+        {view === 'content' && (
+          <Home onStartSurvey={() => setView('survey')} />
+        )}
 
-      {view === 'result' && (
-        <PromptResult 
-          answers={surveyAnswers ?? { subject: '', topic: '', styleKey: '' }}
-          onRetry={() => setView('survey')}
-          onHome={() => {
-            setView('content')
-            localStorage.removeItem('surveyAnswers')
-          }}
-        />
-      )}
+        {view === 'result' && (
+          <PromptResult 
+            answers={surveyAnswers ?? { subject: '', topic: '', styleKey: '' }}
+            onRetry={() => setView('survey')}
+            onHome={() => {
+              setView('content')
+              localStorage.removeItem('surveyAnswers')
+            }}
+          />
+        )}
+      </main>
     </div>
   )
 }

@@ -125,6 +125,25 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 768px) {
+  .article {
+    margin: 20px auto;
+    padding: 0 4px;
+  }
+  .article-text p {
+    font-size: 1.05rem;
+  }
+  .article h2 {
+    margin-top: 48px;
+  }
+  .example-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pitfalls-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 640px) {
   .article {
     margin: 8px auto 20px;

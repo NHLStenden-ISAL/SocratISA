@@ -93,9 +93,9 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
 
   if (isGenerating) {
     return (
-      <div className="survey-container loading">
+      <div className="survey-container loading" role="status" aria-live="polite">
         <div className="loading-content">
-          <div className="spinner"></div>
+          <div className="spinner" aria-hidden="true"></div>
           <p>{t('survey_loading')}</p>
         </div>
       </div>
@@ -104,16 +104,22 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
 
   return (
     <div className="survey-container">
-      {/* Voortgangsbalk: percentage gebaseerd op huidige stap t.o.v. totaal */}
-      <div className="survey-progress">
+      <div
+        className="survey-progress"
+        role="progressbar"
+        aria-valuenow={step + 1}
+        aria-valuemin={1}
+        aria-valuemax={QUESTION_DEFS.length}
+        aria-label={t('survey_progress_label')}
+      >
         <div
           className="progress-bar"
           style={{ width: `${((step + 1) / QUESTION_DEFS.length) * 100}%` }}
         ></div>
       </div>
 
-      <button className="cancel-survey" onClick={onCancel}>
-        <i className="fas fa-times"></i>
+      <button className="cancel-survey" onClick={onCancel} aria-label={t('survey_cancel_label')}>
+        <i className="fas fa-times" aria-hidden="true"></i>
       </button>
 
       <div className="survey-card-wrapper" key={step}>
@@ -134,20 +140,23 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
                   if (input?.value) handleNext(input.value);
                 }}
               >
+                <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
                 <input
+                  id="survey-input"
                   autoFocus
                   type="text"
                   inputMode="text"
                   autoComplete="off"
                   placeholder={t('survey_input_placeholder')}
+                  aria-describedby="survey-hint"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value) {
                       handleNext(e.currentTarget.value);
                     }
                   }}
                 />
-                <button type="submit" className="submit-btn">
-                  <i className="fas fa-arrow-right"></i>
+                <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
+                  <i className="fas fa-arrow-right" aria-hidden="true"></i>
                 </button>
               </form>
             ) : (
@@ -166,7 +175,7 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
           </div>
 
           {currentQ.type === 'text' && (
-            <div className="hint">{t('survey_input_hint')}</div>
+            <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
           )}
         </div>
       </div>

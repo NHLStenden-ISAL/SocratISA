@@ -217,6 +217,16 @@
   to { transform: rotate(360deg); }
 }
 
+@media (max-width: 768px) {
+  .survey-card h2 {
+    font-size: 2rem;
+  }
+
+  .text-input-form input {
+    font-size: 1.3rem;
+  }
+}
+
 @media (max-width: 640px) {
   .survey-container {
     padding: 16px;

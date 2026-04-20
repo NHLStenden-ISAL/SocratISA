@@ -183,7 +183,22 @@
   to { opacity: 1; }
 }
 
+@media (max-width: 768px) {
+  .result-container {
+    margin: 24px 16px;
+  }
+  .result-card {
+    padding: 24px;
+  }
+}
+
 @media (max-width: 640px) {
+  .result-container {
+    margin: 16px 8px;
+  }
+  .result-card {
+    padding: 20px 16px;
+  }
   .provider-grid {
     flex-direction: column;
     align-items: stretch;
