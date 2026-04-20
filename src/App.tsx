@@ -1,3 +1,9 @@
+/**
+ * App: hoofdcomponent van SocratISA.
+ * Beheert de taal, het thema (icon-toggle) en de drie weergaven:
+ * Hoofdpagina (Home), vragenlijst (SocraticSurvey) en prompt resultaat (PromptResult).
+ */
+
 import './App.css'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -5,6 +11,7 @@ import { Home } from './components/Home/Home'
 import { SocraticSurvey } from './components/SocraticSurvey/SocraticSurvey'
 import { PromptResult } from './components/PromptResult/PromptResult'
 
+/** Antwoorden van de Socratische vragenlijst. */
 export interface SurveyAnswers {
   subject: string;
   topic: string;
@@ -14,10 +21,12 @@ export interface SurveyAnswers {
 function App() {
   const { t, i18n } = useTranslation()
   const [lang, setLang] = useState<'NL' | 'EN'>(() => (localStorage.getItem('lang') as 'NL' | 'EN') || 'NL')
+  /** Toggle voor de Licht/Donker thema. */
   const [icon, setIcon] = useState<'sun' | 'moon'>('sun')
   const [view, setView] = useState<'content' | 'survey' | 'result'>('content')
   const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers | null>(null)
 
+  /** Toggle voor NL/EN taal, slaat keuze op in localStorage en update i18next. */
   const toggleLang = () => {
     const newLang = lang === 'NL' ? 'EN' : 'NL'
     setLang(newLang)
@@ -25,6 +34,7 @@ function App() {
     localStorage.setItem('lang', newLang)
   }
 
+  /** Sla antwoorden op en ga naar resultaat. */
   const handleSurveyComplete = (answers: SurveyAnswers) => {
     setSurveyAnswers(answers)
     setView('result')
@@ -46,6 +56,7 @@ function App() {
         </button>
       </div>
 
+      {/* Eén tegelijk tonen: survey boven content, resultaat boven alles */}
       {view === 'survey' && (
         <SocraticSurvey 
           onComplete={handleSurveyComplete} 

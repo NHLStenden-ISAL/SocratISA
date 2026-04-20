@@ -1,13 +1,20 @@
+/**
+ * PromptResult: toont de gegenereerde Socratische prompt
+ * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
+ */
+
 import { useTranslation } from 'react-i18next';
 import type { SurveyAnswers } from '../../App';
 import './PromptResult.css';
 
+/** Props voor survey antwoorden, retry en home opties. */
 interface PromptResultProps {
   answers: SurveyAnswers;
   onRetry: () => void;
   onHome: () => void;
 }
 
+/** Koppelt survey-keuzes aan stijl-aanwijzingen voor de prompt-template. */
 const STYLE_HINT_MAP: Record<string, string> = {
   'survey_option_visual': 'style_hint_visual',
   'survey_option_step': 'style_hint_step',
@@ -15,6 +22,7 @@ const STYLE_HINT_MAP: Record<string, string> = {
   'survey_option_practical': 'style_hint_practical',
 };
 
+/** Meestgebruikte AI-providers waar de prompt naar gekopieerd kan worden. */
 const PROVIDERS = [
   { name: 'ChatGPT', url: 'https://chat.openai.com/', icon: 'fas fa-robot' },
   { name: 'Claude', url: 'https://claude.ai/', icon: 'fas fa-brain' },
@@ -24,7 +32,9 @@ const PROVIDERS = [
 export const PromptResult = ({ answers, onRetry, onHome }: PromptResultProps) => {
   const { t } = useTranslation();
 
+  /** Bepaal de stijl-aanwijzing op basis van de gekozen leerstijl. */
   const styleHintKey = STYLE_HINT_MAP[answers.styleKey] || 'style_hint_default';
+  /** Vul de prompt-template in met de survey antwoorden */
   const prompt = t('prompt_template', {
     subject: answers.subject,
     topic: answers.topic,

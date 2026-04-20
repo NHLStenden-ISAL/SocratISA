@@ -1,3 +1,5 @@
+/** Applicatie-instap: initialiseert React, i18n en FontAwesome. */
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fortawesome/fontawesome-free/css/all.min.css'

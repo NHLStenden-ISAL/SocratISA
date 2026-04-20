@@ -1,8 +1,14 @@
+/**
+ * SocraticSurvey: vragenlijst die de gebruiker doorloopt
+ * om een Socratische AI-prompt op maat te genereren.
+ */
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SurveyAnswers } from '../../App';
 import './SocraticSurvey.css';
 
+/** Opbouw van een survey vraag. */
 interface Question {
   id: string;
   questionKey: string;
@@ -11,6 +17,12 @@ interface Question {
   type: 'text' | 'select';
 }
 
+/**
+ * Volgorde van de surveyvragen.
+ * Stap 1: vak/onderwerp (vrij tekstveld)
+ * Stap 2: specifiek onderwerp (vrij tekstveld)
+ * Stap 3: leerstijlvoorkeur (meerkeuze)
+ */
 const QUESTION_DEFS: Question[] = [
   {
     id: 'subject',
@@ -63,6 +75,10 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
     }
   };
 
+  /**
+   * Rondt de survey af: toont eerst een laad-indicator (1,5s)
+   * en geeft dan de antwoorden door aan onComplete.
+   */
   const finishSurvey = (finalAnswers: Record<string, string>) => {
     setIsGenerating(true);
     setTimeout(() => {
@@ -88,6 +104,7 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
 
   return (
     <div className="survey-container">
+      {/* Voortgangsbalk: percentage gebaseerd op huidige stap t.o.v. totaal */}
       <div className="survey-progress">
         <div
           className="progress-bar"

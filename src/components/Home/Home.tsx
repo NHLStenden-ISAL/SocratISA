@@ -1,6 +1,12 @@
+/**
+ * Home: landingspagina met informatie over generatieve AI en Socratisch leren.
+ * Bevat secties over AI-toepassingen, valkuilen en een CTA naar de survey.
+ */
+
 import { useTranslation } from 'react-i18next';
 import './Home.css'
 
+/** Props om de Socratische vragenlijst te starten. */
 interface HomeProps {
   onStartSurvey: () => void;
 }
