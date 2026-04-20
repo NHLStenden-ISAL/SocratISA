@@ -3,7 +3,7 @@
  * om een Socratische AI-prompt op maat te genereren.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,8 +21,15 @@ export const SocraticSurvey = () => {
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [inputError, setInputError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const currentQ = SURVEY_QUESTIONS[step];
+
+  useEffect(() => {
+    if (currentQ.type === 'text' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [step, currentQ.type]);
 
   const handleNext = (value: string) => {
     if (!SurveyService.validate(value)) {
@@ -113,7 +120,7 @@ export const SocraticSurvey = () => {
                 <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
                 <input
                   id="survey-input"
-                  autoFocus
+                  ref={inputRef}
                   type="text"
                   inputMode="text"
                   autoComplete="off"

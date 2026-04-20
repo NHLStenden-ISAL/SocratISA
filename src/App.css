@@ -8,6 +8,15 @@
   position: relative;
 }
 
+.error-boundary {
+  text-align: center;
+  padding-top: 4rem;
+}
+
+.error-boundary .socratic-button {
+  margin-top: 1rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

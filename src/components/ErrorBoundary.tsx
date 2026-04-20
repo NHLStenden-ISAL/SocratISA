@@ -13,13 +13,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="panel" style={{ textAlign: 'center', paddingTop: '4rem' }}>
+        <div className="panel error-boundary">
           <h2>Er ging iets mis</h2>
           <p>Something went wrong.</p>
           <button
             className="socratic-button"
             onClick={() => window.location.assign('/')}
-            style={{ marginTop: '1rem' }}
           >
             Terug naar start
           </button>
