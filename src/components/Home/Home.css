@@ -1,7 +1,9 @@
 .article {
   max-width: 800px;
   margin: 40px auto;
-  line-height: 1.6;
+  line-height: 1.8;
+  word-spacing: 0.09em;
+  letter-spacing: 0.001em;
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -10,8 +12,8 @@
 }
 
 .article-text p {
-  margin-bottom: 20px;
-  font-size: 1.1rem;
+  margin-bottom: 28px;
+  font-size: 1.15rem;
 }
 
 .example-grid {
@@ -99,19 +101,18 @@
 
 .socratic-button {
   padding: 14px 24px;
-  border: 1px solid #d14343;
+  border: 1px solid var(--accent-bg);
   border-radius: 8px;
-  background: #d14343;
+  background: var(--accent-bg);
   color: #fff;
   cursor: pointer;
   font-weight: 600;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .socratic-button:hover {
-  background: #b33838;
-  border-color: #b33838;
+  opacity: 0.85;
 }
 
 .button-container {
@@ -119,14 +120,38 @@
   margin: 40px 0;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@media (max-width: 768px) {
+  .article {
+    margin: 20px auto;
+    padding: 0 4px;
+  }
+  .article-text p {
+    font-size: 1.05rem;
+  }
+  .article h2 {
+    margin-top: 48px;
+  }
+  .example-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pitfalls-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
   .article {
-    margin: 20px auto;
+    margin: 8px auto 20px;
+  }
+  .article-text {
+    margin-bottom: 28px;
+  }
+  .article-text p {
+    font-size: 1rem;
+  }
+  .article h2 {
+    margin-top: 40px;
+    margin-bottom: 12px;
   }
   .example-grid,
   .pitfalls-grid {
@@ -135,5 +160,8 @@
   .example-box:hover,
   .pitfall-box:hover {
     transform: none;
+  }
+  .button-container {
+    margin: 28px 0;
   }
 }

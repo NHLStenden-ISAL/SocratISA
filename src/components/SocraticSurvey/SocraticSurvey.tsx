@@ -1,69 +1,79 @@
-import { useState } from 'react';
+/**
+ * SocraticSurvey: vragenlijst die de gebruiker doorloopt
+ * om een Socratische AI-prompt op maat te genereren.
+ */
+
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { SurveyService, SURVEY_QUESTIONS } from '../../services/SurveyService';
+import type { SurveyAnswers } from '../../types';
 import './SocraticSurvey.css';
 
-interface Question {
-  id: string;
-  question: string;
-  description: string;
-  options?: string[];
-  type: 'text' | 'select';
-}
 
-const QUESTIONS: Question[] = [
-  {
-    id: 'subject',
-    question: 'Wat ben je aan het leren?',
-    description: 'Bijvoorbeeld: "Lineaire Algebra".',
-    type: 'text'
-  },
-  {
-    id: 'topic',
-    question: 'Wat wil je precies weten?',
-    description: 'Bijvoorbeeld: "Hoe werkt de stelling van Pythagoras?".',
-    type: 'text'
-  },
-  {
-    id: 'style',
-    question: 'Wat is jouw leerstijl?',
-    description: 'Hoe leer je het liefst? Met veel voorbeelden, stap-voor-stap uitleg, of door uitgedaagd te worden?',
-    options: ['Visueel & Voorbeelden', 'Stap-voor-stap', 'Conceptueel & Abstract', 'Praktisch & Doen'],
-    type: 'select'
-  }
-];
-
-export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (prompt: string) => void, onCancel: () => void }) => {
+export const SocraticSurvey = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const surveyServiceRef = useRef(new SurveyService());
+  const surveyService = surveyServiceRef.current;
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [inputError, setInputError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const currentQuestion = QUESTIONS[step];
+  const currentQ = SURVEY_QUESTIONS[step];
+
+  useEffect(() => {
+    if (currentQ.type === 'text' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [step, currentQ.type]);
 
   const handleNext = (value: string) => {
-    const newAnswers = { ...answers, [currentQuestion.id]: value };
-    setAnswers(newAnswers);
-    
-    if (step < QUESTIONS.length - 1) {
+    if (!SurveyService.validate(value)) {
+      setInputError(true);
+      return;
+    }
+    surveyService.setAnswer(currentQ.id, value);
+    setInputError(false);
+
+    if (step < SURVEY_QUESTIONS.length - 1) {
       setStep(step + 1);
     } else {
-      generatePrompt();
+      finishSurvey();
     }
   };
 
-  const generatePrompt = () => {
+  const handleOptionSelect = (key: string) => {
+    surveyService.setAnswer(currentQ.id, key);
+
+    if (step < SURVEY_QUESTIONS.length - 1) {
+      setStep(step + 1);
+    } else {
+      finishSurvey();
+    }
+  };
+
+  /**
+   * Rondt de survey af: toont eerst een laad-indicator (1,5s)
+   * en navigeert dan naar het resultaat met de antwoorden als route state.
+   */
+  const finishSurvey = () => {
     setIsGenerating(true);
     setTimeout(() => {
-      const prompt = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.";
-      onComplete(prompt);
-      setIsGenerating(false);
+      const answers: SurveyAnswers = surveyService.toSurveyAnswers();
+      navigate('/result', { state: { answers } });
     }, 1500);
   };
 
   if (isGenerating) {
     return (
-      <div className="survey-container loading">
+      <div className="survey-container loading" role="status" aria-live="polite">
         <div className="loading-content">
-          <div className="spinner"></div>
-          <p>Socratische prompt wordt geformuleerd...</p>
+          <div className="spinner" aria-hidden="true"></div>
+          <p>{t('survey_loading')}</p>
         </div>
       </div>
     );
@@ -71,52 +81,87 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (prompt: 
 
   return (
     <div className="survey-container">
-      <div className="survey-progress">
-        <div 
-          className="progress-bar" 
-          style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }}
+      <div
+        className="survey-progress"
+        role="progressbar"
+        aria-valuenow={step + 1}
+        aria-valuemin={1}
+        aria-valuemax={SURVEY_QUESTIONS.length}
+        aria-label={t('survey_progress_label')}
+      >
+        <div
+          className="progress-bar"
+          style={{ width: `${((step + 1) / SURVEY_QUESTIONS.length) * 100}%` }}
         ></div>
       </div>
-      
-      <button className="cancel-survey" onClick={onCancel}>
-        <i className="fas fa-times"></i>
+
+      <button className="cancel-survey" onClick={() => navigate('/')} aria-label={t('survey_cancel_label')}>
+        <FontAwesomeIcon icon={faTimes} aria-hidden="true" />
       </button>
 
       <div className="survey-card-wrapper" key={step}>
         <div className="survey-card">
-          <span className="step-indicator">Vraag {step + 1} van {QUESTIONS.length}</span>
-          <h2>{currentQuestion.question}</h2>
-          <p className="description">{currentQuestion.description}</p>
+          <span className="step-indicator">
+            {t('survey_step', { current: step + 1, total: SURVEY_QUESTIONS.length })}
+          </span>
+          <h2>{t(currentQ.questionKey)}</h2>
+          <p className="description">{t(currentQ.descriptionKey)}</p>
 
           <div className="input-area">
-            {currentQuestion.type === 'text' ? (
-              <input 
-                autoFocus
-                type="text" 
-                placeholder="Typ je antwoord hier..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.currentTarget.value) {
-                    handleNext(e.currentTarget.value);
-                  }
+            {currentQ.type === 'text' ? (
+              <form
+                className="text-input-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.currentTarget.querySelector('input');
+                  if (input?.value) handleNext(input.value);
                 }}
-              />
+              >
+                <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
+                <input
+                  id="survey-input"
+                  ref={inputRef}
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  placeholder={t('survey_input_placeholder')}
+                  aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
+                  aria-invalid={inputError}
+                  onChange={() => inputError && setInputError(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value) {
+                      handleNext(e.currentTarget.value);
+                    }
+                  }}
+                />
+                <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
+                  <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+                </button>
+              </form>
             ) : (
               <div className="options-grid">
-                {currentQuestion.options?.map(option => (
-                  <button 
-                    key={option} 
+                {currentQ.optionKeys?.map(key => (
+                  <button
+                    key={key}
                     className="option-btn"
-                    onClick={() => handleNext(option)}
+                    onClick={() => handleOptionSelect(key)}
                   >
-                    {option}
+                    {t(key)}
                   </button>
                 ))}
               </div>
             )}
           </div>
-          
-          {currentQuestion.type === 'text' && (
-            <div className="hint">Druk op Enter om verder te gaan</div>
+
+          {currentQ.type === 'text' && (
+            <>
+              {inputError && (
+                <div className="survey-error" id="survey-error" role="alert">
+                  {t('survey_input_error')}
+                </div>
+              )}
+              <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
+            </>
           )}
         </div>
       </div>

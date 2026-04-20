@@ -1,90 +1,102 @@
+/**
+ * Home: landingspagina met informatie over generatieve AI en Socratisch leren.
+ * Bevat secties over AI-toepassingen, valkuilen en een CTA naar de survey.
+ */
+
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import './Home.css'
 
-interface HomeProps {
-  onStartSurvey: () => void;
-}
+export const Home = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
-export const Home = ({ onStartSurvey }: HomeProps) => {
   return (
     <div className="article">
-      <h1>Generatieve AI: wat is het?</h1>
+      <h1>{t('home_title')}</h1>
       
       <section className="article-text">
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        </p>
-        <p>
-          Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-        </p>
-        <p>
-          Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.
-        </p>
+        <p>{t('home_intro_1')}</p>
+        <p>{t('home_intro_2')}</p>
       </section>
 
-      <h2>Valkuilen bij AI-gebruik</h2>
+      <h2>{t('home_practice_title')}</h2>
       <section className="article-text">
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
+        <p>{t('home_practice_1')}</p>
+        <p>{t('home_practice_2')}</p>
       </section>
 
-      <section className="pitfalls-grid">
-        <div className="pitfall-box bad">
-          <h3>Slecht voorbeeld</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
-        </div>
-        <div className="pitfall-box good">
-          <h3>Goed voorbeeld</h3>
-          <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.</p>
-        </div>
-        <div className="pitfall-box bad">
-          <h3>Slecht voorbeeld</h3>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto.</p>
-        </div>
-        <div className="pitfall-box good">
-          <h3>Goed voorbeeld</h3>
-          <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est.</p>
-        </div>
-      </section>
-
-      <h2>De Socratische Methode</h2>
+      <h2>{t('home_apps_title')}</h2>
       <section className="article-text">
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
-        <p>
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        </p>
+        <p>{t('home_apps_intro')}</p>
       </section>
-
-      <h2>Toepassingen van Generatieve AI</h2>
-      <section className="example-grid">
+      <section className="example-grid" aria-label={t('home_apps_title')}>
         <div className="example-box">
-          <h3>RAG</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+          <h3>{t('app_rag_title')}</h3>
+          <p>{t('app_rag_desc')}</p>
         </div>
         <div className="example-box">
-          <h3>Computer Vision</h3>
-          <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <h3>{t('app_cv_title')}</h3>
+          <p>{t('app_cv_desc')}</p>
         </div>
         <div className="example-box">
-          <h3>Tool Calling</h3>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+          <h3>{t('app_tool_title')}</h3>
+          <p>{t('app_tool_desc')}</p>
+        </div>
+      </section>
+      <section className="article-text">
+        <p>{t('home_apps_outro')}</p>
+      </section>
+
+      <h2>{t('home_pitfalls_title')}</h2>
+      <section className="article-text">
+        <p>{t('home_pitfalls_1')}</p>
+        <p>{t('home_pitfalls_2')}</p>
+      </section>
+
+      <section className="pitfalls-grid" aria-label={t('home_pitfalls_title')}>
+        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_no_check_title')}>
+          <h3>{t('pitfall_no_check_title')}</h3>
+          <p>{t('pitfall_no_check_desc')}</p>
+        </div>
+        <div className="pitfall-box good" role="img" aria-label={t('pitfall_critical_title')}>
+          <h3>{t('pitfall_critical_title')}</h3>
+          <p>{t('pitfall_critical_desc')}</p>
+        </div>
+        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_privacy_bad_title')}>
+          <h3>{t('pitfall_privacy_bad_title')}</h3>
+          <p>{t('pitfall_privacy_bad_desc')}</p>
+        </div>
+        <div className="pitfall-box good" role="img" aria-label={t('pitfall_privacy_good_title')}>
+          <h3>{t('pitfall_privacy_good_title')}</h3>
+          <p>{t('pitfall_privacy_good_desc')}</p>
+        </div>
+        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_trust_title')}>
+          <h3>{t('pitfall_trust_title')}</h3>
+          <p>{t('pitfall_trust_desc')}</p>
+        </div>
+        <div className="pitfall-box good" role="img" aria-label={t('pitfall_tool_title')}>
+          <h3>{t('pitfall_tool_title')}</h3>
+          <p>{t('pitfall_tool_desc')}</p>
         </div>
       </section>
 
+      <h2>{t('home_socratic_title')}</h2>
       <section className="article-text">
-        <p>
-          Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-        </p>
-        <p>
-          Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-        </p>
+        <p>{t('home_socratic_1')}</p>
+        <p>{t('home_socratic_2')}</p>
+        <p>{t('home_socratic_3')}</p>
+      </section>
+
+      <h2>{t('home_action_title')}</h2>
+      <section className="article-text">
+        <p>{t('home_action_1')}</p>
+        <p>{t('home_action_2')}</p>
       </section>
 
       <div className="button-container">
-        <button className="socratic-button" onClick={onStartSurvey}>
-          Maak een socratische prompt
+        <button className="socratic-button" onClick={() => navigate('/survey')} aria-label={t('home_cta_aria')}>
+          {t('home_cta')}
         </button>
       </div>
     </div>

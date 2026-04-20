@@ -8,6 +8,27 @@
   position: relative;
 }
 
+.error-boundary {
+  text-align: center;
+  padding-top: 4rem;
+}
+
+.error-boundary .socratic-button {
+  margin-top: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .status-indicator {
   position: absolute;
   top: 18px;
@@ -52,7 +73,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .toggle-btn:hover {
@@ -61,15 +82,28 @@
 
 @media (max-width: 640px) {
   .panel {
-    padding: 16px;
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
   }
   .status-indicator {
     position: static;
-    margin-bottom: 8px;
+    pointer-events: auto;
   }
   .top-nav {
     position: static;
-    justify-content: flex-end;
-    margin-bottom: 8px;
+    gap: 10px;
+  }
+  .toggle-btn {
+    padding: 8px 14px;
+    font-size: 15px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

@@ -1,3 +1,12 @@
+@media (min-width: 1025px) {
+  html:has(.result-container) {
+    overflow: hidden;
+  }
+  html:has(.result-container) body {
+    overflow: hidden;
+  }
+}
+
 .result-container {
   max-width: 650px;
   margin: 40px auto;
@@ -25,7 +34,7 @@
   background: var(--code-bg);
   border-radius: 8px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .prompt-text {
@@ -34,6 +43,31 @@
   line-height: 1.5;
   color: var(--text);
   text-align: left;
+  white-space: pre-wrap;
+}
+
+.prompt-textarea {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: vertical;
+  text-align: left;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+}
+
+.copy-feedback {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 12px;
+  animation: fadeIn 0.2s ease;
 }
 
 .prompt-actions {
@@ -49,7 +83,17 @@
   font-family: var(--sans);
   font-size: 0.9rem;
   font-weight: 600;
-  cursor: default;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.action-btn:active {
+  opacity: 0.8;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .action-btn.primary {
@@ -86,15 +130,33 @@
 }
 
 .provider-btn {
-  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
   border: 1px solid var(--border);
   background: var(--bg);
   border-radius: 6px;
   font-family: var(--sans);
   font-size: 0.85rem;
   font-weight: 500;
-  cursor: default;
+  cursor: pointer;
   color: var(--text);
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.provider-btn:hover {
+  border-color: var(--accent);
+  background: var(--code-bg);
+}
+
+.provider-btn:active {
+  opacity: 0.8;
+}
+
+.provider-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .result-footer {
@@ -106,7 +168,8 @@
 .footer-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--text);
+  opacity: 0.5;
   font-family: var(--sans);
   font-size: 0.8rem;
   cursor: pointer;
@@ -120,16 +183,35 @@
   color: var(--accent-bg);
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .result-container {
+    margin: 24px 16px;
+  }
+  .result-card {
+    padding: 24px;
+  }
 }
 
 @media (max-width: 640px) {
+  .result-container {
+    margin: 16px 8px;
+  }
+  .result-card {
+    padding: 20px 16px;
+  }
   .provider-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
   .prompt-actions {
     flex-direction: column;
+  }
+  .provider-btn {
+    justify-content: center;
   }
 }
