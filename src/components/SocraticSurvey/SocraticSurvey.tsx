@@ -3,85 +3,49 @@
  * om een Socratische AI-prompt op maat te genereren.
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import type { SurveyAnswers } from '../../App';
+import { SurveyService, SURVEY_QUESTIONS } from '../../services/SurveyService';
+import type { SurveyAnswers } from '../../types';
 import './SocraticSurvey.css';
 
-/** Opbouw van een survey vraag. */
-interface Question {
-  id: string;
-  questionKey: string;
-  descriptionKey: string;
-  optionKeys?: string[];
-  type: 'text' | 'select';
-}
-
-/**
- * Volgorde van de surveyvragen.
- * Stap 1: vak/onderwerp (vrij tekstveld)
- * Stap 2: specifiek onderwerp (vrij tekstveld)
- * Stap 3: leerstijlvoorkeur (meerkeuze)
- */
-const QUESTION_DEFS: Question[] = [
-  {
-    id: 'subject',
-    questionKey: 'survey_q_subject',
-    descriptionKey: 'survey_q_subject_desc',
-    type: 'text'
-  },
-  {
-    id: 'topic',
-    questionKey: 'survey_q_topic',
-    descriptionKey: 'survey_q_topic_desc',
-    type: 'text'
-  },
-  {
-    id: 'style',
-    questionKey: 'survey_q_style',
-    descriptionKey: 'survey_q_style_desc',
-    optionKeys: ['survey_option_visual', 'survey_option_step', 'survey_option_conceptual', 'survey_option_practical'],
-    type: 'select'
-  }
-];
 
 export const SocraticSurvey = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const surveyServiceRef = useRef(new SurveyService());
+  const surveyService = surveyServiceRef.current;
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [inputError, setInputError] = useState(false);
 
-  const currentQ = QUESTION_DEFS[step];
+  const currentQ = SURVEY_QUESTIONS[step];
 
   const handleNext = (value: string) => {
-    if (!value.trim()) {
+    if (!SurveyService.validate(value)) {
       setInputError(true);
       return;
     }
-    const newAnswers = { ...answers, [currentQ.id]: value };
-    setAnswers(newAnswers);
+    surveyService.setAnswer(currentQ.id, value);
     setInputError(false);
 
-    if (step < QUESTION_DEFS.length - 1) {
+    if (step < SURVEY_QUESTIONS.length - 1) {
       setStep(step + 1);
     } else {
-      finishSurvey(newAnswers);
+      finishSurvey();
     }
   };
 
   const handleOptionSelect = (key: string) => {
-    const newAnswers = { ...answers, [currentQ.id]: key };
-    setAnswers(newAnswers);
+    surveyService.setAnswer(currentQ.id, key);
 
-    if (step < QUESTION_DEFS.length - 1) {
+    if (step < SURVEY_QUESTIONS.length - 1) {
       setStep(step + 1);
     } else {
-      finishSurvey(newAnswers);
+      finishSurvey();
     }
   };
 
@@ -89,14 +53,10 @@ export const SocraticSurvey = () => {
    * Rondt de survey af: toont eerst een laad-indicator (1,5s)
    * en navigeert dan naar het resultaat met de antwoorden als route state.
    */
-  const finishSurvey = (finalAnswers: Record<string, string>) => {
+  const finishSurvey = () => {
     setIsGenerating(true);
     setTimeout(() => {
-      const answers: SurveyAnswers = {
-        subject: finalAnswers.subject,
-        topic: finalAnswers.topic,
-        styleKey: finalAnswers.style,
-      };
+      const answers: SurveyAnswers = surveyService.toSurveyAnswers();
       navigate('/result', { state: { answers } });
     }, 1500);
   };
@@ -119,12 +79,12 @@ export const SocraticSurvey = () => {
         role="progressbar"
         aria-valuenow={step + 1}
         aria-valuemin={1}
-        aria-valuemax={QUESTION_DEFS.length}
+        aria-valuemax={SURVEY_QUESTIONS.length}
         aria-label={t('survey_progress_label')}
       >
         <div
           className="progress-bar"
-          style={{ width: `${((step + 1) / QUESTION_DEFS.length) * 100}%` }}
+          style={{ width: `${((step + 1) / SURVEY_QUESTIONS.length) * 100}%` }}
         ></div>
       </div>
 
@@ -135,7 +95,7 @@ export const SocraticSurvey = () => {
       <div className="survey-card-wrapper" key={step}>
         <div className="survey-card">
           <span className="step-indicator">
-            {t('survey_step', { current: step + 1, total: QUESTION_DEFS.length })}
+            {t('survey_step', { current: step + 1, total: SURVEY_QUESTIONS.length })}
           </span>
           <h2>{t(currentQ.questionKey)}</h2>
           <p className="description">{t(currentQ.descriptionKey)}</p>

@@ -3,28 +3,16 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
-import type { SurveyAnswers } from '../../App';
+import { FallbackService } from '../../services/FallbackService';
+import { ProviderService } from '../../services/ProviderService';
+import type { SurveyAnswers } from '../../types';
 import './PromptResult.css';
 
-/** Koppelt survey-keuzes aan stijl-aanwijzingen voor de prompt-template. */
-const STYLE_HINT_MAP: Record<string, string> = {
-  'survey_option_visual': 'style_hint_visual',
-  'survey_option_step': 'style_hint_step',
-  'survey_option_conceptual': 'style_hint_conceptual',
-  'survey_option_practical': 'style_hint_practical',
-};
-
-/** Meestgebruikte AI-providers waar de prompt naar gekopieerd kan worden. */
-const PROVIDERS = [
-  { name: 'ChatGPT', url: (q: string) => `https://chat.openai.com/?q=${encodeURIComponent(q)}` },
-  { name: 'Claude', url: (q: string) => `https://claude.ai/new?q=${encodeURIComponent(q)}` },
-  { name: 'Gemini', url: (q: string) => `https://gemini.google.com/app?q=${encodeURIComponent(q)}` },
-];
 
 export const PromptResult = () => {
   const { t, i18n } = useTranslation();
@@ -36,15 +24,10 @@ export const PromptResult = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const providerService = useMemo(() => new ProviderService(), []);
 
-  /** Bepaal de stijl-aanwijzing op basis van de gekozen leerstijl. */
-  const styleHintKey = STYLE_HINT_MAP[answers.styleKey] || 'style_hint_default';
-  /** Vul de prompt-template in met de survey antwoorden */
-  const generatedPrompt = t('prompt_template', {
-    subject: answers.subject,
-    topic: answers.topic,
-    styleHint: t(styleHintKey),
-  });
+  /** Genereer de fallback prompt via FallbackService. */
+  const generatedPrompt = FallbackService.generatePrompt(answers, t);
 
   /** Geef de bewerkte prompt terug als die er is, anders de gegenereerde prompt */
   const prompt = edits[i18n.language] ?? generatedPrompt;
@@ -156,11 +139,11 @@ export const PromptResult = () => {
         <div className="provider-section">
           <p className="provider-cta">{t('result_cta')}</p>
           <div className="provider-grid">
-            {PROVIDERS.map(provider => (
+            {providerService.getProviders().map(provider => (
               <button
                 key={provider.name}
                 className="provider-btn"
-                onClick={() => handleProvider(provider.url)}
+                onClick={() => handleProvider(provider.buildUrl)}
                 disabled={isCopying}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >

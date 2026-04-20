@@ -1,21 +1,16 @@
 /**
  * App: layoutcomponent van SocratISA.
- * Beheert de taal en het thema (icon-toggle) en rendert de actieve route via Outlet.
+ * Rendert de actieve route via Outlet, taal en thema via React Context.
  */
 
 import './App.css'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
-
-/** Antwoorden van de Socratische vragenlijst. */
-export interface SurveyAnswers {
-  subject: string;
-  topic: string;
-  styleKey: string;
-}
+import { useTheme } from './contexts/useTheme'
+import { useLanguage } from './contexts/useLanguage'
 
 /** Mapping van routes naar paginatitels. */
 const PAGE_TITLES: Record<string, string> = {
@@ -23,23 +18,10 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 function App() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const location = useLocation()
-  const [lang, setLang] = useState<'NL' | 'EN'>(
-    () => (localStorage.getItem('lang') as 'NL' | 'EN') || 'NL'
-  )
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    () => (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
-  )
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  useEffect(() => {
-    document.documentElement.lang = lang.toLowerCase()
-  }, [lang])
+  const { theme, toggleTheme } = useTheme()
+  const { lang, toggleLang } = useLanguage()
 
   useEffect(() => {
     const titles: Record<string, string> = {
@@ -49,19 +31,6 @@ function App() {
     }
     document.title = titles[location.pathname] || 'SocratISA'
   }, [location.pathname, t])
-
-  /** Toggle voor NL/EN taal, slaat keuze op in localStorage en update i18next. */
-  const toggleLang = () => {
-    const newLang = lang === 'NL' ? 'EN' : 'NL'
-    setLang(newLang)
-    i18n.changeLanguage(newLang.toLowerCase())
-    localStorage.setItem('lang', newLang)
-  }
-
-  /** Toggle voor Licht/Donker thema. */
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
 
   return (
     <div className="panel">
