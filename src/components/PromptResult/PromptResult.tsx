@@ -6,6 +6,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
 import type { SurveyAnswers } from '../../App';
 import './PromptResult.css';
 
@@ -32,6 +34,7 @@ export const PromptResult = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /** Bepaal de stijl-aanwijzing op basis van de gekozen leerstijl. */
@@ -68,6 +71,7 @@ export const PromptResult = () => {
 
   /** Kopieer naar klembord of open deelmenu op mobiel */
   const handleCopy = async () => {
+    setIsCopying(true);
     try {
       if (navigator.share) {
         await navigator.share({ text: prompt });
@@ -82,11 +86,14 @@ export const PromptResult = () => {
       } catch {
         showFeedback(t('result_copy_failed'));
       }
+    } finally {
+      setIsCopying(false);
     }
   };
 
   /** Kopieer prompt en open provider met vooringevulde prompt */
   const handleProvider = async (urlFn: (q: string) => string) => {
+    setIsCopying(true);
     const url = urlFn(prompt);
     try {
       if (navigator.share) {
@@ -102,6 +109,8 @@ export const PromptResult = () => {
       } catch {
         showFeedback(t('result_copy_failed'));
       }
+    } finally {
+      setIsCopying(false);
     }
     window.open(url, '_blank', 'noopener');
   };
@@ -139,7 +148,7 @@ export const PromptResult = () => {
               {t('result_edit')}
             </button>
           )}
-          <button className="action-btn primary" onClick={handleCopy} aria-label={t('result_copy_aria')}>
+          <button className="action-btn primary" onClick={handleCopy} disabled={isCopying} aria-label={t('result_copy_aria')}>
             {t('result_copy')}
           </button>
         </div>
@@ -152,6 +161,7 @@ export const PromptResult = () => {
                 key={provider.name}
                 className="provider-btn"
                 onClick={() => handleProvider(provider.url)}
+                disabled={isCopying}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}
@@ -162,10 +172,10 @@ export const PromptResult = () => {
 
         <div className="result-footer">
           <button className="footer-btn" onClick={() => navigate('/survey')} aria-label={t('result_retry_aria')}>
-            <i className="fas fa-redo" aria-hidden="true"></i> {t('result_retry')}
+            <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
           <button className="footer-btn" onClick={() => navigate('/')} aria-label={t('result_home_aria')}>
-            <i className="fas fa-home" aria-hidden="true"></i> {t('result_home')}
+            <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
         </div>
       </div>

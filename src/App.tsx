@@ -7,6 +7,8 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 
 /** Antwoorden van de Socratische vragenlijst. */
 export interface SurveyAnswers {
@@ -73,7 +75,7 @@ function App() {
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
-          <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'} aria-hidden="true"></i>
+          <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} aria-hidden="true" />
         </button>
       </nav>
 

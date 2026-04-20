@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import type { SurveyAnswers } from '../../App';
 import './SocraticSurvey.css';
 
@@ -127,7 +129,7 @@ export const SocraticSurvey = () => {
       </div>
 
       <button className="cancel-survey" onClick={() => navigate('/')} aria-label={t('survey_cancel_label')}>
-        <i className="fas fa-times" aria-hidden="true"></i>
+        <FontAwesomeIcon icon={faTimes} aria-hidden="true" />
       </button>
 
       <div className="survey-card-wrapper" key={step}>
@@ -166,7 +168,7 @@ export const SocraticSurvey = () => {
                   }}
                 />
                 <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
-                  <i className="fas fa-arrow-right" aria-hidden="true"></i>
+                  <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
                 </button>
               </form>
             ) : (

@@ -91,6 +91,11 @@
   opacity: 0.8;
 }
 
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .action-btn.primary {
   background: var(--accent-bg);
   color: white;
@@ -149,6 +154,11 @@
   opacity: 0.8;
 }
 
+.provider-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .result-footer {
   display: flex;
   justify-content: center;
@@ -171,11 +181,6 @@
 
 .footer-btn:hover {
   color: var(--accent-bg);
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
