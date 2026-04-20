@@ -8,24 +8,6 @@
   position: relative;
 }
 
-.skip-link {
-  position: absolute;
-  top: -100%;
-  left: 16px;
-  z-index: 9999;
-  padding: 8px 16px;
-  background: var(--accent-bg);
-  color: #fff;
-  border-radius: 0 0 6px 6px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: top 0.2s;
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;

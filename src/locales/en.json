@@ -1,6 +1,7 @@
 {
   "status_online": "Online: device",
-  "skip_to_content": "Skip to main content",
+  "title_survey": "Survey - SocratISA",
+  "title_result": "Your Prompt - SocratISA",
   "nav_controls_label": "Language and theme",
   "aria_switch_lang": "Switch to {{lang}}",
   "aria_dark_mode": "Switch to dark mode",
@@ -57,6 +58,7 @@
   "survey_option_practical": "Practical & Hands-on",
   "survey_input_placeholder": "Type your answer here...",
   "survey_input_hint": "Press Enter to continue",
+  "survey_input_error": "Enter an answer to continue",
   "survey_loading": "Formulating Socratic prompt...",
   "survey_progress_label": "Questionnaire progress",
   "survey_cancel_label": "Cancel questionnaire",

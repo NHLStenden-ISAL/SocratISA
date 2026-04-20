@@ -50,12 +50,18 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [inputError, setInputError] = useState(false);
 
   const currentQ = QUESTION_DEFS[step];
 
   const handleNext = (value: string) => {
+    if (!value.trim()) {
+      setInputError(true);
+      return;
+    }
     const newAnswers = { ...answers, [currentQ.id]: value };
     setAnswers(newAnswers);
+    setInputError(false);
 
     if (step < QUESTION_DEFS.length - 1) {
       setStep(step + 1);
@@ -148,7 +154,9 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
                   inputMode="text"
                   autoComplete="off"
                   placeholder={t('survey_input_placeholder')}
-                  aria-describedby="survey-hint"
+                  aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
+                  aria-invalid={inputError}
+                  onChange={() => inputError && setInputError(false)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value) {
                       handleNext(e.currentTarget.value);
@@ -175,7 +183,14 @@ export const SocraticSurvey = ({ onComplete, onCancel }: { onComplete: (answers:
           </div>
 
           {currentQ.type === 'text' && (
-            <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
+            <>
+              {inputError && (
+                <div className="survey-error" id="survey-error" role="alert">
+                  {t('survey_input_error')}
+                </div>
+              )}
+              <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
+            </>
           )}
         </div>
       </div>

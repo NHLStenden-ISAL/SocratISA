@@ -48,6 +48,15 @@ function App() {
   }, [lang])
 
   useEffect(() => {
+    const titles: Record<View, string> = {
+      content: 'SocratISA',
+      survey: t('title_survey'),
+      result: t('title_result'),
+    }
+    document.title = titles[view]
+  }, [view, t])
+
+  useEffect(() => {
     localStorage.setItem('view', view)
   }, [view])
 
@@ -73,7 +82,6 @@ function App() {
 
   return (
     <div className="panel">
-      <a href="#main-content" className="skip-link">{t('skip_to_content')}</a>
       <div className="status-indicator" role="status">
         <span className="status-dot" aria-hidden="true"></span>
         <span className="status-text">{t('status_online')}</span>

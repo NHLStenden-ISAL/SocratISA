@@ -1,6 +1,7 @@
 {
   "status_online": "Online: apparaat",
-  "skip_to_content": "Ga naar hoofdinhoud",
+  "title_survey": "Vragenlijst - SocratISA",
+  "title_result": "Jouw Prompt - SocratISA",
   "nav_controls_label": "Taal en thema",
   "aria_switch_lang": "Schakel naar {{lang}}",
   "aria_dark_mode": "Schakel naar donkere modus",
@@ -57,6 +58,7 @@
   "survey_option_practical": "Praktisch & Doen",
   "survey_input_placeholder": "Typ je antwoord hier...",
   "survey_input_hint": "Druk op Enter om verder te gaan",
+  "survey_input_error": "Vul een antwoord in om verder te gaan",
   "survey_loading": "Socratische prompt wordt geformuleerd...",
   "survey_progress_label": "Voortgang van de vragenlijst",
   "survey_cancel_label": "Annuleer vragenlijst",

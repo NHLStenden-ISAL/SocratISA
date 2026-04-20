@@ -188,6 +188,14 @@
   transform: translateY(0);
 }
 
+.survey-error {
+  margin-top: 16px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--accent-bg);
+  font-weight: 500;
+}
+
 .hint {
   margin-top: 32px;
   font-family: var(--mono);
