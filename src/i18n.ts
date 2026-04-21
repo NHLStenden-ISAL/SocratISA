@@ -10,8 +10,7 @@ i18n.use(initReactI18next).init({
     nl: { translation: nl },
     en: { translation: en },
   },
-  /** Standaardtaal uit localStorage, anders NL. */
-  lng: (localStorage.getItem('lang') || 'NL').toLowerCase(),
+  lng: 'nl',
   fallbackLng: 'nl',
   interpolation: { escapeValue: false },
 });

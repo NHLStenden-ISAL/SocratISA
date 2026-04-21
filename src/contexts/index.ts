@@ -5,3 +5,5 @@ export { ThemeProvider } from './ThemeContext';
 export { useTheme, type ThemeContextValue } from './useTheme';
 export { LanguageProvider } from './LanguageContext';
 export { useLanguage, type LanguageContextValue } from './useLanguage';
+export { StorageProvider } from './StorageContext';
+export { useStorage, type IStorage } from './useStorage';

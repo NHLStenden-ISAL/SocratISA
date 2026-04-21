@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { SurveyService, SURVEY_QUESTIONS } from '../../services/SurveyService';
-import type { SurveyAnswers } from '../../types';
+import type { SurveyAnswers, Question } from '../../types';
 import './SocraticSurvey.css';
 
 
@@ -68,6 +68,73 @@ export const SocraticSurvey = () => {
     }, 1500);
   };
 
+  function assertNever(x: never): never {
+    throw new Error(`Unexpected question type: ${x}`);
+  }
+
+  interface RenderInputOptions {
+    inputRef: React.RefObject<HTMLInputElement | null>;
+    inputError: boolean;
+    setInputError: (v: boolean) => void;
+    handleNext: (value: string) => void;
+    handleOptionSelect: (key: string) => void;
+    t: (key: string) => string;
+  }
+
+  function renderQuestionInput(q: Question, opts: RenderInputOptions) {
+    const { inputRef, inputError, setInputError, handleNext, handleOptionSelect, t } = opts;
+    switch (q.type) {
+      case 'text':
+        return (
+          <form
+            className="text-input-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const input = e.currentTarget.querySelector('input');
+              if (input?.value) handleNext(input.value);
+            }}
+          >
+            <label htmlFor="survey-input" className="sr-only">{t(q.questionKey)}</label>
+            <input
+              id="survey-input"
+              ref={inputRef}
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              placeholder={t('survey_input_placeholder')}
+              aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
+              aria-invalid={inputError}
+              onChange={() => inputError && setInputError(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.currentTarget.value) {
+                  handleNext(e.currentTarget.value);
+                }
+              }}
+            />
+            <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
+              <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+            </button>
+          </form>
+        );
+      case 'select':
+        return (
+          <div className="options-grid">
+            {q.optionKeys?.map(key => (
+              <button
+                key={key}
+                className="option-btn"
+                onClick={() => handleOptionSelect(key)}
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+        );
+      default:
+        return assertNever(q.type);
+    }
+  }
+
   if (isGenerating) {
     return (
       <div className="survey-container loading" role="status" aria-live="polite">
@@ -108,49 +175,14 @@ export const SocraticSurvey = () => {
           <p className="description">{t(currentQ.descriptionKey)}</p>
 
           <div className="input-area">
-            {currentQ.type === 'text' ? (
-              <form
-                className="text-input-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const input = e.currentTarget.querySelector('input');
-                  if (input?.value) handleNext(input.value);
-                }}
-              >
-                <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
-                <input
-                  id="survey-input"
-                  ref={inputRef}
-                  type="text"
-                  inputMode="text"
-                  autoComplete="off"
-                  placeholder={t('survey_input_placeholder')}
-                  aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
-                  aria-invalid={inputError}
-                  onChange={() => inputError && setInputError(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value) {
-                      handleNext(e.currentTarget.value);
-                    }
-                  }}
-                />
-                <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
-                  <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
-                </button>
-              </form>
-            ) : (
-              <div className="options-grid">
-                {currentQ.optionKeys?.map(key => (
-                  <button
-                    key={key}
-                    className="option-btn"
-                    onClick={() => handleOptionSelect(key)}
-                  >
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            )}
+            {renderQuestionInput(currentQ, {
+              inputRef,
+              inputError,
+              setInputError,
+              handleNext,
+              handleOptionSelect,
+              t,
+            })}
           </div>
 
           {currentQ.type === 'text' && (

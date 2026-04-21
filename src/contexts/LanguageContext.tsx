@@ -5,7 +5,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Language } from '../types';
-import { StorageService } from '../services/StorageService';
+import { useStorage } from './useStorage';
 import { LanguageContext } from './useLanguage';
 
 interface LanguageProviderProps {
@@ -15,8 +15,9 @@ interface LanguageProviderProps {
 /** Provider component die taal state beschikbaar stelt aan de componenten. */
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n } = useTranslation();
+  const storage = useStorage();
   const [lang, setLang] = useState<Language>(() =>
-    StorageService.get<Language>('lang', 'NL')
+    storage.get<Language>('lang', 'NL')
   );
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const newLang: Language = lang === 'NL' ? 'EN' : 'NL';
     setLang(newLang);
     i18n.changeLanguage(newLang.toLowerCase());
-    StorageService.set('lang', newLang);
+    storage.set('lang', newLang);
   };
 
   return (

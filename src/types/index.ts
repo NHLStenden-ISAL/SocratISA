@@ -2,6 +2,7 @@
  * Types: centrale type-definities voor SocratISA.
  * Bevat interfaces voor services, antwoorden, en configuratie.
  */
+import type { TranslationKey } from './i18n-keys';
 
 /** Antwoorden van de Socratische vragenlijst. */
 export interface SurveyAnswers {
@@ -13,9 +14,9 @@ export interface SurveyAnswers {
 /** Opbouw van een survey vraag. */
 export interface Question {
   id: string;
-  questionKey: string;
-  descriptionKey: string;
-  optionKeys?: string[];
+  questionKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  optionKeys?: TranslationKey[];
   type: 'text' | 'select';
 }
 

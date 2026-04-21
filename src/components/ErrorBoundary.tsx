@@ -14,13 +14,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="panel error-boundary">
-          <h2>Er ging iets mis</h2>
-          <p>Something went wrong.</p>
+          <h2>Something went wrong / Er is iets misgegaan</h2>
           <button
             className="socratic-button"
             onClick={() => window.location.assign(import.meta.env.BASE_URL)}
           >
-            Terug naar start
+            Back to start / Terug naar start
           </button>
         </div>
       );

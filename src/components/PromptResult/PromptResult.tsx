@@ -3,7 +3,7 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -24,7 +24,8 @@ export const PromptResult = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const providerService = useMemo(() => new ProviderService(), []);
+  const providerServiceRef = useRef(new ProviderService());
+  const providerService = providerServiceRef.current;
 
   /** Genereer de fallback prompt via FallbackService. */
   const generatedPrompt = FallbackService.generatePrompt(answers, t);
@@ -75,8 +76,8 @@ export const PromptResult = () => {
   };
 
   /** Open provider met vooringevulde prompt */
-  const handleProvider = (urlFn: (q: string) => string) => {
-    const url = urlFn(prompt);
+  const handleProvider = (providerName: string) => {
+    const url = providerService.buildUrl(providerName, prompt);
     window.open(url, '_blank', 'noopener');
   };
 
@@ -125,7 +126,7 @@ export const PromptResult = () => {
               <button
                 key={provider.name}
                 className="provider-btn"
-                onClick={() => handleProvider(provider.buildUrl)}
+                onClick={() => handleProvider(provider.name)}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}

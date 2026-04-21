@@ -12,6 +12,7 @@ import { LanguageProvider } from './contexts/LanguageContext'
 import { Home } from './components/Home/Home'
 import { SocraticSurvey } from './components/SocraticSurvey/SocraticSurvey'
 import { PromptResult } from './components/PromptResult/PromptResult'
+import { StorageProvider } from './contexts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 const router = createBrowserRouter([
@@ -32,11 +33,13 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <LanguageProvider>
-        <ThemeProvider>
-          <RouterProvider router={router} />
-        </ThemeProvider>
-      </LanguageProvider>
+      <StorageProvider>
+        <LanguageProvider>
+          <ThemeProvider>
+            <RouterProvider router={router} />
+          </ThemeProvider>
+        </LanguageProvider>
+      </StorageProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

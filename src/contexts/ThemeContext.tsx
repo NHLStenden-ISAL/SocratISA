@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, type ReactNode } from 'react';
 import type { Theme } from '../types';
-import { StorageService } from '../services/StorageService';
+import { useStorage } from './useStorage';
 import { ThemeContext } from './useTheme';
 
 interface ThemeProviderProps {
@@ -13,14 +13,15 @@ interface ThemeProviderProps {
 
 /** Provider component die thema state beschikbaar stelt aan de componenten. */
 export function ThemeProvider({ children }: ThemeProviderProps) {
+  const storage = useStorage();
   const [theme, setTheme] = useState<Theme>(() =>
-    StorageService.get<Theme>('theme', 'light')
+    storage.get<Theme>('theme', 'light')
   );
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    StorageService.set('theme', theme);
-  }, [theme]);
+    storage.set('theme', theme);
+  }, [theme, storage]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));

@@ -70,7 +70,6 @@
   "result_retry": "Regenerate",
   "result_home": "Back to start",
   "result_copied": "Copied!",
-  "result_copied_provider": "Copied! Opening provider...",
   "result_copy_failed": "Copy failed",
   "result_done": "Done",
   "result_done_aria": "Stop editing",
