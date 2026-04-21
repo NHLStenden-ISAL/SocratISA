@@ -2,7 +2,7 @@
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import '@fortawesome/fontawesome-svg-core/styles.css'
 import './i18n'
 import './index.css'
@@ -15,28 +15,22 @@ import { PromptResult } from './components/PromptResult/PromptResult'
 import { StorageProvider } from './contexts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <App />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: 'survey', element: <SocraticSurvey /> },
-      { path: 'result', element: <PromptResult /> },
-    ],
-  },
-  { path: '*', element: <Navigate to='/' replace /> },
-],
-  { basename: import.meta.env.BASE_URL }
-)
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <StorageProvider>
         <LanguageProvider>
           <ThemeProvider>
-            <RouterProvider router={router} />
+            <HashRouter>
+              <Routes>
+                <Route path='/' element={<App />}>
+                  <Route index element={<Home />} />
+                  <Route path='survey' element={<SocraticSurvey />} />
+                  <Route path='result' element={<PromptResult />} />
+                </Route>
+                <Route path='*' element={<Navigate to='/' replace />} />
+              </Routes>
+            </HashRouter>
           </ThemeProvider>
         </LanguageProvider>
       </StorageProvider>

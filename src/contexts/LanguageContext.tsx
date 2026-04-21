@@ -22,7 +22,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
-  }, [lang]);
+    i18n.changeLanguage(lang.toLowerCase());
+  }, [lang, i18n]);
 
   const toggleLang = () => {
     const newLang: Language = lang === 'NL' ? 'EN' : 'NL';
