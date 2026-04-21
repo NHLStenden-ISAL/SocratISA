@@ -55,6 +55,14 @@
   border-radius: 50%;
 }
 
+.status-dot.webgpu {
+  background: #22c55e;
+}
+
+.status-dot.fallback {
+  background: #f59e0b;
+}
+
 .top-nav {
   position: absolute;
   top: 12px;

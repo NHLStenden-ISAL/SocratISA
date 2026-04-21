@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 import { useTheme } from './contexts/useTheme'
 import { useLanguage } from './contexts/useLanguage'
+import { useGPUStatus } from './hooks'
 
 /** Mapping van routes naar paginatitels. */
 const PAGE_TITLES: Record<string, string> = {
@@ -22,6 +23,7 @@ function App() {
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
   const { lang, toggleLang } = useLanguage()
+  const { isAvailable, gpuName, isChecking } = useGPUStatus()
 
   useEffect(() => {
     const titles: Record<string, string> = {
@@ -35,8 +37,14 @@ function App() {
   return (
     <div className="panel">
       <div className="status-indicator" role="status">
-        <span className="status-dot" aria-hidden="true"></span>
-        <span className="status-text">{t('status_online')}</span>
+        <span className={`status-dot ${isChecking ? '' : isAvailable ? 'webgpu' : 'fallback'}`} aria-hidden="true"></span>
+        <span className="status-text">
+          {isChecking
+            ? t('status_checking_gpu')
+            : isAvailable
+              ? t('status_webgpu', { name: gpuName ?? 'GPU' })
+              : t('status_fallback')}
+        </span>
       </div>
 
       <nav className="top-nav" aria-label={t('nav_controls_label')}>

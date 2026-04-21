@@ -6,7 +6,7 @@
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { useSurvey } from '../../hooks/useSurvey';
+import { useSurvey } from '../../hooks';
 import type { Question } from '../../types';
 import './SocraticSurvey.css';
 

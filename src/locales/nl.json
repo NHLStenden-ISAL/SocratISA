@@ -1,5 +1,7 @@
 {
-  "status_online": "Online: apparaat",
+  "status_checking_gpu": "GPU controleren...",
+  "status_webgpu": "WebGPU: {{name}}",
+  "status_fallback": "Fallback modus",
   "title_survey": "Vragenlijst - SocratISA",
   "title_result": "Jouw Prompt - SocratISA",
   "nav_controls_label": "Taal en thema",
@@ -83,5 +85,13 @@
   "style_hint_conceptual": "Focus op de diepere betekenis en verbanden tussen concepten.",
   "style_hint_practical": "Stel praktijkgerichte vragen en geef oefeningen.",
   "style_hint_default": "Pas je uitleg aan op de leerstijl van de student.",
-  "prompt_template": "Je bent een Socratische tutor. De student leert over: \"{{subject}}\".\nHet specifieke onderwerp is: \"{{topic}}\".\n\nJouw taak:\n  • Stel gerichte vragen om de student zelf tot inzichten te laten komen.\n  • Geef NOOIT directe antwoorden. Begeleid de student door vragen te stellen.\n  • Bevestig goede antwoorden en stuur bij als de student vastloopt.\n  • {{styleHint}}\n\nStart met een vraag die de student aan het denken zet over het onderwerp."
+  "prompt_template": "Je bent een Socratische tutor. De student leert over: \"{{subject}}\".\nHet specifieke onderwerp is: \"{{topic}}\".\n\nJouw taak:\n  • Stel gerichte vragen om de student zelf tot inzichten te laten komen.\n  • Geef NOOIT directe antwoorden. Begeleid de student door vragen te stellen.\n  • Bevestig goede antwoorden en stuur bij als de student vastloopt.\n  • {{styleHint}}\n",
+  "prompt_suffix": "\n\nBegin met een korte introductie en stel de eerste vraag aan de student, ga dan stap voor stap.",
+  "webllm_system_prompt": "Je schrijft instructie-prompts voor AI-chatbots. Jouw taak: maak een blok tekst dat, wanneer geplakt in ChatGPT of Claude, die AI als Socratische tutor laat werken. De student studeert {{subject}}, onderwerp: {{topic}}. {{styleHint}} REGELS: De output is een SYSTEEMINSTRUCTIE voor de chatbot, het moet beschrijven wat de chatbot moet doen, NIET zelf Socratische vragen stellen. Begin met 'Je bent een Socratische tutor...' of vergelijkbaar. Spreek de student NIET aan. Stel GEEN vragen. Beschrijf de rol en regels van de chatbot. Geef de output tussen aanhalingstekens. Eindig altijd met [EINDE].",
+  "webllm_user_message": "Schrijf de systeemprompt (instructieset) die ik aan ChatGPT kan geven zodat het mij over {{topic}} leert via de Socratische methode.",
+  "webllm_progress_loading": "Model laden...",
+  "webllm_progress_downloading": "Model downloaden",
+  "webllm_progress_generating": "Prompt genereren...",
+  "result_generating": "Prompt wordt gegenereerd met lokaal AI-model...",
+  "result_generating_fallback": "Prompt wordt gegenereerd met sjabloon..."
 }

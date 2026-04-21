@@ -1,5 +1,7 @@
 {
-  "status_online": "Online: device",
+  "status_checking_gpu": "Checking GPU...",
+  "status_webgpu": "WebGPU: {{name}}",
+  "status_fallback": "Fallback mode",
   "title_survey": "Survey - SocratISA",
   "title_result": "Your Prompt - SocratISA",
   "nav_controls_label": "Language and theme",
@@ -83,5 +85,13 @@
   "style_hint_conceptual": "Focus on the deeper meaning and connections between concepts.",
   "style_hint_practical": "Ask practice-oriented questions and give exercises.",
   "style_hint_default": "Adapt your explanation to the student's learning style.",
-  "prompt_template": "You are a Socratic tutor. The student is learning about: \"{{subject}}\".\nThe specific topic is: \"{{topic}}\".\n\nYour task:\n  • Ask targeted questions to help the student arrive at insights themselves.\n  • NEVER give direct answers. Guide the student by asking questions.\n  • Confirm good answers and correct course if the student gets stuck.\n  • {{styleHint}}\n\nStart with a question that makes the student think about the topic."
+  "prompt_template": "You are a Socratic tutor. The student is learning about: \"{{subject}}\".\nThe specific topic is: \"{{topic}}\".\n\nYour task:\n  • Ask targeted questions to help the student arrive at insights themselves.\n  • NEVER give direct answers. Guide the student by asking questions.\n  • Confirm good answers and correct course if the student gets stuck.\n  • {{styleHint}}\n",
+  "prompt_suffix": "\n\nStart with a short introduction and ask the first question to the student, then go step by step.",
+  "webllm_system_prompt": "You write instruction prompts for AI chatbots. Your task: produce a single block of text that, when pasted into ChatGPT or Claude, will make that AI act as a Socratic tutor. The student is studying {{subject}}, topic: {{topic}}. {{styleHint}} RULES: The output is a SYSTEM INSTRUCTION for the chatbot, it must describe what the chatbot should do, NOT contain Socratic questions yourself. Start with 'You are a Socratic tutor...' or similar. Do NOT address the student. Do NOT ask questions. Describe the chatbot's role and rules. Output the result between quotes. Always end with [END].",
+  "webllm_user_message": "Write the system prompt (instruction set) I can give to ChatGPT so it teaches me about {{topic}} using the Socratic method.",
+  "webllm_progress_loading": "Loading model...",
+  "webllm_progress_downloading": "Downloading model",
+  "webllm_progress_generating": "Generating your prompt...",
+  "result_generating": "Generating prompt with local AI model...",
+  "result_generating_fallback": "Generating prompt with template..."
 }

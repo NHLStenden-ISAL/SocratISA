@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SurveyService, SURVEY_QUESTIONS } from '../services/SurveyService';
+import { WebLLMService } from '../services/WebLLMService';
 import type { SurveyAnswers } from '../types';
 
 export function useSurvey() {
@@ -17,6 +18,7 @@ export function useSurvey() {
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [inputError, setInputError] = useState(false);
+  const gpuAvailable = WebLLMService.isWebGPUAvailable();
 
   const currentQ = SURVEY_QUESTIONS[step];
 
@@ -57,7 +59,7 @@ export function useSurvey() {
     setIsGenerating(true);
     setTimeout(() => {
       const answers: SurveyAnswers = surveyService.toSurveyAnswers();
-      navigate('/result', { state: { answers } });
+      navigate('/result', { state: { answers, gpuAvailable } });
     }, 1500);
   };
 

@@ -18,7 +18,7 @@ export class StorageService {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (err) {
-      console.warn(`StorageService: failed to save "${key}"`, err);
+      console.warn(`StorageService: opslaan van "${key}" mislukt`, err);
     }
   }
 

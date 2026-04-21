@@ -6,13 +6,15 @@
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult } from '../../hooks/usePromptResult';
+import { usePromptResult } from '../../hooks';
 import './PromptResult.css';
 
 export const PromptResult = () => {
   const { t } = useTranslation();
   const {
     prompt,
+    isGenerating,
+    progressText,
     isEditing,
     feedback,
     isCopying,
@@ -26,6 +28,17 @@ export const PromptResult = () => {
     handleHome,
     providers,
   } = usePromptResult();
+
+  if (isGenerating) {
+    return (
+      <div className="result-loading" role="status" aria-live="polite">
+        <div className="loading-content">
+          <div className="spinner" aria-hidden="true"></div>
+          <p>{progressText || t('result_generating')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="result-container">
