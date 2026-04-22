@@ -12,6 +12,7 @@ import { LanguageProvider } from './contexts/LanguageContext'
 import { Home } from './components/Home/Home'
 import { StorageProvider, ServiceProvider } from './contexts'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { LoadingScreen } from './components/LoadingScreen/LoadingScreen'
 import { SocraticSurvey, PromptResult } from './routes'
 
 createRoot(document.getElementById('root')!).render(
@@ -25,8 +26,8 @@ createRoot(document.getElementById('root')!).render(
               <Routes>
                 <Route path='/' element={<App />}>
                   <Route index element={<Home />} />
-                  <Route path='survey' element={<Suspense fallback={null}><SocraticSurvey /></Suspense>} />
-                  <Route path='result' element={<Suspense fallback={null}><PromptResult /></Suspense>} />
+                  <Route path='survey' element={<Suspense fallback={<LoadingScreen />}><SocraticSurvey /></Suspense>} />
+                  <Route path='result' element={<Suspense fallback={<LoadingScreen />}><PromptResult /></Suspense>} />
                 </Route>
                 <Route path='*' element={<Navigate to='/' replace />} />
               </Routes>

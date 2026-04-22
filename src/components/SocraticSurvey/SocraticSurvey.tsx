@@ -5,8 +5,9 @@
 
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faArrowRight, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useSurvey } from '../../hooks';
+import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import type { Question } from '../../types';
 import './SocraticSurvey.css';
 
@@ -82,19 +83,13 @@ export const SocraticSurvey = () => {
     inputRef,
     handleNext,
     handleOptionSelect,
+    handleBack,
     handleCancel,
     totalSteps,
   } = useSurvey();
 
   if (isGenerating) {
-    return (
-      <div className="survey-container loading" role="status" aria-live="polite">
-        <div className="loading-content">
-          <div className="spinner" aria-hidden="true"></div>
-          <p>{t('survey_loading')}</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -146,6 +141,17 @@ export const SocraticSurvey = () => {
               )}
               <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
             </>
+          )}
+
+          {step > 0 && (
+            <button
+              className="back-btn"
+              onClick={handleBack}
+              aria-label={t('survey_back_label')}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} aria-hidden="true" />
+              <span>{t('survey_back')}</span>
+            </button>
           )}
         </div>
       </div>

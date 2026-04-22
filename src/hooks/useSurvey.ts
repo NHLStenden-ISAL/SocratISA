@@ -26,9 +26,22 @@ export function useSurvey() {
 
   useEffect(() => {
     if (currentQ.type === 'text' && inputRef.current) {
-      inputRef.current.focus();
+      const prevAnswer = surveyService.getAnswer(currentQ.id)
+      inputRef.current.value = prevAnswer
+      inputRef.current.focus()
     }
-  }, [step, currentQ.type]);
+  }, [step, currentQ.type, currentQ.id, surveyService])
+
+  const handleBack = () => {
+    if (step > 0) {
+      const newStep = step - 1
+      for (let i = newStep + 1; i < SURVEY_QUESTIONS.length; i++) {
+        surveyService.setAnswer(SURVEY_QUESTIONS[i].id, '')
+      }
+      setInputError(false)
+      setStep(newStep)
+    }
+  }
 
   /** Laad bij first token. */
   useEffect(() => {
@@ -94,6 +107,7 @@ export function useSurvey() {
     inputRef,
     handleNext,
     handleOptionSelect,
+    handleBack,
     handleCancel: () => {
       promptGeneratorService.abort();
       navigate('/');

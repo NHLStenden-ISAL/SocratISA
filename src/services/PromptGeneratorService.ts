@@ -43,6 +43,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.listeners.forEach(l => l(event));
   }
 
+  private cleanOutput(text: string): string {
+    return text.replace(/\[EINDE\]|\[END\]/g, '').trim();
+  }
+
   reset(): void {
     this.abort();
     this.currentText = '';
@@ -81,6 +85,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
         }
 
         if (this.abortCtrl && !this.abortCtrl.signal.aborted) {
+          this.currentText = this.cleanOutput(this.currentText);
           this.complete = true;
           this.generating = false;
           this.emit({ type: 'complete', text: this.currentText });

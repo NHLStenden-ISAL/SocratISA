@@ -103,7 +103,7 @@ export class WebLLMService implements IWebLLMService {
         { role: 'user', content: userMessage },
       ],
       temperature: 0.3,
-      max_tokens: 768,
+      max_tokens: 1500,
       presence_penalty: 1.2,
       stop: ['[EINDE]', '[END]'],
       stream: true,
