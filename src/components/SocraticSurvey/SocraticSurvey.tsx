@@ -44,11 +44,7 @@ function QuestionInput({ q, inputRef, inputError, setInputError, handleNext, han
             aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
             aria-invalid={inputError}
             onChange={() => inputError && setInputError(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.currentTarget.value) {
-                handleNext(e.currentTarget.value);
-              }
-            }}
+
           />
           <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
             <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />

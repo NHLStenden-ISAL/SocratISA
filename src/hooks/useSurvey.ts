@@ -16,6 +16,7 @@ export function useSurvey() {
   const navigate = useNavigate();
   const { surveyService, promptGeneratorService, webLLMService } = useServices();
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
 
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -25,6 +26,7 @@ export function useSurvey() {
   const currentQ = SURVEY_QUESTIONS[step];
 
   useEffect(() => {
+    isSubmittingRef.current = false
     if (currentQ.type === 'text' && inputRef.current) {
       const prevAnswer = surveyService.getAnswer(currentQ.id)
       inputRef.current.value = prevAnswer
@@ -34,12 +36,8 @@ export function useSurvey() {
 
   const handleBack = () => {
     if (step > 0) {
-      const newStep = step - 1
-      for (let i = newStep + 1; i < SURVEY_QUESTIONS.length; i++) {
-        surveyService.setAnswer(SURVEY_QUESTIONS[i].id, '')
-      }
       setInputError(false)
-      setStep(newStep)
+      setStep(prev => prev - 1)
     }
   }
 
@@ -65,8 +63,11 @@ export function useSurvey() {
   }, [isGenerating, gpuAvailable, navigate, surveyService, promptGeneratorService]);
 
   const handleNext = (value: string) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     if (!value.trim().length) {
       setInputError(true);
+      isSubmittingRef.current = false;
       return;
     }
     surveyService.setAnswer(currentQ.id, value);
