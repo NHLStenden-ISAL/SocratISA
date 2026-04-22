@@ -1,18 +1,20 @@
 /**
  * useSurvey: hook die de state en flow-logic van de survey beheert.
- * Houdt bij welke vraag actief is, valideert input, en navigeert naar het resultaat.
+ * Houdt bij welke vraag actief is, valideert input, en navigeert naar het resultaat
+ * zodra de eerste token van de prompt-generatie is ontvangen.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SurveyService, SURVEY_QUESTIONS } from '../services/SurveyService';
 import { WebLLMService } from '../services/WebLLMService';
-import type { SurveyAnswers } from '../types';
+import { PromptGeneratorService, type GenerationEvent } from '../services/PromptGeneratorService';
 
 export function useSurvey() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const surveyServiceRef = useRef(new SurveyService());
-  const surveyService = surveyServiceRef.current;
+  const surveyService = useMemo(() => new SurveyService(), []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
@@ -27,6 +29,29 @@ export function useSurvey() {
       inputRef.current.focus();
     }
   }, [step, currentQ.type]);
+
+  /** Laad bij first token. */
+  useEffect(() => {
+    if (!isGenerating) return;
+
+    const service = PromptGeneratorService.getInstance();
+
+    if (service.getIsComplete() || service.getCurrentText()) {
+      const answers = surveyService.toSurveyAnswers();
+      navigate('/result', { state: { answers, gpuAvailable } });
+      return;
+    }
+
+    const handleEvent = (event: GenerationEvent) => {
+      if (event.type === 'firstToken' || event.type === 'complete') {
+        const answers = surveyService.toSurveyAnswers();
+        navigate('/result', { state: { answers, gpuAvailable } });
+      }
+    };
+
+    service.subscribe(handleEvent);
+    return () => service.unsubscribe(handleEvent);
+  }, [isGenerating, gpuAvailable, navigate, surveyService]);
 
   const handleNext = (value: string) => {
     if (!SurveyService.validate(value)) {
@@ -52,15 +77,15 @@ export function useSurvey() {
   };
 
   /**
-   * Rondt de survey af: toont eerst een laad-indicator (1,5s)
-   * en navigeert dan naar het resultaat met de antwoorden als route state.
+   * Rondt de survey af: start direct de prompt-generatie.
+   * De laad-indicator blijft zichtbaar totdat de eerste token arriveert;
+   * dan wordt automatisch naar het resultaat genavigeerd.
    */
   const finishSurvey = () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      const answers: SurveyAnswers = surveyService.toSurveyAnswers();
-      navigate('/result', { state: { answers, gpuAvailable } });
-    }, 1500);
+    const service = PromptGeneratorService.getInstance();
+    service.reset();
+    service.start(surveyService.toSurveyAnswers(), gpuAvailable, t);
   };
 
   return {
@@ -72,7 +97,10 @@ export function useSurvey() {
     inputRef,
     handleNext,
     handleOptionSelect,
-    handleCancel: () => navigate('/'),
+    handleCancel: () => {
+      PromptGeneratorService.getInstance().abort();
+      navigate('/');
+    },
     totalSteps: SURVEY_QUESTIONS.length,
   };
 }

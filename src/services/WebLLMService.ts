@@ -11,7 +11,7 @@ const MODEL_ID = 'Llama-3.2-3B-Instruct-q4f32_1-MLC';
 export type ProgressCallback = (text: string) => void;
 
 export class WebLLMService {
-  private engine: webllm.MLCEngine | null = null;
+  private static engine: webllm.MLCEngine | null = null;
 
   /** Controleer of WebGPU beschikbaar is in de browser. */
   static isWebGPUAvailable(): boolean {
@@ -57,19 +57,19 @@ export class WebLLMService {
     });
   }
 
-  /** Laad het model en genereer een prompt via WebLLM. */
-  async generatePrompt(
+  /** Laad het model en stream een prompt via WebLLM token-voor-token. */
+  async *generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: ProgressCallback,
-  ): Promise<string> {
+  ): AsyncGenerator<string> {
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
-    if (!this.engine) {
+    if (!WebLLMService.engine) {
       onProgress?.(translate('webllm_progress_loading'));
-      this.engine = await webllm.CreateMLCEngine(MODEL_ID, {
+      WebLLMService.engine = await webllm.CreateMLCEngine(MODEL_ID, {
         initProgressCallback: (report: webllm.InitProgressReport) => {
           const pct = Math.round(report.progress * 100);
           const text = report.text || translate('webllm_progress_downloading');
@@ -86,16 +86,21 @@ export class WebLLMService {
       topic: answers.topic,
     });
 
-    const reply = await this.engine.chat.completions.create({
+    const stream = await WebLLMService.engine.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
       temperature: 0.3,
-      max_tokens: 1024,
+      max_tokens: 768,
+      presence_penalty: 1.2,
       stop: ['[EINDE]', '[END]'],
-    });
+      stream: true,
+    } as webllm.ChatCompletionRequestStreaming);
 
-    return reply.choices[0]?.message?.content ?? '';
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content ?? '';
+      if (content) yield content;
+    }
   }
 }

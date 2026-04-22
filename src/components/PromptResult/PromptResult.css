@@ -35,6 +35,7 @@
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 12px;
+  min-height: 120px;
 }
 
 .prompt-text {
@@ -44,6 +45,23 @@
   color: var(--text);
   text-align: left;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  contain: layout;
+}
+
+.prompt-text.streaming::after {
+  content: '▋';
+  display: inline-block;
+  color: var(--accent-bg);
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  vertical-align: baseline;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .prompt-textarea {
@@ -157,6 +175,52 @@
 .provider-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.tooltip-trigger {
+  position: relative;
+}
+
+.tooltip-trigger[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.tooltip-trigger[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--text) transparent transparent transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.tooltip-trigger[data-tooltip]:hover::after,
+.tooltip-trigger[data-tooltip]:hover::before,
+.tooltip-trigger[data-tooltip]:focus-visible::after,
+.tooltip-trigger[data-tooltip]:focus-visible::before {
+  opacity: 1;
 }
 
 .result-footer {

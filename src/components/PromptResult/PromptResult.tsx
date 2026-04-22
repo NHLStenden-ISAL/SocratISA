@@ -14,10 +14,12 @@ export const PromptResult = () => {
   const {
     prompt,
     isGenerating,
+    isStreaming,
     progressText,
     isEditing,
     feedback,
     isCopying,
+    isComplete,
     textareaRef,
     setPrompt,
     handleEdit,
@@ -40,6 +42,8 @@ export const PromptResult = () => {
     );
   }
 
+  const tooltip = isStreaming ? t('tooltip_wait_for_stream') : undefined;
+
   return (
     <div className="result-container">
       <div className="result-card">
@@ -57,7 +61,9 @@ export const PromptResult = () => {
               rows={Math.max(8, prompt.split('\n').length + 2)}
             />
           ) : (
-            <div className="prompt-text">{prompt}</div>
+            <div className={`prompt-text ${!isComplete ? 'streaming' : ''}`}>
+              {prompt}
+            </div>
           )}
         </div>
 
@@ -65,15 +71,31 @@ export const PromptResult = () => {
 
         <div className="prompt-actions">
           {isEditing ? (
-            <button className="action-btn secondary" onClick={handleDone} aria-label={t('result_done_aria')}>
+            <button
+              className="action-btn secondary"
+              onClick={handleDone}
+              aria-label={t('result_done_aria')}
+            >
               {t('result_done')}
             </button>
           ) : (
-            <button className="action-btn secondary" onClick={handleEdit} aria-label={t('result_edit_aria')}>
+            <button
+              className="action-btn secondary tooltip-trigger"
+              onClick={handleEdit}
+              disabled={isStreaming}
+              aria-label={t('result_edit_aria')}
+              data-tooltip={tooltip}
+            >
               {t('result_edit')}
             </button>
           )}
-          <button className="action-btn primary" onClick={handleCopy} disabled={isCopying} aria-label={t('result_copy_aria')}>
+          <button
+            className="action-btn primary tooltip-trigger"
+            onClick={handleCopy}
+            disabled={isCopying || isStreaming}
+            aria-label={t('result_copy_aria')}
+            data-tooltip={tooltip}
+          >
             {t('result_copy')}
           </button>
         </div>
@@ -84,9 +106,11 @@ export const PromptResult = () => {
             {providers.map(provider => (
               <button
                 key={provider.name}
-                className="provider-btn"
+                className="provider-btn tooltip-trigger"
                 onClick={() => handleProvider(provider.name)}
+                disabled={isStreaming}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
+                data-tooltip={tooltip}
               >
                 {provider.name}
               </button>
