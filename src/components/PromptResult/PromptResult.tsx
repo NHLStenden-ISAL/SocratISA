@@ -3,23 +3,31 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
+import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import './PromptResult.css';
 
 export const PromptResult = () => {
+  const [prompt, setPrompt] = useState<string | null>(null);
+
+  if (prompt === null) {
+    return <PromptGenerator onComplete={setPrompt} />;
+  }
+
+  return <PromptResultView prompt={prompt} />;
+};
+
+function PromptResultView({ prompt }: { prompt: string }) {
   const { t } = useTranslation();
   const {
-    prompt,
-    isGenerating,
-    isStreaming,
-    progressText,
+    prompt: displayPrompt,
     isEditing,
     feedback,
     isCopying,
-    isComplete,
     textareaRef,
     setPrompt,
     handleEdit,
@@ -29,20 +37,7 @@ export const PromptResult = () => {
     handleRetry,
     handleHome,
     providers,
-  } = usePromptResult();
-
-  if (isGenerating) {
-    return (
-      <div className="result-loading" role="status" aria-live="polite">
-        <div className="loading-content">
-          <div className="spinner" aria-hidden="true"></div>
-          <p>{progressText || t('result_generating')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const tooltip = isStreaming ? t('tooltip_wait_for_stream') : undefined;
+  } = usePromptResult(prompt);
 
   return (
     <div className="result-container">
@@ -56,13 +51,13 @@ export const PromptResult = () => {
             <textarea
               ref={textareaRef}
               className="prompt-textarea"
-              value={prompt}
+              value={displayPrompt}
               onChange={(e) => setPrompt(e.target.value)}
-              rows={Math.max(8, prompt.split('\n').length + 2)}
+              rows={Math.max(8, displayPrompt.split('\n').length + 2)}
             />
           ) : (
-            <div className={`prompt-text ${!isComplete ? 'streaming' : ''}`}>
-              {prompt}
+            <div className="prompt-text">
+              {displayPrompt}
             </div>
           )}
         </div>
@@ -80,21 +75,18 @@ export const PromptResult = () => {
             </button>
           ) : (
             <button
-              className="action-btn secondary tooltip-trigger"
+              className="action-btn secondary"
               onClick={handleEdit}
-              disabled={isStreaming}
               aria-label={t('result_edit_aria')}
-              data-tooltip={tooltip}
             >
               {t('result_edit')}
             </button>
           )}
           <button
-            className="action-btn primary tooltip-trigger"
+            className="action-btn primary"
             onClick={handleCopy}
-            disabled={isCopying || isStreaming}
+            disabled={isCopying}
             aria-label={t('result_copy_aria')}
-            data-tooltip={tooltip}
           >
             {t('result_copy')}
           </button>
@@ -106,11 +98,9 @@ export const PromptResult = () => {
             {providers.map(provider => (
               <button
                 key={provider.name}
-                className="provider-btn tooltip-trigger"
+                className="provider-btn"
                 onClick={() => handleProvider(provider.name)}
-                disabled={isStreaming}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
-                data-tooltip={tooltip}
               >
                 {provider.name}
               </button>
@@ -129,4 +119,4 @@ export const PromptResult = () => {
       </div>
     </div>
   );
-};
+}

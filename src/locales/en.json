@@ -93,10 +93,8 @@
   "webllm_progress_downloading": "Downloading model",
   "webllm_progress_generating": "Generating your prompt...",
   "result_generating": "Generating prompt with local AI model...",
-  "result_generating_fallback": "Generating prompt with template...",
   "lang_dialog_title": "Change language",
   "lang_dialog_body": "The prompt was generated in the current language. If you switch languages, you'll need to go through the survey again to generate a new prompt.",
   "lang_dialog_cancel": "Cancel",
-  "lang_dialog_confirm": "Back to survey",
-  "tooltip_wait_for_stream": "Wait until the prompt has finished generating..."
+  "lang_dialog_confirm": "Back to survey"
 }

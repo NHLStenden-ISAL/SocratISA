@@ -1,32 +1,29 @@
 /**
- * PromptGeneratorService: singleton die de prompt-generatie orkestreert.
+ * PromptGeneratorService: orkestreert de prompt-generatie.
  * Single Responsibility: coördineren van generatie via WebGPU of fallback,
  * en streamen van tokens naar subscribers.
  */
 
-import { WebLLMService } from './WebLLMService';
-import { FallbackService } from './FallbackService';
-import type { SurveyAnswers } from '../types';
+import type {
+  SurveyAnswers,
+  IPromptGeneratorService,
+  IWebLLMService,
+  IFallbackService,
+  GenerationEvent,
+} from '../types';
 
-export type GenerationEvent =
-  | { type: 'firstToken'; text: string }
-  | { type: 'token'; text: string }
-  | { type: 'complete'; text: string }
-  | { type: 'error'; error: Error };
-
-export class PromptGeneratorService {
-  private static instance: PromptGeneratorService;
+export class PromptGeneratorService implements IPromptGeneratorService {
+  private webLLMService: IWebLLMService;
+  private fallbackService: IFallbackService;
   private listeners = new Set<(event: GenerationEvent) => void>();
   private currentText = '';
   private generating = false;
   private complete = false;
   private abortCtrl: AbortController | null = null;
 
-  static getInstance(): PromptGeneratorService {
-    if (!PromptGeneratorService.instance) {
-      PromptGeneratorService.instance = new PromptGeneratorService();
-    }
-    return PromptGeneratorService.instance;
+  constructor(webLLMService: IWebLLMService, fallbackService: IFallbackService) {
+    this.webLLMService = webLLMService;
+    this.fallbackService = fallbackService;
   }
 
   subscribe(listener: (event: GenerationEvent) => void): void {
@@ -66,11 +63,13 @@ export class PromptGeneratorService {
 
     try {
       if (gpuAvailable) {
-        const webllm = new WebLLMService();
         let firstTokenSent = false;
 
-        for await (const token of webllm.generatePromptStream(answers, translate, onProgress)) {
-          if (this.abortCtrl.signal.aborted) break;
+        for await (const token of this.webLLMService.generatePromptStream(answers, translate, onProgress)) {
+          if (this.abortCtrl?.signal.aborted) {
+            this.generating = false;
+            break;
+          }
           this.currentText += token;
 
           if (!firstTokenSent && this.currentText.trim().length > 0) {
@@ -81,13 +80,13 @@ export class PromptGeneratorService {
           }
         }
 
-        if (!this.abortCtrl.signal.aborted) {
+        if (this.abortCtrl && !this.abortCtrl.signal.aborted) {
           this.complete = true;
           this.generating = false;
           this.emit({ type: 'complete', text: this.currentText });
         }
       } else {
-        const raw = FallbackService.generatePrompt(answers, translate);
+        const raw = this.fallbackService.generatePrompt(answers, translate);
         this.currentText = raw;
         this.emit({ type: 'firstToken', text: this.currentText });
         this.emit({ type: 'token', text: this.currentText });
@@ -96,10 +95,10 @@ export class PromptGeneratorService {
         this.emit({ type: 'complete', text: this.currentText });
       }
     } catch (err) {
-      if (!this.abortCtrl.signal.aborted) {
+      if (this.abortCtrl && !this.abortCtrl.signal.aborted) {
         console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
         try {
-          const raw = FallbackService.generatePrompt(answers, translate);
+          const raw = this.fallbackService.generatePrompt(answers, translate);
           this.currentText = raw;
           this.emit({ type: 'firstToken', text: this.currentText });
           this.emit({ type: 'token', text: this.currentText });

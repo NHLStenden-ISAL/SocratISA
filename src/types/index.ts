@@ -4,6 +4,15 @@
  */
 import type { TranslationKey } from './i18n-keys';
 
+export type {
+  ISurveyService,
+  IWebLLMService,
+  IFallbackService,
+  IPromptGeneratorService,
+  IProviderService,
+  GenerationEvent,
+} from './services';
+
 /** Antwoorden van de Socratische vragenlijst. */
 export interface SurveyAnswers {
   subject: string;

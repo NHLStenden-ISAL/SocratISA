@@ -93,10 +93,8 @@
   "webllm_progress_downloading": "Model downloaden",
   "webllm_progress_generating": "Prompt genereren...",
   "result_generating": "Prompt wordt gegenereerd met lokaal AI-model...",
-  "result_generating_fallback": "Prompt wordt gegenereerd met sjabloon...",
   "lang_dialog_title": "Taal wijzigen",
   "lang_dialog_body": "De prompt is gegenereerd in de huidige taal. Als je van taal wijzigt, moet je de vragenlijst opnieuw doorlopen om een nieuwe prompt te genereren.",
   "lang_dialog_cancel": "Annuleren",
-  "lang_dialog_confirm": "Terug naar vragenlijst",
-  "tooltip_wait_for_stream": "Wacht tot de prompt klaar is met genereren..."
+  "lang_dialog_confirm": "Terug naar vragenlijst"
 }

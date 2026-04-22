@@ -2,7 +2,7 @@
  * ProviderService: beheert AI-provider configuraties.
  * Single Responsibility: alleen verantwoordelijk voor provider-links.
  */
-import type { Provider } from '../types';
+import type { Provider, IProviderService } from '../types';
 
 /** Standaard AI-providers. */
 export const PROVIDERS: Provider[] = [
@@ -23,7 +23,7 @@ export const PROVIDERS: Provider[] = [
   },
 ];
 
-export class ProviderService {
+export class ProviderService implements IProviderService {
   private providers: Provider[];
 
   constructor(providers: Provider[] = PROVIDERS) {

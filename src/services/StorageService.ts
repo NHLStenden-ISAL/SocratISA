@@ -22,8 +22,4 @@ export class StorageService {
     }
   }
 
-  /** Verwijder een waarde uit localStorage. */
-  static remove(key: string): void {
-    localStorage.removeItem(key);
-  }
 }

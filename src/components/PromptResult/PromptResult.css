@@ -177,52 +177,6 @@
   cursor: not-allowed;
 }
 
-.tooltip-trigger {
-  position: relative;
-}
-
-.tooltip-trigger[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--text);
-  color: var(--bg);
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  font-weight: 500;
-  padding: 6px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 10;
-}
-
-.tooltip-trigger[data-tooltip]::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 3px);
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  border-color: var(--text) transparent transparent transparent;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 10;
-}
-
-.tooltip-trigger[data-tooltip]:hover::after,
-.tooltip-trigger[data-tooltip]:hover::before,
-.tooltip-trigger[data-tooltip]:focus-visible::after,
-.tooltip-trigger[data-tooltip]:focus-visible::before {
-  opacity: 1;
-}
-
 .result-footer {
   display: flex;
   justify-content: center;

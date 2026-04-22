@@ -4,7 +4,7 @@
  */
 
 import './App.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -26,6 +26,7 @@ function App() {
   const { lang, toggleLang } = useLanguage()
   const { isAvailable, gpuName, isChecking } = useGPUStatus()
   const [showLangDialog, setShowLangDialog] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const titles: Record<string, string> = {
@@ -50,6 +51,43 @@ function App() {
     navigate('/survey')
   }
 
+  const closeLangDialog = useCallback(() => {
+    setShowLangDialog(false)
+  }, [])
+
+  useEffect(() => {
+    if (!showLangDialog) return
+    const timer = setTimeout(() => {
+      const firstButton = dialogRef.current?.querySelector('button')
+      firstButton?.focus()
+    }, 0)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeLangDialog()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusable || focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showLangDialog, closeLangDialog])
+
   return (
     <div className="panel">
       <div className="status-indicator" role="status">
@@ -73,8 +111,8 @@ function App() {
       </nav>
 
       {showLangDialog && (
-        <div className="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="lang-dialog-title">
-          <div className="dialog-box">
+        <div className="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="lang-dialog-title" onClick={(e) => { if (e.target === e.currentTarget) closeLangDialog() }}>
+          <div className="dialog-box" ref={dialogRef}>
             <h3 id="lang-dialog-title">{t('lang_dialog_title')}</h3>
             <p>{t('lang_dialog_body')}</p>
             <div className="dialog-actions">
