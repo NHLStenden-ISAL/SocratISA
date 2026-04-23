@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   overscroll-behavior: none;
 }

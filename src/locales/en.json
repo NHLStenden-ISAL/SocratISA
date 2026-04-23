@@ -62,6 +62,7 @@
   "survey_input_hint": "Press Enter to continue",
   "survey_input_error": "Enter an answer to continue",
   "survey_loading": "Formulating Socratic prompt...",
+  "generic_loading": "Loading...",
   "survey_progress_label": "Questionnaire progress",
   "survey_cancel_label": "Cancel questionnaire",
   "survey_submit_label": "Submit answer",

@@ -7,7 +7,7 @@ export const LoadingScreen = () => {
     <div className="loading-screen" role="status" aria-live="polite">
       <div className="loading-content">
         <div className="spinner" aria-hidden="true"></div>
-        <p>{t('survey_loading')}</p>
+        <p>{t('generic_loading')}</p>
       </div>
     </div>
   )

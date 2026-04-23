@@ -52,7 +52,7 @@ export function useSurvey() {
     }
 
     const handleEvent = (event: GenerationEvent) => {
-      if (event.type === 'firstToken' || event.type === 'complete') {
+      if (event.type === 'firstToken' || event.type === 'complete' || event.type === 'error') {
         const answers = surveyService.toSurveyAnswers();
         navigate('/result', { state: { answers, gpuAvailable } });
       }
@@ -76,6 +76,8 @@ export function useSurvey() {
   };
 
   const handleOptionSelect = (key: string) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     surveyService.setAnswer(currentQ.id, key);
     advanceStep();
   };
