@@ -45,6 +45,12 @@ export class WebLLMService implements IWebLLMService {
     return WebLLMService.detectGPU();
   }
 
+  async interruptGenerate(): Promise<void> {
+    if (WebLLMService.engine) {
+      await WebLLMService.engine.interruptGenerate();
+    }
+  }
+
   /** Koppel leerstijl key aan stijl-aanwijzing key. */
   private getStyleHintKey(styleKey: string): string {
     const map: Record<string, string> = {

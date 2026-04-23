@@ -51,6 +51,7 @@ function PromptResultView({ prompt }: { prompt: string }) {
             <textarea
               ref={textareaRef}
               className="prompt-textarea"
+              aria-label={t('result_textarea_label')}
               value={displayPrompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={Math.max(8, displayPrompt.split('\n').length + 2)}

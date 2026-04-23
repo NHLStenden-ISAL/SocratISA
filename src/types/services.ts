@@ -16,6 +16,7 @@ export interface IWebLLMService {
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (text: string) => void,
   ): AsyncGenerator<string>;
+  interruptGenerate(): Promise<void>;
 }
 
 export interface IFallbackService {

@@ -8,6 +8,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../contexts/useServices';
 
+async function copyPromptText(prompt: string): Promise<void> {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error('Clipboard API niet beschikbaar');
+  }
+
+  await navigator.clipboard.writeText(prompt);
+}
+
 export function usePromptResult(initialPrompt: string) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -39,19 +47,10 @@ export function usePromptResult(initialPrompt: string) {
   const handleCopy = async () => {
     setIsCopying(true);
     try {
-      if (navigator.share) {
-        await navigator.share({ text: prompt });
-      } else {
-        await navigator.clipboard.writeText(prompt);
-      }
+      await copyPromptText(prompt);
       showFeedback(t('result_copied'));
     } catch {
-      try {
-        await navigator.clipboard.writeText(prompt);
-        showFeedback(t('result_copied'));
-      } catch {
-        showFeedback(t('result_copy_failed'));
-      }
+      showFeedback(t('result_copy_failed'));
     } finally {
       setIsCopying(false);
     }

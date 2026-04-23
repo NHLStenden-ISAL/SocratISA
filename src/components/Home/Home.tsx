@@ -55,27 +55,27 @@ export const Home = () => {
       </section>
 
       <section className="pitfalls-grid" aria-label={t('home_pitfalls_title')}>
-        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_no_check_title')}>
+        <div className="pitfall-box bad">
           <h3>{t('pitfall_no_check_title')}</h3>
           <p>{t('pitfall_no_check_desc')}</p>
         </div>
-        <div className="pitfall-box good" role="img" aria-label={t('pitfall_critical_title')}>
+        <div className="pitfall-box good">
           <h3>{t('pitfall_critical_title')}</h3>
           <p>{t('pitfall_critical_desc')}</p>
         </div>
-        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_privacy_bad_title')}>
+        <div className="pitfall-box bad">
           <h3>{t('pitfall_privacy_bad_title')}</h3>
           <p>{t('pitfall_privacy_bad_desc')}</p>
         </div>
-        <div className="pitfall-box good" role="img" aria-label={t('pitfall_privacy_good_title')}>
+        <div className="pitfall-box good">
           <h3>{t('pitfall_privacy_good_title')}</h3>
           <p>{t('pitfall_privacy_good_desc')}</p>
         </div>
-        <div className="pitfall-box bad" role="img" aria-label={t('pitfall_trust_title')}>
+        <div className="pitfall-box bad">
           <h3>{t('pitfall_trust_title')}</h3>
           <p>{t('pitfall_trust_desc')}</p>
         </div>
-        <div className="pitfall-box good" role="img" aria-label={t('pitfall_tool_title')}>
+        <div className="pitfall-box good">
           <h3>{t('pitfall_tool_title')}</h3>
           <p>{t('pitfall_tool_desc')}</p>
         </div>

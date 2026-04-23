@@ -63,14 +63,15 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     if (this.generating) return;
     this.reset();
     this.generating = true;
-    this.abortCtrl = new AbortController();
+    const abortCtrl = new AbortController();
+    this.abortCtrl = abortCtrl;
 
     try {
       if (gpuAvailable) {
         let firstTokenSent = false;
 
         for await (const token of this.webLLMService.generatePromptStream(answers, translate, onProgress)) {
-          if (this.abortCtrl?.signal.aborted) {
+          if (abortCtrl.signal.aborted) {
             this.generating = false;
             break;
           }
@@ -84,7 +85,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
           }
         }
 
-        if (this.abortCtrl && !this.abortCtrl.signal.aborted) {
+        if (!abortCtrl.signal.aborted) {
           this.currentText = this.cleanOutput(this.currentText);
           this.complete = true;
           this.generating = false;
@@ -100,7 +101,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
         this.emit({ type: 'complete', text: this.currentText });
       }
     } catch (err) {
-      if (this.abortCtrl && !this.abortCtrl.signal.aborted) {
+      if (!abortCtrl.signal.aborted) {
         console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
         try {
           const raw = this.fallbackService.generatePrompt(answers, translate);
@@ -115,12 +116,22 @@ export class PromptGeneratorService implements IPromptGeneratorService {
           this.emit({ type: 'error', error: fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)) });
         }
       }
+    } finally {
+      if (this.abortCtrl === abortCtrl) {
+        this.abortCtrl = null;
+      }
     }
   }
 
   abort(): void {
-    this.abortCtrl?.abort();
-    this.abortCtrl = null;
+    if (!this.abortCtrl) {
+      return;
+    }
+
+    this.abortCtrl.abort();
+    this.generating = false;
+    this.complete = false;
+    void this.webLLMService.interruptGenerate();
   }
 
   getCurrentText(): string {

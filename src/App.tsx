@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 import { useTheme } from './contexts/useTheme'
 import { useLanguage } from './contexts/useLanguage'
+import { useServices } from './contexts/useServices'
 import { useGPUStatus } from './hooks'
 
 /** Mapping van routes naar paginatitels. */
@@ -24,9 +25,11 @@ function App() {
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
   const { lang, toggleLang } = useLanguage()
+  const { promptGeneratorService } = useServices()
   const { isAvailable, gpuName, isChecking } = useGPUStatus()
   const [showLangDialog, setShowLangDialog] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const previousPathRef = useRef(location.pathname)
 
   useEffect(() => {
     const titles: Record<string, string> = {
@@ -36,6 +39,13 @@ function App() {
     }
     document.title = titles[location.pathname] || 'SocratISA'
   }, [location.pathname, t])
+
+  useEffect(() => {
+    if (previousPathRef.current === '/result' && location.pathname !== '/result') {
+      promptGeneratorService.abort()
+    }
+    previousPathRef.current = location.pathname
+  }, [location.pathname, promptGeneratorService])
 
   const handleLangToggle = () => {
     if (location.pathname === '/result') {

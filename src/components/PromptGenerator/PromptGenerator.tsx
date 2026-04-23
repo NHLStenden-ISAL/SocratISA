@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
 import type { SurveyAnswers, GenerationEvent } from '../../types';
@@ -41,11 +41,13 @@ function stripQuotesAndSuffix(raw: string, suffix: string): string {
 export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const { promptGeneratorService } = useServices();
 
   const [phase, setPhase] = useState<'loading' | 'streaming'>('loading');
   const [text, setText] = useState('');
   const [progressText, setProgressText] = useState('');
+  const [generationError, setGenerationError] = useState<Error | null>(null);
 
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
@@ -91,7 +93,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete('');
+          setGenerationError(event.error);
           break;
       }
     };
@@ -114,6 +116,29 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       }
     };
   }, [location, t, promptGeneratorService, onComplete, flushPendingText]);
+
+  if (generationError) {
+    return (
+      <div className="result-container">
+        <div className="result-card">
+          <div className="result-header">
+            <h2>{t('result_error_title')}</h2>
+          </div>
+          <div className="prompt-display">
+            <div className="prompt-text">{t('result_error_body')}</div>
+          </div>
+          <div className="prompt-actions">
+            <button className="action-btn secondary" onClick={() => navigate('/')}>
+              {t('result_error_home')}
+            </button>
+            <button className="action-btn primary" onClick={() => navigate('/survey')}>
+              {t('result_error_retry')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === 'loading') {
     return (
