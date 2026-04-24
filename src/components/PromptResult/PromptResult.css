@@ -1,12 +1,3 @@
-@media (min-width: 1025px) {
-  html:has(.result-container) {
-    overflow: hidden;
-  }
-  html:has(.result-container) body {
-    overflow: hidden;
-  }
-}
-
 .result-container {
   max-width: 650px;
   margin: 40px auto;
@@ -35,6 +26,7 @@
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 12px;
+  min-height: 120px;
 }
 
 .prompt-text {
@@ -44,6 +36,23 @@
   color: var(--text);
   text-align: left;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  contain: layout;
+}
+
+.prompt-text.streaming::after {
+  content: '▋';
+  display: inline-block;
+  color: var(--accent-bg);
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  vertical-align: baseline;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .prompt-textarea {
@@ -186,6 +195,51 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+.result-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background: var(--bg);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.result-loading .loading-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.result-loading .loading-content p {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--text);
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--code-bg);
+  border-top-color: var(--accent-bg);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

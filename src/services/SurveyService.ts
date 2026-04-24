@@ -2,7 +2,7 @@
  * SurveyService: verzamelt en valideert survey-antwoorden.
  * Single Responsibility: alleen verantwoordelijk voor survey-data logica.
  */
-import type { SurveyAnswers, Question } from '../types';
+import type { SurveyAnswers, Question, ISurveyService } from '../types';
 
 /** Vaste vragen voor de socratische vragenlijst. */
 export const SURVEY_QUESTIONS: Question[] = [
@@ -32,13 +32,8 @@ export const SURVEY_QUESTIONS: Question[] = [
   },
 ];
 
-export class SurveyService {
+export class SurveyService implements ISurveyService {
   private answers: Record<string, string> = {};
-
-  /** Valideer of een antwoord niet leeg is. */
-  static validate(value: string): boolean {
-    return value.trim().length > 0;
-  }
 
   /** Sla een antwoord op voor een specifieke vraag. */
   setAnswer(questionId: string, value: string): void {

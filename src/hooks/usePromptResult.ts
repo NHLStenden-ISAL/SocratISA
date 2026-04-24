@@ -1,33 +1,34 @@
 /**
- * usePromptResult: hook die de state en acties van de promptresultaatpagina beheert.
- * Behandelt bewerken, kopiëren, delen, en doorsturen naar AI-providers.
+ * usePromptResult: hook voor prompt resultaat-acties (bewerken, kopiëren, providers).
+ * Verwacht dat generatie al voltooid is.
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FallbackService } from '../services/FallbackService';
-import { ProviderService } from '../services/ProviderService';
-import type { SurveyAnswers } from '../types';
+import { useServices } from '../contexts/useServices';
 
-export function usePromptResult() {
+async function copyPromptText(prompt: string): Promise<void> {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error('Clipboard API niet beschikbaar');
+  }
+
+  await navigator.clipboard.writeText(prompt);
+}
+
+export function usePromptResult(initialPrompt: string) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
-  const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const providerServiceRef = useRef(new ProviderService());
-  const providerService = providerServiceRef.current;
+  const { providerService } = useServices();
 
-  const [isEditing, setIsEditing] = useState(false);
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /** Genereer de fallback prompt via FallbackService. */
-  const generatedPrompt = FallbackService.generatePrompt(answers, t);
-  /** Geef de bewerkte prompt terug als die er is, anders de gegenereerde prompt */
-  const prompt = edits[i18n.language] ?? generatedPrompt;
+  const prompt = edits[i18n.language] ?? initialPrompt;
   const setPrompt = (value: string) => setEdits(prev => ({ ...prev, [i18n.language]: value }));
 
   useEffect(() => {
@@ -36,40 +37,40 @@ export function usePromptResult() {
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
   const showFeedback = (msg: string) => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
     setFeedback(msg);
-    setTimeout(() => setFeedback(null), 2000);
+    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 2000);
   };
 
   const handleEdit = () => setIsEditing(true);
   const handleDone = () => setIsEditing(false);
 
-  /** Kopieer naar klembord of open deelmenu op mobiel */
   const handleCopy = async () => {
     setIsCopying(true);
     try {
-      if (navigator.share) {
-        await navigator.share({ text: prompt });
-      } else {
-        await navigator.clipboard.writeText(prompt);
-      }
+      await copyPromptText(prompt);
       showFeedback(t('result_copied'));
     } catch {
-      try {
-        await navigator.clipboard.writeText(prompt);
-        showFeedback(t('result_copied'));
-      } catch {
-        showFeedback(t('result_copy_failed'));
-      }
+      showFeedback(t('result_copy_failed'));
     } finally {
       setIsCopying(false);
     }
   };
 
-  /** Open provider met vooringevulde prompt */
   const handleProvider = (providerName: string) => {
     const url = providerService.buildUrl(providerName, prompt);
-    window.open(url, '_blank', 'noopener');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return {

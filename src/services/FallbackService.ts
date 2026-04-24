@@ -2,7 +2,7 @@
  * FallbackService: genereert prompts zonder WebGPU.
  * Single Responsibility: template-gebaseerde prompt generatie als fallback.
  */
-import type { SurveyAnswers } from '../types';
+import type { SurveyAnswers, IFallbackService } from '../types';
 import type { TranslationKey } from '../types/i18n-keys';
 
 /** Koppelt leerstijl keys aan stijl-aanwijzingen. */
@@ -13,13 +13,13 @@ const STYLE_HINT_MAP: Record<string, TranslationKey> = {
   survey_option_practical: 'style_hint_practical',
 };
 
-export class FallbackService {
-  static getStyleHintKey(styleKey: string): TranslationKey {
+export class FallbackService implements IFallbackService {
+  private getStyleHintKey(styleKey: string): TranslationKey {
     return STYLE_HINT_MAP[styleKey] || 'style_hint_default';
   }
 
   /** Genereer een fallback prompt op basis van survey antwoorden. */
-  static generatePrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
+  generatePrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = this.getStyleHintKey(answers.styleKey);
     return translate('prompt_template', {
       subject: answers.subject,

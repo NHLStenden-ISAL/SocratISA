@@ -198,26 +198,28 @@
   opacity: 0.4;
 }
 
-.survey-container.loading {
-  background: var(--bg);
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+  background: none;
+  border: none;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.2s, color 0.2s;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
-.loading-content {
-  text-align: center;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--code-bg);
-  border-top-color: var(--accent-bg);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 24px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.back-btn:hover,
+.back-btn:active {
+  opacity: 0.8;
+  color: var(--accent-bg);
+  background: var(--code-bg);
 }
 
 @media (max-width: 768px) {

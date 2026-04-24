@@ -6,7 +6,6 @@ import { useContext, createContext } from 'react';
 export interface IStorage {
   get<T>(key: string, fallback: T): T;
   set<T>(key: string, value: T): void;
-  remove(key: string): void;
 }
 
 export const StorageContext = createContext<IStorage | undefined>(undefined);

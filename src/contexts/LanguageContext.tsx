@@ -16,8 +16,9 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n } = useTranslation();
   const storage = useStorage();
+  const fallbackLanguage: Language = i18n.resolvedLanguage?.toUpperCase() === 'EN' ? 'EN' : 'NL';
   const [lang, setLang] = useState<Language>(() =>
-    storage.get<Language>('lang', 'NL')
+    storage.get<Language>('lang', fallbackLanguage)
   );
 
   useEffect(() => {
@@ -28,7 +29,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const toggleLang = () => {
     const newLang: Language = lang === 'NL' ? 'EN' : 'NL';
     setLang(newLang);
-    i18n.changeLanguage(newLang.toLowerCase());
     storage.set('lang', newLang);
   };
 

@@ -3,16 +3,28 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult } from '../../hooks/usePromptResult';
+import { usePromptResult } from '../../hooks';
+import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import './PromptResult.css';
 
 export const PromptResult = () => {
+  const [prompt, setPrompt] = useState<string | null>(null);
+
+  if (prompt === null) {
+    return <PromptGenerator onComplete={setPrompt} />;
+  }
+
+  return <PromptResultView prompt={prompt} />;
+};
+
+function PromptResultView({ prompt }: { prompt: string }) {
   const { t } = useTranslation();
   const {
-    prompt,
+    prompt: displayPrompt,
     isEditing,
     feedback,
     isCopying,
@@ -25,7 +37,7 @@ export const PromptResult = () => {
     handleRetry,
     handleHome,
     providers,
-  } = usePromptResult();
+  } = usePromptResult(prompt);
 
   return (
     <div className="result-container">
@@ -39,12 +51,15 @@ export const PromptResult = () => {
             <textarea
               ref={textareaRef}
               className="prompt-textarea"
-              value={prompt}
+              aria-label={t('result_textarea_label')}
+              value={displayPrompt}
               onChange={(e) => setPrompt(e.target.value)}
-              rows={Math.max(8, prompt.split('\n').length + 2)}
+              rows={Math.max(8, displayPrompt.split('\n').length + 2)}
             />
           ) : (
-            <div className="prompt-text">{prompt}</div>
+            <div className="prompt-text">
+              {displayPrompt}
+            </div>
           )}
         </div>
 
@@ -52,15 +67,28 @@ export const PromptResult = () => {
 
         <div className="prompt-actions">
           {isEditing ? (
-            <button className="action-btn secondary" onClick={handleDone} aria-label={t('result_done_aria')}>
+            <button
+              className="action-btn secondary"
+              onClick={handleDone}
+              aria-label={t('result_done_aria')}
+            >
               {t('result_done')}
             </button>
           ) : (
-            <button className="action-btn secondary" onClick={handleEdit} aria-label={t('result_edit_aria')}>
+            <button
+              className="action-btn secondary"
+              onClick={handleEdit}
+              aria-label={t('result_edit_aria')}
+            >
               {t('result_edit')}
             </button>
           )}
-          <button className="action-btn primary" onClick={handleCopy} disabled={isCopying} aria-label={t('result_copy_aria')}>
+          <button
+            className="action-btn primary"
+            onClick={handleCopy}
+            disabled={isCopying}
+            aria-label={t('result_copy_aria')}
+          >
             {t('result_copy')}
           </button>
         </div>
@@ -92,4 +120,4 @@ export const PromptResult = () => {
       </div>
     </div>
   );
-};
+}
