@@ -26,6 +26,7 @@ export function usePromptResult(initialPrompt: string) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const prompt = edits[i18n.language] ?? initialPrompt;
   const setPrompt = (value: string) => setEdits(prev => ({ ...prev, [i18n.language]: value }));
@@ -36,9 +37,20 @@ export function usePromptResult(initialPrompt: string) {
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
   const showFeedback = (msg: string) => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
     setFeedback(msg);
-    setTimeout(() => setFeedback(null), 2000);
+    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 2000);
   };
 
   const handleEdit = () => setIsEditing(true);

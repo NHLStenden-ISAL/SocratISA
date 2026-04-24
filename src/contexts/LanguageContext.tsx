@@ -29,7 +29,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const toggleLang = () => {
     const newLang: Language = lang === 'NL' ? 'EN' : 'NL';
     setLang(newLang);
-    i18n.changeLanguage(newLang.toLowerCase());
     storage.set('lang', newLang);
   };
 
