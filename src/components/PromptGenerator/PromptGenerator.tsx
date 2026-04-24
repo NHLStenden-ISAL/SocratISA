@@ -73,6 +73,9 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
     const handleEvent = (event: GenerationEvent) => {
       switch (event.type) {
+        case 'progress':
+          setProgressText(event.text);
+          break;
         case 'firstToken':
         case 'token':
           setPhase('streaming');

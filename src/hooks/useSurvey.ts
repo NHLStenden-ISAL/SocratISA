@@ -20,6 +20,7 @@ export function useSurvey() {
 
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progressText, setProgressText] = useState('');
   const [inputError, setInputError] = useState(false);
   const [searchParams] = useSearchParams();
   const gpuAvailable = !searchParams.has('fallback') && webLLMService.isWebGPUAvailable();
@@ -53,6 +54,9 @@ export function useSurvey() {
     }
 
     const handleEvent = (event: GenerationEvent) => {
+      if (event.type === 'progress') {
+        setProgressText(event.text);
+      }
       if (event.type === 'firstToken' || event.type === 'complete' || event.type === 'error') {
         const answers = surveyService.toSurveyAnswers();
         navigate('/result', { state: { answers, gpuAvailable } });
@@ -99,12 +103,13 @@ export function useSurvey() {
   const finishSurvey = () => {
     setIsGenerating(true);
     promptGeneratorService.reset();
-    promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t);
+    promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressText);
   };
 
   return {
     step,
     isGenerating,
+    progressText,
     inputError,
     setInputError,
     currentQ,

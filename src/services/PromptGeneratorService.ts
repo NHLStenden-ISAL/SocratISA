@@ -17,6 +17,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private fallbackService: IFallbackService;
   private listeners = new Set<(event: GenerationEvent) => void>();
   private currentText = '';
+  private lastProgress = '';
   private generating = false;
   private complete = false;
   private abortCtrl: AbortController | null = null;
@@ -28,6 +29,9 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
   subscribe(listener: (event: GenerationEvent) => void): void {
     this.listeners.add(listener);
+    if (this.generating && this.lastProgress) {
+      listener({ type: 'progress', text: this.lastProgress });
+    }
     if (this.generating && this.currentText) {
       listener({ type: 'token', text: this.currentText });
     } else if (this.complete) {
@@ -50,6 +54,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   reset(): void {
     this.abort();
     this.currentText = '';
+    this.lastProgress = '';
     this.generating = false;
     this.complete = false;
   }
@@ -70,7 +75,13 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       if (gpuAvailable) {
         let firstTokenSent = false;
 
-        for await (const token of this.webLLMService.generatePromptStream(answers, translate, onProgress)) {
+        const wrappedOnProgress = (text: string) => {
+          this.lastProgress = text;
+          onProgress?.(text);
+          this.emit({ type: 'progress', text });
+        };
+
+        for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {
           if (abortCtrl.signal.aborted) {
             this.generating = false;
             break;

@@ -10,6 +10,7 @@ export interface ISurveyService {
 
 export interface IWebLLMService {
   isWebGPUAvailable(): boolean;
+  canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
   generatePromptStream(
     answers: SurveyAnswers,
@@ -24,6 +25,7 @@ export interface IFallbackService {
 }
 
 export type GenerationEvent =
+  | { type: 'progress'; text: string }
   | { type: 'firstToken'; text: string }
   | { type: 'token'; text: string }
   | { type: 'complete'; text: string }

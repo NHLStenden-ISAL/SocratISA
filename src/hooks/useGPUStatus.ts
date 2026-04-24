@@ -21,8 +21,8 @@ export function useGPUStatus(): GPUStatus {
     let cancelled = false;
 
     async function check() {
-      const available = webLLMService.isWebGPUAvailable();
-      if (!available) {
+      const usable = await webLLMService.canUseWebGPU();
+      if (!usable) {
         if (!cancelled) {
           setIsAvailable(false);
           setIsChecking(false);

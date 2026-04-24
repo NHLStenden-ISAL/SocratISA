@@ -22,6 +22,22 @@ export class WebLLMService implements IWebLLMService {
     return WebLLMService.isWebGPUAvailable();
   }
 
+  /** Controleer of WebGPU daadwerkelijk bruikbaar is (adapter kan worden opgevraagd). */
+  static async canUseWebGPU(): Promise<boolean> {
+    if (!WebLLMService.isWebGPUAvailable()) return false;
+    try {
+      type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
+      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
+      return adapter !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  async canUseWebGPU(): Promise<boolean> {
+    return WebLLMService.canUseWebGPU();
+  }
+
   /** Detecteer de GPU-naam via de WebGPU API. */
   static async detectGPU(): Promise<string | null> {
     try {
