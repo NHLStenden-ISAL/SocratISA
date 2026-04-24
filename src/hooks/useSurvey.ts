@@ -5,7 +5,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SURVEY_QUESTIONS } from '../services';
 import { useServices } from '../contexts/useServices';
@@ -21,7 +21,8 @@ export function useSurvey() {
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [inputError, setInputError] = useState(false);
-  const gpuAvailable = webLLMService.isWebGPUAvailable();
+  const [searchParams] = useSearchParams();
+  const gpuAvailable = !searchParams.has('fallback') && webLLMService.isWebGPUAvailable();
 
   const currentQ = SURVEY_QUESTIONS[step];
 

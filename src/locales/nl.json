@@ -106,5 +106,9 @@
   "lang_dialog_title": "Taal wijzigen",
   "lang_dialog_body": "De prompt is gegenereerd in de huidige taal. Als je van taal wijzigt, moet je de vragenlijst opnieuw doorlopen om een nieuwe prompt te genereren.",
   "lang_dialog_cancel": "Annuleren",
-  "lang_dialog_confirm": "Terug naar vragenlijst"
+  "lang_dialog_confirm": "Terug naar vragenlijst",
+  "home_download_dialog_title": "AI-model downloaden",
+  "home_download_dialog_body": "Om de prompt met AI te genereren moet er een model van ongeveer 2 GB worden gedownload. Doe dit niet via mobiele data. Wil je het model downloaden?",
+  "home_download_dialog_continue": "Ja, downloaden",
+  "home_download_dialog_fallback": "Nee, gebruik de standaard versie (zonder AI)"
 }
