@@ -121,7 +121,9 @@ describe('PromptGenerator', () => {
     );
 
     const handler = getHandler();
-    handler!({ type: 'complete', text: 'Voltooid' });
+    act(() => {
+      handler!({ type: 'complete', text: 'Voltooid' });
+    });
 
     await waitFor(() => {
       expect(mockOnComplete).toHaveBeenCalled();
@@ -140,7 +142,9 @@ describe('PromptGenerator', () => {
     );
 
     const handler = getHandler();
-    handler!({ type: 'error', error: new Error('Generatie mislukt') });
+    act(() => {
+      handler!({ type: 'error', error: new Error('Generatie mislukt') });
+    });
 
     await waitFor(() => {
       expect(screen.getByText('result_error_title')).toBeInTheDocument();
@@ -174,7 +178,9 @@ describe('PromptGenerator', () => {
     );
 
     const handler = getHandler();
-    handler!({ type: 'progress', text: 'Model laden...' });
+    act(() => {
+      handler!({ type: 'progress', text: 'Model laden...' });
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Model laden...')).toBeInTheDocument();
