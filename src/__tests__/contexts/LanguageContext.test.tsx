@@ -1,0 +1,121 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import { LanguageProvider, useLanguage } from '../../contexts';
+import { StorageProvider } from '../../contexts';
+import { MockI18nProvider } from '../helpers/mockI18n';
+
+function TestComponent() {
+  const { lang, toggleLang } = useLanguage();
+  return (
+    <div>
+      <span data-testid="lang">{lang}</span>
+      <button onClick={toggleLang} data-testid="toggle">Wissel</button>
+    </div>
+  );
+}
+
+describe('LanguageContext', () => {
+  beforeEach(() => {
+    document.documentElement.lang = '';
+  });
+
+  it('geeft een fout als useLanguage buiten een provider wordt gebruikt', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    function BadComponent() {
+      useLanguage();
+      return null;
+    }
+
+    expect(() => render(<BadComponent />)).toThrow(
+      'useLanguage must be used within a LanguageProvider',
+    );
+
+    consoleError.mockRestore();
+  });
+
+  it('laadt de initiele taal uit storage', () => {
+    const mockStorage = {
+      get: vi.fn().mockReturnValue('EN'),
+      set: vi.fn(),
+    };
+
+    render(
+      <StorageProvider storage={mockStorage}>
+        <MockI18nProvider>
+          <LanguageProvider>
+            <TestComponent />
+          </LanguageProvider>
+        </MockI18nProvider>
+      </StorageProvider>,
+    );
+
+    expect(screen.getByTestId('lang').textContent).toBe('EN');
+  });
+
+  it('valt terug op NL als storage geen waarde heeft', () => {
+    const mockStorage = {
+      get: vi.fn().mockReturnValue('NL'),
+      set: vi.fn(),
+    };
+
+    render(
+      <StorageProvider storage={mockStorage}>
+        <MockI18nProvider>
+          <LanguageProvider>
+            <TestComponent />
+          </LanguageProvider>
+        </MockI18nProvider>
+      </StorageProvider>,
+    );
+
+    expect(screen.getByTestId('lang').textContent).toBe('NL');
+  });
+
+  it('wisselt de taal en slaat deze op bij toggle', () => {
+    const mockStorage = {
+      get: vi.fn().mockReturnValue('NL'),
+      set: vi.fn(),
+    };
+
+    render(
+      <StorageProvider storage={mockStorage}>
+        <MockI18nProvider>
+          <LanguageProvider>
+            <TestComponent />
+          </LanguageProvider>
+        </MockI18nProvider>
+      </StorageProvider>,
+    );
+
+    act(() => {
+      screen.getByTestId('toggle').click();
+    });
+
+    expect(screen.getByTestId('lang').textContent).toBe('EN');
+    expect(mockStorage.set).toHaveBeenCalledWith('lang', 'EN');
+  });
+
+  it('update document.documentElement.lang bij taalwissel', () => {
+    const mockStorage = {
+      get: vi.fn().mockReturnValue('NL'),
+      set: vi.fn(),
+    };
+
+    render(
+      <StorageProvider storage={mockStorage}>
+        <MockI18nProvider>
+          <LanguageProvider>
+            <TestComponent />
+          </LanguageProvider>
+        </MockI18nProvider>
+      </StorageProvider>,
+    );
+
+    act(() => {
+      screen.getByTestId('toggle').click();
+    });
+
+    expect(document.documentElement.lang).toBe('en');
+  });
+});
