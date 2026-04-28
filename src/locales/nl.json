@@ -110,5 +110,12 @@
   "home_download_dialog_title": "AI-model downloaden",
   "home_download_dialog_body": "Om de prompt met AI te genereren moet er een model van ongeveer 2 GB worden gedownload. Doe dit niet via mobiele data. Wil je het model downloaden?",
   "home_download_dialog_continue": "Ja, downloaden",
-  "home_download_dialog_fallback": "Nee, gebruik de standaard versie (zonder AI)"
+  "home_download_dialog_fallback": "Nee, gebruik de standaard versie (zonder AI)",
+  "footer_privacy_title": "Privacy",
+  "footer_privacy_body": "Deze app voldoet aan de GDPR/AVG. Er worden geen persoonsgegevens op externe servers opgeslagen.",
+  "footer_local_title": "Lokale Verwerking",
+  "footer_local_body": "Je vragenlijstantwoorden en gegenereerde prompt worden volledig op je eigen apparaat verwerkt. Er worden geen gegevens naar externe servers verstuurd.",
+  "footer_disclaimer_title": "Disclaimer",
+  "footer_disclaimer_body": "De gegenereerde prompts zijn suggesties. Controleer altijd de output van AI en gebruik je eigen oordeel.",
+  "footer_attribution": "{{year}}™ ISA Lab, NHL Stenden. Gebouwd voor het SocratISA-project."
 }

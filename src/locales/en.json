@@ -110,5 +110,12 @@
   "home_download_dialog_title": "Download AI model",
   "home_download_dialog_body": "To generate the prompt with AI, a model of about 2 GB needs to be downloaded. Do not do this on mobile data. Do you want to download the model?",
   "home_download_dialog_continue": "Yes, download",
-  "home_download_dialog_fallback": "No, use the standard version (without AI)"
+  "home_download_dialog_fallback": "No, use the standard version (without AI)",
+  "footer_privacy_title": "Privacy",
+  "footer_privacy_body": "This app complies with GDPR/AVG. No personal data is stored on external servers.",
+  "footer_local_title": "Local Processing",
+  "footer_local_body": "Your survey answers and generated prompt are processed entirely on your device. No data is sent to external servers.",
+  "footer_disclaimer_title": "Disclaimer",
+  "footer_disclaimer_body": "The generated prompts are suggestions. Always verify AI output and use your own judgment.",
+  "footer_attribution": "{{year}}™ ISA Lab, NHL Stenden. Built for the SocratISA project."
 }

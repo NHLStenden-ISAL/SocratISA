@@ -13,6 +13,7 @@ import { useTheme } from './contexts/useTheme'
 import { useLanguage } from './contexts/useLanguage'
 import { useServices } from './contexts/useServices'
 import { useGPUStatus } from './hooks'
+import { Footer } from './components/Footer/Footer'
 
 /** Mapping van routes naar paginatitels. */
 const PAGE_TITLES: Record<string, string> = {
@@ -140,6 +141,8 @@ function App() {
       <main id="main-content">
         <Outlet />
       </main>
+
+      <Footer />
     </div>
   )
 }

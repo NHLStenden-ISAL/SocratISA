@@ -2,10 +2,13 @@
   max-width: 840px;
   margin: 0 auto;
   padding: 24px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   text-align: left;
   position: relative;
+  min-height: 100svh;
+  box-sizing: border-box;
 }
 
 .error-boundary {
