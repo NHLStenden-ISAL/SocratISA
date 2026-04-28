@@ -12,6 +12,7 @@ type ProgressCallback = (text: string) => void;
 
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
+  private static enginePromise: Promise<webllm.MLCEngine> | null = null;
 
   /** Controleer of WebGPU beschikbaar is in de browser. */
   static isWebGPUAvailable(): boolean {
@@ -67,6 +68,37 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  /** Laad het model vooraf zonder te genereren. */
+  async preloadModel(onProgress?: (text: string) => void): Promise<void> {
+    if (!WebLLMService.isWebGPUAvailable()) {
+      throw new Error('WebGPU niet beschikbaar');
+    }
+
+    if (WebLLMService.engine) {
+      onProgress?.('Model al geladen');
+      return;
+    }
+
+    if (WebLLMService.enginePromise) {
+      await WebLLMService.enginePromise;
+      onProgress?.('Model al geladen');
+      return;
+    }
+
+    const webllmModule = await import('@mlc-ai/web-llm');
+
+    WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+      initProgressCallback: (report) => {
+        const pct = Math.round(report.progress * 100);
+        const text = report.text || 'Model downloaden';
+        onProgress?.(`${text} (${pct}%)`);
+      },
+    });
+
+    WebLLMService.engine = await WebLLMService.enginePromise;
+    WebLLMService.enginePromise = null;
+  }
+
   /** Koppel leerstijl key aan stijl-aanwijzing key. */
   private getStyleHintKey(styleKey: string): string {
     const map: Record<string, string> = {
@@ -101,14 +133,25 @@ export class WebLLMService implements IWebLLMService {
     const webllmModule = await import('@mlc-ai/web-llm');
 
     if (!WebLLMService.engine) {
-      onProgress?.(translate('webllm_progress_loading'));
-      WebLLMService.engine = await webllmModule.CreateMLCEngine(MODEL_ID, {
-        initProgressCallback: (report) => {
-          const pct = Math.round(report.progress * 100);
-          const text = report.text || translate('webllm_progress_downloading');
-          onProgress?.(`${text} (${pct}%)`);
-        },
-      });
+      if (WebLLMService.enginePromise) {
+        onProgress?.(translate('webllm_progress_loading'));
+        await WebLLMService.enginePromise;
+      } else {
+        onProgress?.(translate('webllm_progress_loading'));
+        WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+          initProgressCallback: (report) => {
+            const pct = Math.round(report.progress * 100);
+            const text = report.text || translate('webllm_progress_downloading');
+            onProgress?.(`${text} (${pct}%)`);
+          },
+        });
+        WebLLMService.engine = await WebLLMService.enginePromise;
+        WebLLMService.enginePromise = null;
+      }
+    }
+
+    if (!WebLLMService.engine) {
+      throw new Error('WebLLM engine niet geladen');
     }
 
     onProgress?.(translate('webllm_progress_generating'));

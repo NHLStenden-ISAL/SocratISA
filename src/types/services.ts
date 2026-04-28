@@ -12,6 +12,7 @@ export interface IWebLLMService {
   isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
+  preloadModel(onProgress?: (text: string) => void): Promise<void>;
   generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
@@ -39,6 +40,10 @@ export interface IPromptGeneratorService {
     answers: SurveyAnswers,
     gpuAvailable: boolean,
     translate: (key: string, options?: Record<string, string>) => string,
+    onProgress?: (text: string) => void,
+  ): Promise<void>;
+  preload(
+    _translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (text: string) => void,
   ): Promise<void>;
   abort(): void;

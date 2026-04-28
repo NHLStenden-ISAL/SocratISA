@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WebLLMService } from '../../services/WebLLMService';
 
+vi.mock('@mlc-ai/web-llm', () => ({
+  CreateMLCEngine: vi.fn().mockResolvedValue({ interruptGenerate: vi.fn() }),
+}));
+
 describe('WebLLMService', () => {
   let service: WebLLMService;
 
@@ -186,5 +190,31 @@ describe('WebLLMService', () => {
     it('doet niets als er geen engine is', async () => {
       await expect(service.interruptGenerate()).resolves.toBeUndefined();
     });
+  });
+
+  describe('preloadModel', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('gooit een fout als WebGPU niet beschikbaar is', async () => {
+      vi.stubGlobal('navigator', {});
+      await expect(service.preloadModel()).rejects.toThrow('WebGPU niet beschikbaar');
+    });
+
+    it('roept onProgress aan als model al geladen is', async () => {
+      vi.stubGlobal('navigator', {
+        gpu: {
+          requestAdapter: vi.fn().mockResolvedValue({
+            info: { description: 'NVIDIA GeForce RTX 4090' },
+          }),
+        },
+      });
+      const onProgress = vi.fn();
+      await service.preloadModel(onProgress);
+      await service.preloadModel(onProgress);
+      expect(onProgress).toHaveBeenCalledWith('Model al geladen');
+    });
+
   });
 });

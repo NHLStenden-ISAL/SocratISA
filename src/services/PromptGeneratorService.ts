@@ -59,6 +59,18 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.complete = false;
   }
 
+  async preload(
+    _translate: (key: string, options?: Record<string, string>) => string,
+    onProgress?: (text: string) => void,
+  ): Promise<void> {
+    const wrappedOnProgress = (text: string) => {
+      this.lastProgress = text;
+      onProgress?.(text);
+      this.emit({ type: 'progress', text });
+    };
+    await this.webLLMService.preloadModel(wrappedOnProgress);
+  }
+
   async start(
     answers: SurveyAnswers,
     gpuAvailable: boolean,

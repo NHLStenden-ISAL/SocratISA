@@ -18,6 +18,10 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     isWebGPUAvailable: vi.fn().mockReturnValue(true),
     canUseWebGPU: vi.fn().mockResolvedValue(true),
     detectGPU: vi.fn().mockResolvedValue('MockGPU'),
+    preloadModel: vi.fn().mockImplementation((_onProgress?: (text: string) => void) => {
+      _onProgress?.('Model laden...');
+      return Promise.resolve();
+    }),
     generatePromptStream: vi.fn().mockImplementation(mockGenerator),
     interruptGenerate: vi.fn().mockResolvedValue(undefined),
   };
@@ -365,6 +369,34 @@ describe('PromptGeneratorService', () => {
       await promise2;
 
       expect(webLLMService.generatePromptStream).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('preload', () => {
+    it('roept preloadModel aan en emitt progress events', async () => {
+      const events: GenerationEvent[] = [];
+      service.subscribe((event) => events.push(event));
+
+      await service.preload(translate);
+
+      expect(webLLMService.preloadModel).toHaveBeenCalled();
+      const progressEvent = events.find((e) => e.type === 'progress');
+      expect(progressEvent).toBeDefined();
+    });
+
+    it('stuurt progress events door naar onProgress callback', async () => {
+      const onProgress = vi.fn();
+      await service.preload(translate, onProgress);
+      expect(onProgress).toHaveBeenCalled();
+    });
+
+    it('gooit een fout als preloadModel faalt', async () => {
+      const errorWebLLM = createMockWebLLMService();
+      errorWebLLM.preloadModel = vi.fn().mockRejectedValue(new Error('Preload fout'));
+
+      service = new PromptGeneratorService(errorWebLLM, fallbackService);
+
+      await expect(service.preload(translate)).rejects.toThrow('Preload fout');
     });
   });
 });
