@@ -87,6 +87,7 @@
   display: block;
 }
 
+.survey-card h1,
 .survey-card h2 {
   font-size: 2.5rem;
   margin-bottom: 16px;
@@ -207,22 +208,25 @@
   border: none;
   font-family: var(--sans);
   font-size: 1rem;
-  color: var(--text);
-  opacity: 0.5;
+  color: #767676;
   cursor: pointer;
-  transition: opacity 0.2s, color 0.2s;
+  transition: color 0.2s;
   padding: 8px 12px;
   border-radius: 8px;
 }
 
+html[data-theme="dark"] .back-btn {
+  color: #a0a0a0;
+}
+
 .back-btn:hover,
 .back-btn:active {
-  opacity: 0.8;
   color: var(--accent-bg);
   background: var(--code-bg);
 }
 
 @media (max-width: 768px) {
+  .survey-card h1,
   .survey-card h2 {
     font-size: 2rem;
   }
@@ -237,6 +241,7 @@
     padding: 16px;
   }
 
+  .survey-card h1,
   .survey-card h2 {
     font-size: 1.6rem;
   }

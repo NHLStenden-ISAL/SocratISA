@@ -15,6 +15,7 @@ import { useServices } from './contexts/useServices'
 import { useGPUStatus } from './hooks'
 import { Footer } from './components/Footer/Footer'
 
+
 /** Mapping van routes naar paginatitels. */
 const PAGE_TITLES: Record<string, string> = {
   '/': 'SocratISA',
@@ -113,7 +114,7 @@ function App() {
       </div>
 
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
-        <button className="toggle-btn" onClick={handleLangToggle} aria-label={t('aria_switch_lang', { lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
+        <button className="toggle-btn" onClick={handleLangToggle} aria-label={t('aria_switch_lang_v2', { visible: lang === 'NL' ? 'EN' : 'NL', lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>

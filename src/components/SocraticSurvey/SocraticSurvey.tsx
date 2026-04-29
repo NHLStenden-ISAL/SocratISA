@@ -3,6 +3,7 @@
  * om een Socratische AI-prompt op maat te genereren.
  */
 
+
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faArrowRight, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -41,6 +42,7 @@ function QuestionInput({ q, inputRef, inputError, setInputError, handleNext, han
             inputMode="text"
             autoComplete="off"
             placeholder={t('survey_input_placeholder')}
+            aria-labelledby="survey-question"
             aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
             aria-invalid={inputError}
             onChange={() => inputError && setInputError(false)}
@@ -84,7 +86,6 @@ export const SocraticSurvey = () => {
     handleCancel,
     totalSteps,
   } = useSurvey();
-
   if (isGenerating) {
     return <LoadingScreen progressText={progressText} />;
   }
@@ -114,7 +115,9 @@ export const SocraticSurvey = () => {
           <span className="step-indicator">
             {t('survey_step', { current: step + 1, total: totalSteps })}
           </span>
-          <h2>{t(currentQ.questionKey)}</h2>
+          <h1 id="survey-question" tabIndex={-1}>
+            {t(currentQ.questionKey)}
+          </h1>
           <p className="description">{t(currentQ.descriptionKey)}</p>
 
           <div className="input-area">

@@ -193,7 +193,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('result_retry_aria')).toBeInTheDocument();
+    expect(screen.getByLabelText('result_retry_aria_v2')).toBeInTheDocument();
   });
 
   it('heeft een home knop', () => {
@@ -207,7 +207,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('result_home_aria')).toBeInTheDocument();
+    expect(screen.getByLabelText('result_home_aria_v2')).toBeInTheDocument();
   });
 
   it('toont de prompt tekst in de view', () => {

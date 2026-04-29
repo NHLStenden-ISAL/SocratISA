@@ -46,7 +46,8 @@ export const Home = () => {
 
   useEffect(() => {
     if (!isChecking && isAvailable && preloadStatus === 'idle' && !showPreloadOffer && !preloadOfferDismissed) {
-      setShowPreloadOffer(true);
+      const timer = setTimeout(() => setShowPreloadOffer(true), 0);
+      return () => clearTimeout(timer);
     }
   }, [isChecking, isAvailable, preloadStatus, showPreloadOffer, preloadOfferDismissed]);
 
@@ -168,7 +169,7 @@ export const Home = () => {
         </section>
 
         <div className="button-container">
-          <button className="socratic-button" onClick={handleCTA} aria-label={t('home_cta_aria')}>
+          <button className="socratic-button" onClick={handleCTA} aria-label={t('home_cta_aria_v2')}>
             {t('home_cta')}
           </button>
           {preloadStatus === 'loading' && (

@@ -3,7 +3,7 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +23,11 @@ export const PromptResult = () => {
 
 function PromptResultView({ prompt }: { prompt: string }) {
   const { t } = useTranslation();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   const {
     prompt: displayPrompt,
     isEditing,
@@ -43,7 +48,7 @@ function PromptResultView({ prompt }: { prompt: string }) {
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h2>{t('result_title')}</h2>
+          <h1 ref={headingRef} tabIndex={-1}>{t('result_title')}</h1>
         </div>
 
         <div className="prompt-display">
@@ -110,10 +115,10 @@ function PromptResultView({ prompt }: { prompt: string }) {
         </div>
 
         <div className="result-footer">
-          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria')}>
+          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
-          <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria')}>
+          <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
         </div>

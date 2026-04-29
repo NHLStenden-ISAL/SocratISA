@@ -60,7 +60,7 @@ describe('Home', () => {
     expect(screen.getByText('home_cta')).toBeInTheDocument();
   });
 
-  it('toont automatisch een preload dialoog als GPU beschikbaar is', () => {
+  it('toont automatisch een preload dialoog als GPU beschikbaar is', async () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -75,7 +75,9 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
     expect(screen.getByText('home_preload_dialog_title')).toBeInTheDocument();
   });
 
@@ -130,7 +132,7 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria');
+    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
     fireEvent.click(ctaButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/survey');
@@ -151,7 +153,7 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria');
+    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
     fireEvent.click(ctaButton);
 
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -172,7 +174,9 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
 
     const overlay = document.querySelector('.dialog-overlay');
     fireEvent.click(overlay!);
@@ -197,7 +201,9 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
 
     const dismissButton = screen.getByText('home_preload_dialog_dismiss');
     fireEvent.click(dismissButton);
@@ -221,6 +227,10 @@ describe('Home', () => {
         </MockI18nProvider>
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
@@ -253,6 +263,10 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
 
@@ -275,6 +289,10 @@ describe('Home', () => {
         </MockI18nProvider>
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);

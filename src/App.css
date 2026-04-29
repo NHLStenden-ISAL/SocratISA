@@ -85,6 +85,8 @@
   font-size: 14px;
   font-weight: 600;
   transition: border-color 0.2s ease;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .toggle-btn:hover {
@@ -190,8 +192,6 @@
   .toggle-btn {
     padding: 8px 14px;
     font-size: 15px;
-    min-width: 44px;
-    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;

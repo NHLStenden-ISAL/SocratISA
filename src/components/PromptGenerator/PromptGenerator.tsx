@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
@@ -48,6 +49,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const [text, setText] = useState('');
   const [progressText, setProgressText] = useState('');
   const [generationError, setGenerationError] = useState<Error | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
 
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
@@ -60,6 +62,12 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       setText(pendingTextRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (phase === 'loading') {
+      loadingRef.current?.focus();
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (promptGeneratorService.getIsComplete()) {
@@ -79,6 +87,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         case 'firstToken':
         case 'token':
           setPhase('streaming');
+
           pendingTextRef.current = event.text;
           if (!rafRef.current) {
             rafRef.current = requestAnimationFrame(flushPendingText);
@@ -125,7 +134,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       <div className="result-container">
         <div className="result-card">
           <div className="result-header">
-            <h2>{t('result_error_title')}</h2>
+            <h1>{t('result_error_title')}</h1>
           </div>
           <div className="prompt-display">
             <div className="prompt-text">{t('result_error_body')}</div>
@@ -145,7 +154,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
   if (phase === 'loading') {
     return (
-      <div className="result-loading" role="status" aria-live="polite">
+      <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
           <p>{progressText || t('result_generating')}</p>
@@ -158,7 +167,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h2>{t('result_title')}</h2>
+          <h1>{t('result_title')}</h1>
         </div>
         <div className="prompt-display">
           <div className="prompt-text streaming">{text}</div>
