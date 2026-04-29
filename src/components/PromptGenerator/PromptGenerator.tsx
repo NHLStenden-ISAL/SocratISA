@@ -12,7 +12,7 @@ import { useServices } from '../../contexts/useServices';
 import type { SurveyAnswers, GenerationEvent } from '../../types';
 
 interface PromptGeneratorProps {
-  onComplete: (prompt: string) => void;
+  onComplete: (prompt: string, stats?: { ttft: number; totalTime: number; tps: number }) => void;
 }
 
 /** Haalt aanhalingstekens of codeblokken van de prompt af en voegt de suffix toe. */
@@ -75,7 +75,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      onComplete(stripQuotesAndSuffix(promptGeneratorService.getCurrentText(), t('prompt_suffix')));
+      onComplete(stripQuotesAndSuffix(promptGeneratorService.getCurrentText(), t('prompt_suffix')), promptGeneratorService.getStats());
       return;
     }
 
@@ -87,7 +87,6 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         case 'firstToken':
         case 'token':
           setPhase('streaming');
-
           pendingTextRef.current = event.text;
           if (!rafRef.current) {
             rafRef.current = requestAnimationFrame(flushPendingText);
@@ -98,7 +97,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete(stripQuotesAndSuffix(event.text, t('prompt_suffix')));
+          onComplete(stripQuotesAndSuffix(event.text, t('prompt_suffix')), event.stats);
           break;
         case 'error':
           if (rafRef.current) {

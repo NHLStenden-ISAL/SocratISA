@@ -29,8 +29,14 @@ export type GenerationEvent =
   | { type: 'progress'; text: string }
   | { type: 'firstToken'; text: string }
   | { type: 'token'; text: string }
-  | { type: 'complete'; text: string }
+  | { type: 'complete'; text: string; stats?: GenerationStats }
   | { type: 'error'; error: Error };
+
+export interface GenerationStats {
+  ttft: number;
+  totalTime: number;
+  tps: number;
+}
 
 export interface IPromptGeneratorService {
   subscribe(listener: (event: GenerationEvent) => void): void;
@@ -50,6 +56,7 @@ export interface IPromptGeneratorService {
   getCurrentText(): string;
   getIsGenerating(): boolean;
   getIsComplete(): boolean;
+  getStats(): GenerationStats | undefined;
 }
 
 export interface IProviderService {

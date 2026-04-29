@@ -9,19 +9,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
+import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
 export const PromptResult = () => {
   const [prompt, setPrompt] = useState<string | null>(null);
+  const [stats, setStats] = useState<GenerationStats | undefined>(undefined);
 
   if (prompt === null) {
-    return <PromptGenerator onComplete={setPrompt} />;
+    return <PromptGenerator onComplete={(p, s) => { setPrompt(p); setStats(s); }} />;
   }
 
-  return <PromptResultView prompt={prompt} />;
+  return <PromptResultView prompt={prompt} stats={stats} />;
 };
 
-function PromptResultView({ prompt }: { prompt: string }) {
+function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
   const { t } = useTranslation();
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -44,12 +46,31 @@ function PromptResultView({ prompt }: { prompt: string }) {
     providers,
   } = usePromptResult(prompt);
 
+  const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+
   return (
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
           <h1 ref={headingRef} tabIndex={-1}>{t('result_title')}</h1>
         </div>
+
+        {stats && (
+          <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_ttft')}</span>
+              <span className="stat-value">{formatMs(stats.ttft)}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_tps')}</span>
+              <span className="stat-value">{stats.tps}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_total')}</span>
+              <span className="stat-value">{formatMs(stats.totalTime)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="prompt-display">
           {isEditing ? (
