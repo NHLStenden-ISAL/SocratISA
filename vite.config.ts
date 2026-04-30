@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob:",
             "font-src 'self' data:",
-            "connect-src 'self' blob: https://huggingface.co",
+            "connect-src 'self' blob: https://huggingface.co https://raw.githubusercontent.com",
             "worker-src 'self' blob:",
             "form-action 'self'",
             "base-uri 'self'",
