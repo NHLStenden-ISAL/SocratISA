@@ -11,6 +11,7 @@ const mockUnsubscribe = vi.fn();
 
 vi.mock('../../hooks', () => ({
   useGPUStatus: vi.fn(),
+  useGenerationSettings: vi.fn(() => ({ throttleMs: 0, setThrottleMs: vi.fn() })),
 }));
 
 vi.mock('../../contexts/useServices', () => ({

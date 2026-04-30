@@ -13,6 +13,7 @@ type ProgressCallback = (text: string) => void;
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
+  static throttleMs = 0;
 
   /** Controleer of WebGPU beschikbaar is in de browser. */
   static isWebGPUAvailable(): boolean {
@@ -169,7 +170,6 @@ export class WebLLMService implements IWebLLMService {
       ],
       temperature: 0.3,
       max_tokens: 1500,
-      presence_penalty: 1.2,
       stop: ['[EINDE]', '[END]'],
       stream: true,
     } as webllm.ChatCompletionRequestStreaming);
@@ -177,6 +177,9 @@ export class WebLLMService implements IWebLLMService {
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
+      if (WebLLMService.throttleMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, WebLLMService.throttleMs));
+      }
     }
   }
 }

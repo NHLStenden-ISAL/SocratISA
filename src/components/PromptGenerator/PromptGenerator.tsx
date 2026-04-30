@@ -9,6 +9,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
+import { useGenerationSettings } from '../../hooks/useGenerationSettings';
+import { WebLLMService } from '../../services/WebLLMService';
 import type { SurveyAnswers, GenerationEvent } from '../../types';
 
 interface PromptGeneratorProps {
@@ -50,6 +52,12 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const [progressText, setProgressText] = useState('');
   const [generationError, setGenerationError] = useState<Error | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
+
+  const { throttleMs, setThrottleMs } = useGenerationSettings();
+
+  useEffect(() => {
+    WebLLMService.throttleMs = throttleMs;
+  }, [throttleMs]);
 
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
@@ -128,6 +136,14 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     };
   }, [location, t, promptGeneratorService, onComplete, flushPendingText]);
 
+  const gpuAvailable = (() => {
+    try {
+      return (location.state as { gpuAvailable?: boolean } | undefined)?.gpuAvailable ?? false;
+    } catch {
+      return false;
+    }
+  })();
+
   if (generationError) {
     return (
       <div className="result-container">
@@ -151,9 +167,37 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     );
   }
 
+  const speedControl = gpuAvailable && (
+    <div className="generation-setting">
+      <div className="slider-header">
+        <span className="slider-title">{t('generation_speed_label')}</span>
+        <span className="slider-value">{throttleMs} ms</span>
+      </div>
+      <input
+        id="throttle-slider"
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={throttleMs}
+        onChange={(e) => {
+          const val = parseInt(e.target.value, 10);
+          setThrottleMs(val);
+          WebLLMService.throttleMs = val;
+        }}
+        aria-label={t('generation_speed_aria')}
+      />
+      <div className="slider-labels-row">
+        <span>{t('generation_speed_fast')}</span>
+        <span>{t('generation_speed_eco')}</span>
+      </div>
+    </div>
+  );
+
   if (phase === 'loading') {
     return (
       <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
+        {speedControl}
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
           <p>{progressText || t('result_generating')}</p>
@@ -168,6 +212,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         <div className="result-header">
           <h1>{t('result_title')}</h1>
         </div>
+        {speedControl}
         <div className="prompt-display">
           <div className="prompt-text streaming">{text}</div>
         </div>
