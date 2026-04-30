@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
+import { Dialog } from '../Dialog/Dialog';
 import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
@@ -26,6 +27,8 @@ export const PromptResult = () => {
 function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
   const { t } = useTranslation();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [showProviderDialog, setShowProviderDialog] = useState(false);
+  const [pendingProvider, setPendingProvider] = useState<string | null>(null);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -45,6 +48,24 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
     handleHome,
     providers,
   } = usePromptResult(prompt);
+
+  const openProviderDialog = (providerName: string) => {
+    setPendingProvider(providerName);
+    setShowProviderDialog(true);
+  };
+
+  const confirmProvider = () => {
+    if (pendingProvider) {
+      handleProvider(pendingProvider);
+    }
+    setShowProviderDialog(false);
+    setPendingProvider(null);
+  };
+
+  const closeProviderDialog = () => {
+    setShowProviderDialog(false);
+    setPendingProvider(null);
+  };
 
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 
@@ -126,7 +147,7 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
               <button
                 key={provider.name}
                 className="provider-btn"
-                onClick={() => handleProvider(provider.name)}
+                onClick={() => openProviderDialog(provider.name)}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}
@@ -134,6 +155,25 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
             ))}
           </div>
         </div>
+
+        <Dialog
+          isOpen={showProviderDialog}
+          onClose={closeProviderDialog}
+          title={t('provider_dialog_title')}
+          titleId="provider-dialog-title"
+          actions={
+            <>
+              <button className="dialog-btn secondary" onClick={closeProviderDialog}>
+                {t('provider_dialog_cancel')}
+              </button>
+              <button className="dialog-btn primary" onClick={confirmProvider}>
+                {t('provider_dialog_confirm')}
+              </button>
+            </>
+          }
+        >
+          <p>{t('provider_dialog_body', { provider: pendingProvider ?? '' })}</p>
+        </Dialog>
 
         <div className="result-footer">
           <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>

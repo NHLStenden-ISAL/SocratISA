@@ -153,7 +153,7 @@ describe('PromptResult', () => {
     expect(screen.getByLabelText('result_provider_aria')).toBeInTheDocument();
   });
 
-  it('roept handleProvider aan bij klik op provider knop', () => {
+  it('toont een waarschuwingsdialog bij klik op provider knop', () => {
     setupMockPromptResult();
 
     render(
@@ -165,7 +165,42 @@ describe('PromptResult', () => {
     );
 
     fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(mockHandleProvider).not.toHaveBeenCalled();
+  });
+
+  it('roept handleProvider aan na bevestigen in de dialog', () => {
+    setupMockPromptResult();
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.click(screen.getByText('provider_dialog_confirm'));
     expect(mockHandleProvider).toHaveBeenCalledWith('ChatGPT');
+  });
+
+  it('sluit de dialog bij klik op annuleren', () => {
+    setupMockPromptResult();
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('provider_dialog_cancel'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mockHandleProvider).not.toHaveBeenCalled();
   });
 
   it('toont feedback na kopiëren', () => {

@@ -3,11 +3,12 @@
  * Bevat secties over AI-toepassingen, valkuilen en een CTA naar de survey.
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
+import { Dialog } from '../Dialog/Dialog';
 import './Home.css'
 
 export const Home = () => {
@@ -17,7 +18,6 @@ export const Home = () => {
   const { promptGeneratorService } = useServices();
   const [showPreloadOffer, setShowPreloadOffer] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
-  const preloadDialogRef = useRef<HTMLDivElement>(null);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState('');
 
@@ -51,38 +51,7 @@ export const Home = () => {
     }
   }, [isChecking, isAvailable, preloadStatus, showPreloadOffer, preloadOfferDismissed]);
 
-  useEffect(() => {
-    if (!showPreloadOffer) return;
-    const timer = setTimeout(() => {
-      const firstButton = preloadDialogRef.current?.querySelector('button');
-      firstButton?.focus();
-    }, 0);
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        dismissPreloadOffer();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      const focusable = preloadDialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showPreloadOffer, dismissPreloadOffer]);
+
 
   return (
     <>
@@ -191,22 +160,24 @@ export const Home = () => {
         </div>
       </div>
 
-      {showPreloadOffer && (
-        <div className="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="preload-dialog-title" onClick={(e) => { if (e.target === e.currentTarget) dismissPreloadOffer() }}>
-          <div className="dialog-box" ref={preloadDialogRef}>
-            <h3 id="preload-dialog-title">{t('home_preload_dialog_title')}</h3>
-            <p>{t('home_preload_dialog_body')}</p>
-            <div className="dialog-actions">
-              <button className="dialog-btn secondary" onClick={dismissPreloadOffer}>
-                {t('home_preload_dialog_dismiss')}
-              </button>
-              <button className="dialog-btn primary" onClick={handlePreload}>
-                {t('home_preload_dialog_confirm')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        isOpen={showPreloadOffer}
+        onClose={dismissPreloadOffer}
+        title={t('home_preload_dialog_title')}
+        titleId="preload-dialog-title"
+        actions={
+          <>
+            <button className="dialog-btn secondary" onClick={dismissPreloadOffer}>
+              {t('home_preload_dialog_dismiss')}
+            </button>
+            <button className="dialog-btn primary" onClick={handlePreload}>
+              {t('home_preload_dialog_confirm')}
+            </button>
+          </>
+        }
+      >
+        <p>{t('home_preload_dialog_body')}</p>
+      </Dialog>
     </>
   );
 };

@@ -8,11 +8,12 @@ describe('ProviderService', () => {
       const service = new ProviderService();
       const providers = service.getProviders();
 
-      expect(providers).toHaveLength(3);
+      expect(providers).toHaveLength(4);
       expect(providers.map((p) => p.name)).toEqual([
         'ChatGPT',
         'Claude',
         'Gemini',
+        'Copilot',
       ]);
     });
 
@@ -40,6 +41,15 @@ describe('ProviderService', () => {
 
       expect(url).toBe(
         'https://gemini.google.com/app?q=AI%20vraag',
+      );
+    });
+
+    it('bouwt een correcte Copilot URL', () => {
+      const service = new ProviderService();
+      const url = service.buildUrl('Copilot', 'Test prompt');
+
+      expect(url).toBe(
+        'https://copilot.microsoft.com/?q=Test%20prompt',
       );
     });
 
@@ -99,10 +109,11 @@ describe('ProviderService', () => {
 
   describe('PROVIDERS constant', () => {
     it('bevat de verwachte standaard providers', () => {
-      expect(PROVIDERS).toHaveLength(3);
+      expect(PROVIDERS).toHaveLength(4);
       expect(PROVIDERS[0].name).toBe('ChatGPT');
       expect(PROVIDERS[1].name).toBe('Claude');
       expect(PROVIDERS[2].name).toBe('Gemini');
+      expect(PROVIDERS[3].name).toBe('Copilot');
     });
   });
 });

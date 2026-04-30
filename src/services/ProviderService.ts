@@ -21,6 +21,11 @@ export const PROVIDERS: Provider[] = [
     buildUrl: (prompt) =>
       `https://gemini.google.com/app?q=${encodeURIComponent(prompt)}`,
   },
+  {
+    name: 'Copilot',
+    buildUrl: (prompt) =>
+      `https://copilot.microsoft.com/?q=${encodeURIComponent(prompt)}`,
+  },
 ];
 
 export class ProviderService implements IProviderService {
