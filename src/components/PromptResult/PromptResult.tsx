@@ -3,26 +3,36 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
+import { Dialog } from '../Dialog/Dialog';
+import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
 export const PromptResult = () => {
   const [prompt, setPrompt] = useState<string | null>(null);
+  const [stats, setStats] = useState<GenerationStats | undefined>(undefined);
 
   if (prompt === null) {
-    return <PromptGenerator onComplete={setPrompt} />;
+    return <PromptGenerator onComplete={(p, s) => { setPrompt(p); setStats(s); }} />;
   }
 
-  return <PromptResultView prompt={prompt} />;
+  return <PromptResultView prompt={prompt} stats={stats} />;
 };
 
-function PromptResultView({ prompt }: { prompt: string }) {
+function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
   const { t } = useTranslation();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [showProviderDialog, setShowProviderDialog] = useState(false);
+  const [pendingProvider, setPendingProvider] = useState<string | null>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   const {
     prompt: displayPrompt,
     isEditing,
@@ -39,12 +49,49 @@ function PromptResultView({ prompt }: { prompt: string }) {
     providers,
   } = usePromptResult(prompt);
 
+  const openProviderDialog = (providerName: string) => {
+    setPendingProvider(providerName);
+    setShowProviderDialog(true);
+  };
+
+  const confirmProvider = () => {
+    if (pendingProvider) {
+      handleProvider(pendingProvider);
+    }
+    setShowProviderDialog(false);
+    setPendingProvider(null);
+  };
+
+  const closeProviderDialog = () => {
+    setShowProviderDialog(false);
+    setPendingProvider(null);
+  };
+
+  const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+
   return (
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h2>{t('result_title')}</h2>
+          <h1 ref={headingRef} tabIndex={-1}>{t('result_title')}</h1>
         </div>
+
+        {stats && (
+          <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_ttft')}</span>
+              <span className="stat-value">{formatMs(stats.ttft)}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_tps')}</span>
+              <span className="stat-value">{stats.tps}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('result_stat_total')}</span>
+              <span className="stat-value">{formatMs(stats.totalTime)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="prompt-display">
           {isEditing ? (
@@ -100,7 +147,7 @@ function PromptResultView({ prompt }: { prompt: string }) {
               <button
                 key={provider.name}
                 className="provider-btn"
-                onClick={() => handleProvider(provider.name)}
+                onClick={() => openProviderDialog(provider.name)}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}
@@ -109,11 +156,30 @@ function PromptResultView({ prompt }: { prompt: string }) {
           </div>
         </div>
 
+        <Dialog
+          isOpen={showProviderDialog}
+          onClose={closeProviderDialog}
+          title={t('provider_dialog_title')}
+          titleId="provider-dialog-title"
+          actions={
+            <>
+              <button className="dialog-btn secondary" onClick={closeProviderDialog}>
+                {t('provider_dialog_cancel')}
+              </button>
+              <button className="dialog-btn primary" onClick={confirmProvider}>
+                {t('provider_dialog_confirm')}
+              </button>
+            </>
+          }
+        >
+          <p>{t('provider_dialog_body', { provider: pendingProvider ?? '' })}</p>
+        </Dialog>
+
         <div className="result-footer">
-          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria')}>
+          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
-          <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria')}>
+          <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
         </div>

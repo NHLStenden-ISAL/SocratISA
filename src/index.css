@@ -45,7 +45,7 @@
   --text: #000;
   --text-h: #000;
   --bg: #fff;
-  --border: #e5e4e7;
+  --border: #949494;
   --code-bg: #f4f3ec;
   --accent: #005AA8;
   --accent-bg: #E7222E;
@@ -97,7 +97,7 @@ html[data-theme="dark"] {
   --text: #e0e0e0;
   --text-h: #f0f0f0;
   --bg: #1a1a2e;
-  --border: #2a2a4a;
+  --border: #555580;
   --code-bg: #16213e;
   --accent: #4da6ff;
   --accent-bg: #ff4d4d;

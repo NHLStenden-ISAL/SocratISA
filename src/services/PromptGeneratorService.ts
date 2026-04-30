@@ -10,6 +10,7 @@ import type {
   IWebLLMService,
   IFallbackService,
   GenerationEvent,
+  GenerationStats,
 } from '../types';
 
 export class PromptGeneratorService implements IPromptGeneratorService {
@@ -21,6 +22,11 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private generating = false;
   private complete = false;
   private abortCtrl: AbortController | null = null;
+  private startTime = 0;
+  private firstTokenTime = 0;
+  private tokenCount = 0;
+  private gpuUsed = false;
+  private lastStats: GenerationStats | undefined = undefined;
 
   constructor(webLLMService: IWebLLMService, fallbackService: IFallbackService) {
     this.webLLMService = webLLMService;
@@ -35,7 +41,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     if (this.generating && this.currentText) {
       listener({ type: 'token', text: this.currentText });
     } else if (this.complete) {
-      listener({ type: 'complete', text: this.currentText });
+      listener({ type: 'complete', text: this.currentText, stats: this.lastStats });
     }
   }
 
@@ -57,6 +63,23 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.lastProgress = '';
     this.generating = false;
     this.complete = false;
+    this.startTime = 0;
+    this.firstTokenTime = 0;
+    this.tokenCount = 0;
+    this.gpuUsed = false;
+    this.lastStats = undefined;
+  }
+
+  async preload(
+    _translate: (key: string, options?: Record<string, string>) => string,
+    onProgress?: (text: string) => void,
+  ): Promise<void> {
+    const wrappedOnProgress = (text: string) => {
+      this.lastProgress = text;
+      onProgress?.(text);
+      this.emit({ type: 'progress', text });
+    };
+    await this.webLLMService.preloadModel(wrappedOnProgress);
   }
 
   async start(
@@ -68,6 +91,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     if (this.generating) return;
     this.reset();
     this.generating = true;
+    this.startTime = performance.now();
+    this.firstTokenTime = 0;
+    this.tokenCount = 0;
+    this.gpuUsed = gpuAvailable;
     const abortCtrl = new AbortController();
     this.abortCtrl = abortCtrl;
 
@@ -90,8 +117,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
           if (!firstTokenSent && this.currentText.trim().length > 0) {
             firstTokenSent = true;
+            this.firstTokenTime = performance.now();
             this.emit({ type: 'firstToken', text: this.currentText });
           } else {
+            this.tokenCount += 1;
             this.emit({ type: 'token', text: this.currentText });
           }
         }
@@ -100,11 +129,13 @@ export class PromptGeneratorService implements IPromptGeneratorService {
           this.currentText = this.cleanOutput(this.currentText);
           this.complete = true;
           this.generating = false;
-          this.emit({ type: 'complete', text: this.currentText });
+          this.lastStats = this.buildStats();
+          this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
         }
       } else {
         const raw = this.fallbackService.generatePrompt(answers, translate);
         this.currentText = raw;
+        this.firstTokenTime = performance.now();
         this.emit({ type: 'firstToken', text: this.currentText });
         this.emit({ type: 'token', text: this.currentText });
         this.complete = true;
@@ -117,6 +148,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
         try {
           const raw = this.fallbackService.generatePrompt(answers, translate);
           this.currentText = raw;
+          this.firstTokenTime = performance.now();
           this.emit({ type: 'firstToken', text: this.currentText });
           this.emit({ type: 'token', text: this.currentText });
           this.complete = true;
@@ -155,5 +187,21 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
   getIsComplete(): boolean {
     return this.complete;
+  }
+
+  getStats(): GenerationStats | undefined {
+    return this.lastStats;
+  }
+
+  private buildStats(): GenerationStats | undefined {
+    if (!this.gpuUsed) return undefined;
+    const completeTime = performance.now();
+    const totalTime = completeTime - this.startTime;
+    const ttft = this.firstTokenTime ? this.firstTokenTime - this.startTime : totalTime;
+    const generationDuration = this.firstTokenTime
+      ? (completeTime - this.firstTokenTime) / 1000
+      : totalTime / 1000;
+    const tps = generationDuration > 0 ? Math.round(this.tokenCount / generationDuration) : 0;
+    return { ttft: Math.round(ttft), totalTime: Math.round(totalTime), tps };
   }
 }

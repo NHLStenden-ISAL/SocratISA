@@ -14,6 +14,7 @@ const mockStart = vi.fn();
 const mockGetIsComplete = vi.fn().mockReturnValue(false);
 const mockGetIsGenerating = vi.fn().mockReturnValue(false);
 const mockGetCurrentText = vi.fn().mockReturnValue('');
+const mockGetStats = vi.fn().mockReturnValue(undefined);
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -33,6 +34,7 @@ vi.mock('../../contexts/useServices', () => ({
       getIsComplete: mockGetIsComplete,
       getIsGenerating: mockGetIsGenerating,
       getCurrentText: mockGetCurrentText,
+      getStats: mockGetStats,
     },
   })),
 }));

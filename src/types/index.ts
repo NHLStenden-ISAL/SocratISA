@@ -11,6 +11,7 @@ export type {
   IPromptGeneratorService,
   IProviderService,
   GenerationEvent,
+  GenerationStats,
 } from './services';
 
 /** Antwoorden van de Socratische vragenlijst. */

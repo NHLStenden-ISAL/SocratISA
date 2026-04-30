@@ -12,6 +12,7 @@ export interface IWebLLMService {
   isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
+  preloadModel(onProgress?: (text: string) => void): Promise<void>;
   generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
@@ -28,8 +29,14 @@ export type GenerationEvent =
   | { type: 'progress'; text: string }
   | { type: 'firstToken'; text: string }
   | { type: 'token'; text: string }
-  | { type: 'complete'; text: string }
+  | { type: 'complete'; text: string; stats?: GenerationStats }
   | { type: 'error'; error: Error };
+
+export interface GenerationStats {
+  ttft: number;
+  totalTime: number;
+  tps: number;
+}
 
 export interface IPromptGeneratorService {
   subscribe(listener: (event: GenerationEvent) => void): void;
@@ -41,10 +48,15 @@ export interface IPromptGeneratorService {
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (text: string) => void,
   ): Promise<void>;
+  preload(
+    _translate: (key: string, options?: Record<string, string>) => string,
+    onProgress?: (text: string) => void,
+  ): Promise<void>;
   abort(): void;
   getCurrentText(): string;
   getIsGenerating(): boolean;
   getIsComplete(): boolean;
+  getStats(): GenerationStats | undefined;
 }
 
 export interface IProviderService {

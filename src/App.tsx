@@ -13,6 +13,9 @@ import { useTheme } from './contexts/useTheme'
 import { useLanguage } from './contexts/useLanguage'
 import { useServices } from './contexts/useServices'
 import { useGPUStatus } from './hooks'
+import { Footer } from './components/Footer/Footer'
+import { Dialog } from './components/Dialog/Dialog'
+
 
 /** Mapping van routes naar paginatitels. */
 const PAGE_TITLES: Record<string, string> = {
@@ -28,7 +31,6 @@ function App() {
   const { promptGeneratorService } = useServices()
   const { isAvailable, gpuName, isChecking } = useGPUStatus()
   const [showLangDialog, setShowLangDialog] = useState(false)
-  const dialogRef = useRef<HTMLDivElement>(null)
   const previousPathRef = useRef(location.pathname)
 
   useEffect(() => {
@@ -65,39 +67,6 @@ function App() {
     setShowLangDialog(false)
   }, [])
 
-  useEffect(() => {
-    if (!showLangDialog) return
-    const timer = setTimeout(() => {
-      const firstButton = dialogRef.current?.querySelector('button')
-      firstButton?.focus()
-    }, 0)
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeLangDialog()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      if (!focusable || focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [showLangDialog, closeLangDialog])
-
   return (
     <div className="panel">
       <div className="status-indicator" role="status">
@@ -112,7 +81,7 @@ function App() {
       </div>
 
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
-        <button className="toggle-btn" onClick={handleLangToggle} aria-label={t('aria_switch_lang', { lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
+        <button className="toggle-btn" onClick={handleLangToggle} aria-label={t('aria_switch_lang_v2', { visible: lang === 'NL' ? 'EN' : 'NL', lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
@@ -120,26 +89,30 @@ function App() {
         </button>
       </nav>
 
-      {showLangDialog && (
-        <div className="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="lang-dialog-title" onClick={(e) => { if (e.target === e.currentTarget) closeLangDialog() }}>
-          <div className="dialog-box" ref={dialogRef}>
-            <h3 id="lang-dialog-title">{t('lang_dialog_title')}</h3>
-            <p>{t('lang_dialog_body')}</p>
-            <div className="dialog-actions">
-              <button className="dialog-btn secondary" onClick={() => setShowLangDialog(false)}>
-                {t('lang_dialog_cancel')}
-              </button>
-              <button className="dialog-btn primary" onClick={confirmLangToggle}>
-                {t('lang_dialog_confirm')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        isOpen={showLangDialog}
+        onClose={closeLangDialog}
+        title={t('lang_dialog_title')}
+        titleId="lang-dialog-title"
+        actions={
+          <>
+            <button className="dialog-btn secondary" onClick={() => setShowLangDialog(false)}>
+              {t('lang_dialog_cancel')}
+            </button>
+            <button className="dialog-btn primary" onClick={confirmLangToggle}>
+              {t('lang_dialog_confirm')}
+            </button>
+          </>
+        }
+      >
+        <p>{t('lang_dialog_body')}</p>
+      </Dialog>
 
       <main id="main-content">
         <Outlet />
       </main>
+
+      <Footer />
     </div>
   )
 }

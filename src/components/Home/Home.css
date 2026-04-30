@@ -120,6 +120,39 @@
   margin: 40px 0;
 }
 
+.preload-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.preload-status.ready {
+  color: var(--accent);
+}
+
+.preload-status.error {
+  color: var(--accent-bg);
+}
+
+.preload-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 768px) {
   .article {
     margin: 20px auto;

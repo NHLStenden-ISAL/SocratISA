@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const t = i18n.getFixedT(this.state.language);
       return (
-        <div className="panel error-boundary">
+        <div className="panel error-boundary" role="alert">
           <h2>{t('error_boundary_title')}</h2>
           <button
             className="socratic-button"
