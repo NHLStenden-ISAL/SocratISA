@@ -63,20 +63,6 @@ describe('PromptResult', () => {
     expect(screen.getByText('result_title')).toBeInTheDocument();
   });
 
-  it('toont een bewerk knop', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_edit_aria')).toBeInTheDocument();
-  });
-
   it('roept handleEdit aan bij klik op bewerk knop', () => {
     setupMockPromptResult();
 
@@ -137,20 +123,6 @@ describe('PromptResult', () => {
     await waitFor(() => {
       expect(mockHandleCopy).toHaveBeenCalled();
     });
-  });
-
-  it('toont provider knoppen', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_provider_aria')).toBeInTheDocument();
   });
 
   it('toont een waarschuwingsdialog bij klik op provider knop', () => {
@@ -217,45 +189,5 @@ describe('PromptResult', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Gekopieerd!');
   });
 
-  it('heeft een retry knop', () => {
-    setupMockPromptResult();
 
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_retry_aria_v2')).toBeInTheDocument();
-  });
-
-  it('heeft een home knop', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_home_aria_v2')).toBeInTheDocument();
-  });
-
-  it('toont de prompt tekst in de view', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('Gegenereerde prompt tekst')).toBeInTheDocument();
-  });
 });

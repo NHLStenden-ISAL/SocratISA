@@ -45,6 +45,13 @@ function App() {
   useEffect(() => {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
       promptGeneratorService.abort()
+      try {
+        sessionStorage.removeItem('socratisa_result_prompt')
+        sessionStorage.removeItem('socratisa_result_stats')
+        sessionStorage.removeItem('socratisa_result_edited_prompt')
+      } catch {
+        // Negeer storage errors
+      }
     }
     previousPathRef.current = location.pathname
   }, [location.pathname, promptGeneratorService])

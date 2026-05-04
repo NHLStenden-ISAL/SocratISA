@@ -6,7 +6,21 @@ import type * as webllm from '@mlc-ai/web-llm';
 import type { SurveyAnswers, IWebLLMService } from '../types';
 
 /** Naam van het te gebruiken model. */
-const MODEL_ID = 'Llama-3.2-3B-Instruct-q4f32_1-MLC';
+const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
+
+const APP_CONFIG: webllm.AppConfig = {
+  model_list: [
+    {
+      model: 'https://huggingface.co/mlc-ai/Qwen3.5-4B-q4f32_1-MLC',
+      model_id: MODEL_ID,
+      model_lib:
+        'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
+      overrides: {
+        context_window_size: 4096,
+      },
+    },
+  ],
+};
 
 type ProgressCallback = (text: string) => void;
 
@@ -89,6 +103,7 @@ export class WebLLMService implements IWebLLMService {
     const webllmModule = await import('@mlc-ai/web-llm');
 
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+      appConfig: APP_CONFIG,
       initProgressCallback: (report) => {
         const pct = Math.round(report.progress * 100);
         const text = report.text || 'Model downloaden';
@@ -140,6 +155,7 @@ export class WebLLMService implements IWebLLMService {
       } else {
         onProgress?.(translate('webllm_progress_loading'));
         WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+          appConfig: APP_CONFIG,
           initProgressCallback: (report) => {
             const pct = Math.round(report.progress * 100);
             const text = report.text || translate('webllm_progress_downloading');
@@ -154,6 +170,7 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.engine) {
       throw new Error('WebLLM engine niet geladen');
     }
+    await WebLLMService.engine.resetChat();
 
     onProgress?.(translate('webllm_progress_generating'));
 
@@ -166,12 +183,13 @@ export class WebLLMService implements IWebLLMService {
     const stream = await WebLLMService.engine.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: `${userMessage}\n\n<think>\n\n</think>\n\n` },
       ],
       temperature: 0.3,
       max_tokens: 1500,
       stop: ['[EINDE]', '[END]'],
       stream: true,
+      enable_thinking: false,
     } as webllm.ChatCompletionRequestStreaming);
 
     for await (const chunk of stream) {

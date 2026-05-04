@@ -102,6 +102,13 @@ export function useSurvey() {
    */
   const finishSurvey = () => {
     setIsGenerating(true);
+    try {
+      sessionStorage.removeItem('socratisa_result_prompt');
+      sessionStorage.removeItem('socratisa_result_stats');
+      sessionStorage.removeItem('socratisa_result_edited_prompt');
+    } catch {
+      // Negeer storage errors
+    }
     promptGeneratorService.reset();
     promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressText);
   };

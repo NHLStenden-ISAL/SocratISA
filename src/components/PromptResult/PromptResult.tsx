@@ -3,7 +3,7 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
@@ -13,12 +13,43 @@ import { Dialog } from '../Dialog/Dialog';
 import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
+const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
+const STORAGE_KEY_STATS = 'socratisa_result_stats';
+
 export const PromptResult = () => {
-  const [prompt, setPrompt] = useState<string | null>(null);
-  const [stats, setStats] = useState<GenerationStats | undefined>(undefined);
+  const [prompt, setPrompt] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY_PROMPT);
+    } catch {
+      return null;
+    }
+  });
+  const [stats, setStats] = useState<GenerationStats | undefined>(() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_STATS);
+      return raw ? JSON.parse(raw) : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+
+  const handleComplete = useCallback((p: string, s?: GenerationStats) => {
+    setPrompt(p);
+    setStats(s);
+    try {
+      sessionStorage.setItem(STORAGE_KEY_PROMPT, p);
+      if (s) {
+        sessionStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(s));
+      } else {
+        sessionStorage.removeItem(STORAGE_KEY_STATS);
+      }
+    } catch {
+      // Negeer storage errors
+    }
+  }, []);
 
   if (prompt === null) {
-    return <PromptGenerator onComplete={(p, s) => { setPrompt(p); setStats(s); }} />;
+    return <PromptGenerator onComplete={handleComplete} />;
   }
 
   return <PromptResultView prompt={prompt} stats={stats} />;
