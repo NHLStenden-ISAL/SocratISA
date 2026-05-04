@@ -13,6 +13,7 @@ import { useTheme } from './contexts/useTheme'
 import { useLanguage } from './contexts/useLanguage'
 import { useServices } from './contexts/useServices'
 import { useGPUStatus } from './hooks'
+import type { GenerationEvent } from './types'
 import { Footer } from './components/Footer/Footer'
 import { Dialog } from './components/Dialog/Dialog'
 
@@ -31,9 +32,10 @@ function App() {
   const { promptGeneratorService } = useServices()
   const { isAvailable, gpuName, isChecking } = useGPUStatus()
   const [showLangDialog, setShowLangDialog] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(() => promptGeneratorService.getIsGenerating())
   const previousPathRef = useRef(location.pathname)
 
-  useEffect(() => {
+  useEffect(function updateDocumentTitle() {
     const titles: Record<string, string> = {
       ...PAGE_TITLES,
       '/survey': t('title_survey'),
@@ -42,9 +44,10 @@ function App() {
     document.title = titles[location.pathname] || 'SocratISA'
   }, [location.pathname, t])
 
-  useEffect(() => {
+  useEffect(function abortGenerationOnLeave() {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
       promptGeneratorService.abort()
+      setIsGenerating(false)
       try {
         sessionStorage.removeItem('socratisa_result_prompt')
         sessionStorage.removeItem('socratisa_result_stats')
@@ -70,9 +73,30 @@ function App() {
     navigate('/survey')
   }
 
-  const closeLangDialog = useCallback(() => {
+  const closeLangDialog = useCallback(function closeLangDialog() {
     setShowLangDialog(false)
   }, [])
+
+  useEffect(function trackGenerationState() {
+    const handler = (event: GenerationEvent) => {
+      switch (event.type) {
+        case 'firstToken':
+        case 'token':
+          setIsGenerating(true)
+          break
+        case 'complete':
+        case 'error':
+          setIsGenerating(false)
+          break
+      }
+    }
+
+    promptGeneratorService.subscribe(handler)
+
+    return () => {
+      promptGeneratorService.unsubscribe(handler)
+    }
+  }, [promptGeneratorService])
 
   return (
     <div className="panel">
@@ -88,7 +112,7 @@ function App() {
       </div>
 
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
-        <button className="toggle-btn" onClick={handleLangToggle} aria-label={t('aria_switch_lang_v2', { visible: lang === 'NL' ? 'EN' : 'NL', lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
+        <button className="toggle-btn" onClick={handleLangToggle} disabled={isGenerating} aria-label={t('aria_switch_lang_v2', { visible: lang === 'NL' ? 'EN' : 'NL', lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
           {lang === 'NL' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>

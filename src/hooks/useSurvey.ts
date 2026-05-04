@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SURVEY_QUESTIONS } from '../services';
 import { useServices } from '../contexts/useServices';
-import type { GenerationEvent } from '../types';
+import type { GenerationEvent, ProgressInfo } from '../types';
 
 export function useSurvey() {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ export function useSurvey() {
 
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [progressText, setProgressText] = useState('');
+  const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [inputError, setInputError] = useState(false);
   const [searchParams] = useSearchParams();
   const gpuAvailable = !searchParams.has('fallback') && webLLMService.isWebGPUAvailable();
@@ -55,7 +55,7 @@ export function useSurvey() {
 
     const handleEvent = (event: GenerationEvent) => {
       if (event.type === 'progress') {
-        setProgressText(event.text);
+        setProgressInfo(event.info);
       }
       if (event.type === 'firstToken' || event.type === 'complete' || event.type === 'error') {
         const answers = surveyService.toSurveyAnswers();
@@ -110,13 +110,13 @@ export function useSurvey() {
       // Negeer storage errors
     }
     promptGeneratorService.reset();
-    promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressText);
+    promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressInfo);
   };
 
   return {
     step,
     isGenerating,
-    progressText,
+    progressInfo,
     inputError,
     setInputError,
     currentQ,

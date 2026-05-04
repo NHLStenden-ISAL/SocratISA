@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
+import type { ProgressInfo } from '../../types';
 import './Home.css'
 
 export const Home = () => {
@@ -19,7 +20,7 @@ export const Home = () => {
   const [showPreloadOffer, setShowPreloadOffer] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [preloadProgress, setPreloadProgress] = useState('');
+  const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
 
   const handleCTA = () => {
     if (isChecking) return;
@@ -29,22 +30,23 @@ export const Home = () => {
   const handlePreload = async () => {
     setShowPreloadOffer(false);
     setPreloadStatus('loading');
+    setPreloadProgress(null);
     try {
       await promptGeneratorService.preload(t, setPreloadProgress);
       setPreloadStatus('ready');
-      setPreloadProgress('');
+      setPreloadProgress(null);
     } catch {
       setPreloadStatus('error');
-      setPreloadProgress('');
+      setPreloadProgress(null);
     }
   };
 
-  const dismissPreloadOffer = useCallback(() => {
+  const dismissPreloadOffer = useCallback(function dismissPreloadOffer() {
     setShowPreloadOffer(false);
     setPreloadOfferDismissed(true);
   }, []);
 
-  useEffect(() => {
+  useEffect(function showPreloadDialog() {
     if (!isChecking && isAvailable && preloadStatus === 'idle' && !showPreloadOffer && !preloadOfferDismissed) {
       const timer = setTimeout(() => setShowPreloadOffer(true), 0);
       return () => clearTimeout(timer);
@@ -142,9 +144,22 @@ export const Home = () => {
             {t('home_cta')}
           </button>
           {preloadStatus === 'loading' && (
-            <div className="preload-status" role="status" aria-live="polite">
+            <div className="preload-status" role="status" aria-live="polite"
+                 title={preloadProgress?.isDownloading ? t('home_preload_tooltip') : undefined}>
               <div className="preload-spinner" aria-hidden="true"></div>
-              <span className="preload-text">{preloadProgress || t('home_preload_loading')}</span>
+              <div className="preload-progress-area">
+                <div className="progress-bar-track">
+                  <div className="progress-bar-fill" style={{ width: `${preloadProgress?.percentage ?? 0}%` }}></div>
+                </div>
+                <span className="preload-text">
+                  {preloadProgress && preloadProgress.percentage > 0
+                    ? (preloadProgress.isDownloading ? t('home_preload_downloading') : t('home_preload_cache'))
+                        + (preloadProgress.mbFetched != null ? ': ' + preloadProgress.mbFetched + ' MB' : '')
+                        + ' (' + preloadProgress.percentage + '%)'
+                    : t('home_preload_loading')
+                  }
+                </span>
+              </div>
             </div>
           )}
           {preloadStatus === 'ready' && (

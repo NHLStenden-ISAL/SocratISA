@@ -8,15 +8,22 @@ export interface ISurveyService {
   reset(): void;
 }
 
+export interface ProgressInfo {
+  text: string;
+  percentage: number;
+  isDownloading: boolean;
+  mbFetched?: number;
+}
+
 export interface IWebLLMService {
   isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
-  preloadModel(onProgress?: (text: string) => void): Promise<void>;
+  preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void>;
   generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string>;
   interruptGenerate(): Promise<void>;
   clearModelCache(): Promise<void>;
@@ -27,7 +34,7 @@ export interface IFallbackService {
 }
 
 export type GenerationEvent =
-  | { type: 'progress'; text: string }
+  | { type: 'progress'; info: ProgressInfo }
   | { type: 'firstToken'; text: string }
   | { type: 'token'; text: string }
   | { type: 'complete'; text: string; stats?: GenerationStats }
@@ -47,11 +54,11 @@ export interface IPromptGeneratorService {
     answers: SurveyAnswers,
     gpuAvailable: boolean,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void>;
   preload(
     _translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void>;
   abort(): void;
   getCurrentText(): string;

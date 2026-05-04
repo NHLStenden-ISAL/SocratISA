@@ -181,7 +181,7 @@ describe('PromptGenerator', () => {
 
     const handler = getHandler();
     act(() => {
-      handler!({ type: 'progress', text: 'Model laden...' });
+      handler!({ type: 'progress', info: { text: 'Model laden...', percentage: 0, isDownloading: false } });
     });
 
     await waitFor(() => {

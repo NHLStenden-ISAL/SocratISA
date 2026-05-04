@@ -21,7 +21,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     storage.get<Language>('lang', fallbackLanguage)
   );
 
-  useEffect(() => {
+  useEffect(function syncLanguage() {
     document.documentElement.lang = lang.toLowerCase();
     i18n.changeLanguage(lang.toLowerCase());
   }, [lang, i18n]);

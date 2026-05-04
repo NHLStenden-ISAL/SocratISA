@@ -34,7 +34,7 @@ export const PromptResult = () => {
     }
   });
 
-  const handleComplete = useCallback((p: string, s?: GenerationStats) => {
+  const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats) {
     setPrompt(p);
     setStats(s);
     try {
@@ -65,7 +65,7 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
 
-  useEffect(() => {
+  useEffect(function focusHeading() {
     headingRef.current?.focus();
   }, []);
   const {

@@ -32,7 +32,7 @@ function setupMockSurvey(overrides: Partial<ReturnType<typeof useSurvey>> = {}) 
   vi.mocked(useSurvey).mockReturnValue({
     step: 0,
     isGenerating: false,
-    progressText: '',
+    progressInfo: null,
     inputError: false,
     setInputError: mockSetInputError,
     currentQ: defaultQuestion,
@@ -196,7 +196,7 @@ describe('SocraticSurvey', () => {
   });
 
   it('toont de LoadingScreen tijdens generatie', () => {
-    setupMockSurvey({ isGenerating: true, progressText: 'Laden...' });
+    setupMockSurvey({ isGenerating: true, progressInfo: { text: 'Loading...', percentage: 0, isDownloading: false, mbFetched: undefined } });
 
     render(
       <MemoryRouter>
@@ -207,7 +207,7 @@ describe('SocraticSurvey', () => {
     );
 
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText('Laden...')).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   it('toont de progress bar', () => {

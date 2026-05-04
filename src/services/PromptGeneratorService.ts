@@ -11,6 +11,7 @@ import type {
   IFallbackService,
   GenerationEvent,
   GenerationStats,
+  ProgressInfo,
 } from '../types';
 
 export class PromptGeneratorService implements IPromptGeneratorService {
@@ -18,7 +19,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private fallbackService: IFallbackService;
   private listeners = new Set<(event: GenerationEvent) => void>();
   private currentText = '';
-  private lastProgress = '';
+  private lastProgress: ProgressInfo | null = null;
   private generating = false;
   private complete = false;
   private abortCtrl: AbortController | null = null;
@@ -35,8 +36,8 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
   subscribe(listener: (event: GenerationEvent) => void): void {
     this.listeners.add(listener);
-    if (this.generating && this.lastProgress) {
-      listener({ type: 'progress', text: this.lastProgress });
+    if (this.generating && this.lastProgress !== null) {
+      listener({ type: 'progress', info: this.lastProgress });
     }
     if (this.generating && this.currentText) {
       const displayText = this.stripThinkTag(this.currentText);
@@ -64,7 +65,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   reset(): void {
     this.abort();
     this.currentText = '';
-    this.lastProgress = '';
+    this.lastProgress = null;
     this.generating = false;
     this.complete = false;
     this.startTime = 0;
@@ -85,12 +86,12 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
   async preload(
     _translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
-    const wrappedOnProgress = (text: string) => {
-      this.lastProgress = text;
-      onProgress?.(text);
-      this.emit({ type: 'progress', text });
+    const wrappedOnProgress = (info: ProgressInfo) => {
+      this.lastProgress = info;
+      onProgress?.(info);
+      this.emit({ type: 'progress', info });
     };
     await this.webLLMService.preloadModel(wrappedOnProgress);
   }
@@ -99,7 +100,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     answers: SurveyAnswers,
     gpuAvailable: boolean,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
     if (this.generating) return;
     this.reset();
@@ -115,10 +116,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       if (gpuAvailable) {
         let firstTokenSent = false;
 
-        const wrappedOnProgress = (text: string) => {
-          this.lastProgress = text;
-          onProgress?.(text);
-          this.emit({ type: 'progress', text });
+        const wrappedOnProgress = (info: ProgressInfo) => {
+          this.lastProgress = info;
+          onProgress?.(info);
+          this.emit({ type: 'progress', info });
         };
 
         for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {

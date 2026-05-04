@@ -4,7 +4,7 @@
  */
 import type * as webllm from '@mlc-ai/web-llm';
 import { deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
-import type { SurveyAnswers, IWebLLMService } from '../types';
+import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 
 /** Naam van het te gebruiken model. */
 const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
@@ -22,8 +22,6 @@ const APP_CONFIG: webllm.AppConfig = {
     },
   ],
 };
-
-type ProgressCallback = (text: string) => void;
 
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
@@ -110,8 +108,23 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  private static parseProgressReport(report: { text: string; progress: number }): ProgressInfo {
+    const rawText = report.text || '';
+    const pct = Math.round(report.progress * 100);
+    const isDownloading = rawText.startsWith('Fetching param cache');
+    const mbMatch = rawText.match(/(\d+)MB/);
+    const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
+
+    return {
+      text: isDownloading ? 'Downloading model' : 'Retrieving from cache',
+      percentage: pct,
+      isDownloading,
+      mbFetched,
+    };
+  }
+
   /** Laad het model vooraf zonder te genereren. */
-  async preloadModel(onProgress?: (text: string) => void): Promise<void> {
+  async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
@@ -120,13 +133,13 @@ export class WebLLMService implements IWebLLMService {
     }
 
     if (WebLLMService.engine) {
-      onProgress?.('Model al geladen');
+      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
       return;
     }
 
     if (WebLLMService.enginePromise) {
       await WebLLMService.enginePromise;
-      onProgress?.('Model al geladen');
+      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
       return;
     }
 
@@ -135,9 +148,7 @@ export class WebLLMService implements IWebLLMService {
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
       appConfig: APP_CONFIG,
       initProgressCallback: (report) => {
-        const pct = Math.round(report.progress * 100);
-        const text = report.text || 'Model downloaden';
-        onProgress?.(`${text} (${pct}%)`);
+        onProgress?.(WebLLMService.parseProgressReport(report));
       },
     });
 
@@ -174,7 +185,7 @@ export class WebLLMService implements IWebLLMService {
   async *generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: ProgressCallback,
+    onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string> {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
@@ -187,16 +198,14 @@ export class WebLLMService implements IWebLLMService {
 
     if (!WebLLMService.engine) {
       if (WebLLMService.enginePromise) {
-        onProgress?.(translate('webllm_progress_loading'));
+        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
         await WebLLMService.enginePromise;
       } else {
-        onProgress?.(translate('webllm_progress_loading'));
+        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
         WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
           appConfig: APP_CONFIG,
           initProgressCallback: (report) => {
-            const pct = Math.round(report.progress * 100);
-            const text = report.text || translate('webllm_progress_downloading');
-            onProgress?.(`${text} (${pct}%)`);
+            onProgress?.(WebLLMService.parseProgressReport(report));
           },
         });
         WebLLMService.engine = await WebLLMService.enginePromise;
@@ -209,7 +218,7 @@ export class WebLLMService implements IWebLLMService {
     }
     await WebLLMService.engine.resetChat();
 
-    onProgress?.(translate('webllm_progress_generating'));
+    onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
     const userMessage = translate('webllm_user_message', {

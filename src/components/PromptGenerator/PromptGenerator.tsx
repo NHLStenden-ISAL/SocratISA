@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
 import { useGenerationSettings } from '../../hooks/useGenerationSettings';
 import { WebLLMService } from '../../services/WebLLMService';
-import type { SurveyAnswers, GenerationEvent } from '../../types';
+import type { SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 interface PromptGeneratorProps {
   onComplete: (prompt: string, stats?: { ttft: number; totalTime: number; tps: number }) => void;
@@ -49,13 +49,13 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
   const [phase, setPhase] = useState<'loading' | 'streaming'>('loading');
   const [text, setText] = useState('');
-  const [progressText, setProgressText] = useState('');
+  const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [generationError, setGenerationError] = useState<Error | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
   const { throttleMs, setThrottleMs } = useGenerationSettings();
 
-  useEffect(() => {
+  useEffect(function syncThrottleMs() {
     WebLLMService.throttleMs = throttleMs;
   }, [throttleMs]);
 
@@ -63,7 +63,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const pendingTextRef = useRef('');
   const lastFlushedRef = useRef('');
 
-  const flushPendingText = useCallback(() => {
+  const flushPendingText = useCallback(function flushPendingText() {
     rafRef.current = 0;
     if (pendingTextRef.current !== lastFlushedRef.current) {
       lastFlushedRef.current = pendingTextRef.current;
@@ -71,13 +71,13 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(function focusLoadingOnPhase() {
     if (phase === 'loading') {
       loadingRef.current?.focus();
     }
   }, [phase]);
 
-  useEffect(() => {
+  useEffect(function subscribeToGeneration() {
     if (promptGeneratorService.getIsComplete()) {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
@@ -90,7 +90,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     const handleEvent = (event: GenerationEvent) => {
       switch (event.type) {
         case 'progress':
-          setProgressText(event.text);
+          setProgressInfo(event.info);
           break;
         case 'firstToken':
         case 'token':
@@ -122,7 +122,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
     if (!promptGeneratorService.getIsGenerating()) {
       promptGeneratorService.reset();
-      promptGeneratorService.start(answers, gpuAvailable, t, setProgressText);
+      promptGeneratorService.start(answers, gpuAvailable, t, setProgressInfo);
     }
 
     promptGeneratorService.subscribe(handleEvent);
@@ -195,11 +195,25 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   );
 
   if (phase === 'loading') {
+    const showProgress = progressInfo && progressInfo.percentage > 0;
     return (
-      <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
+      <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}
+           title={progressInfo?.isDownloading ? t('home_preload_tooltip') : undefined}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
-          <p>{progressText || t('result_generating')}</p>
+          {showProgress && (
+            <div className="loading-progress-track">
+              <div className="loading-progress-fill" style={{ width: `${progressInfo.percentage}%` }}></div>
+            </div>
+          )}
+          <p>
+            {showProgress
+              ? (progressInfo.isDownloading ? t('home_preload_downloading') : t('home_preload_cache'))
+                  + (progressInfo.mbFetched != null ? ': ' + progressInfo.mbFetched + ' MB' : '')
+                  + ' (' + progressInfo.percentage + '%)'
+              : (progressInfo?.text || t('result_generating'))
+            }
+          </p>
         </div>
       </div>
     );
