@@ -6,10 +6,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
+import { useServices } from '../../contexts/useServices';
 import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
@@ -57,9 +58,12 @@ export const PromptResult = () => {
 
 function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
   const { t } = useTranslation();
+  const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [pendingProvider, setPendingProvider] = useState<string | null>(null);
+  const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
+  const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -96,6 +100,17 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
   const closeProviderDialog = () => {
     setShowProviderDialog(false);
     setPendingProvider(null);
+  };
+
+  const handleClearCache = async () => {
+    setShowClearCacheDialog(false);
+    setClearCacheStatus('clearing');
+    try {
+      await webLLMService.clearModelCache();
+      setClearCacheStatus('done');
+    } catch {
+      setClearCacheStatus('error');
+    }
   };
 
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
@@ -213,8 +228,40 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
+          <button
+            className="footer-btn"
+            onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
+            disabled={clearCacheStatus === 'clearing'}
+            aria-label={t('home_clear_cache')}
+          >
+            <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
+          </button>
+          {clearCacheStatus !== 'idle' && (
+            <span className="cache-status-text" role="status" aria-live="polite">
+              {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : clearCacheStatus === 'done' ? t('home_cache_cleared') : t('home_cache_clear_error')}
+            </span>
+          )}
         </div>
       </div>
+
+      <Dialog
+        isOpen={showClearCacheDialog}
+        onClose={() => setShowClearCacheDialog(false)}
+        title={t('home_clear_cache_dialog_title')}
+        titleId="clear-cache-dialog-title"
+        actions={
+          <>
+            <button className="dialog-btn secondary" onClick={() => setShowClearCacheDialog(false)}>
+              {t('home_preload_dialog_dismiss')}
+            </button>
+            <button className="dialog-btn primary" onClick={handleClearCache}>
+              {t('home_clear_cache_dialog_confirm')}
+            </button>
+          </>
+        }
+      >
+        <p>{t('home_clear_cache_dialog_body')}</p>
+      </Dialog>
     </div>
   );
 }

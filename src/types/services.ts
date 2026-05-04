@@ -19,6 +19,7 @@ export interface IWebLLMService {
     onProgress?: (text: string) => void,
   ): AsyncGenerator<string>;
   interruptGenerate(): Promise<void>;
+  clearModelCache(): Promise<void>;
 }
 
 export interface IFallbackService {

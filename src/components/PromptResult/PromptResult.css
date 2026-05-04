@@ -201,7 +201,15 @@
 .result-footer {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 24px;
+  flex-wrap: wrap;
+}
+
+.cache-status-text {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--accent);
 }
 
 .footer-btn {

@@ -197,7 +197,6 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   if (phase === 'loading') {
     return (
       <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
-        {speedControl}
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
           <p>{progressText || t('result_generating')}</p>

@@ -24,6 +24,7 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     }),
     generatePromptStream: vi.fn().mockImplementation(mockGenerator),
     interruptGenerate: vi.fn().mockResolvedValue(undefined),
+    clearModelCache: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -115,7 +116,7 @@ describe('PromptGeneratorService', () => {
 
   describe('start met GPU', () => {
     it('emitt firstToken, token en complete events in de juiste volgorde', async () => {
-      webLLMService = createMockWebLLMService(['Hallo', ' wereld', '!']);
+      webLLMService = createMockWebLLMService(['<think>nadenken</think> Hallo', ' wereld', '!']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
       const events: GenerationEvent[] = [];

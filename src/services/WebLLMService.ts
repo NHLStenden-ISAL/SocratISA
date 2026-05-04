@@ -3,6 +3,7 @@
  * Single Responsibility: detectie van WebGPU en generatie van prompts.
  */
 import type * as webllm from '@mlc-ai/web-llm';
+import { deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
 import type { SurveyAnswers, IWebLLMService } from '../types';
 
 /** Naam van het te gebruiken model. */
@@ -27,6 +28,7 @@ type ProgressCallback = (text: string) => void;
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
+  private static clearingCache = false;
   static throttleMs = 0;
 
   /** Controleer of WebGPU beschikbaar is in de browser. */
@@ -83,8 +85,36 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  private static isAvailableForUse(): boolean {
+    return !WebLLMService.clearingCache;
+  }
+
+  /** Wis de modelcache. */
+  async clearModelCache(): Promise<void> {
+    if (WebLLMService.clearingCache) return;
+    WebLLMService.clearingCache = true;
+    try {
+      if (WebLLMService.engine) {
+        try {
+          await WebLLMService.engine.unload();
+        } catch (err) {
+          console.warn('WebLLMService: engine unload bij cache wissen:', err);
+        }
+        WebLLMService.engine = null;
+      }
+      WebLLMService.enginePromise = null;
+
+      await deleteModelAllInfoInCache(MODEL_ID, APP_CONFIG);
+    } finally {
+      WebLLMService.clearingCache = false;
+    }
+  }
+
   /** Laad het model vooraf zonder te genereren. */
   async preloadModel(onProgress?: (text: string) => void): Promise<void> {
+    if (!WebLLMService.isAvailableForUse()) {
+      throw new Error('WebLLM is bezig met cache wissen');
+    }
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
@@ -115,6 +145,10 @@ export class WebLLMService implements IWebLLMService {
     WebLLMService.enginePromise = null;
   }
 
+  static getModelId(): string {
+    return MODEL_ID;
+  }
+
   /** Koppel leerstijl key aan stijl-aanwijzing key. */
   private getStyleHintKey(styleKey: string): string {
     const map: Record<string, string> = {
@@ -142,6 +176,9 @@ export class WebLLMService implements IWebLLMService {
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: ProgressCallback,
   ): AsyncGenerator<string> {
+    if (!WebLLMService.isAvailableForUse()) {
+      throw new Error('WebLLM is bezig met cache wissen');
+    }
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
