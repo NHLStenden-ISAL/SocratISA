@@ -35,7 +35,7 @@ describe('StorageContext', () => {
     }
 
     expect(() => render(<BadComponent />)).toThrow(
-      'useStorage must be used within a StorageProvider',
+      'useStorage moet binnen een StorageProvider worden gebruikt',
     );
 
     consoleError.mockRestore();

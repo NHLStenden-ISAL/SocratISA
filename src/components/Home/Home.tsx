@@ -1,9 +1,8 @@
 /**
- * Home: landingspagina met informatie over generatieve AI en Socratisch leren.
- * Bevat secties over AI-toepassingen, valkuilen en een CTA naar de survey.
+ * Home: hoofdpagina met informatie over generatieve AI en Socratisch leren, samen met een CTA naar de vragenlijst.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
@@ -21,7 +20,7 @@ export const Home = () => {
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
-
+  
   const handleCTA = () => {
     if (isChecking) return;
     navigate('/survey');
@@ -41,10 +40,10 @@ export const Home = () => {
     }
   };
 
-  const dismissPreloadOffer = useCallback(function dismissPreloadOffer() {
+  const dismissPreloadOffer = () => {
     setShowPreloadOffer(false);
     setPreloadOfferDismissed(true);
-  }, []);
+  };
 
   useEffect(function showPreloadDialog() {
     if (!isChecking && isAvailable && preloadStatus === 'idle' && !showPreloadOffer && !preloadOfferDismissed) {

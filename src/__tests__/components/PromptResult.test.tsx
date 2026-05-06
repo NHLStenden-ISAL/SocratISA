@@ -154,7 +154,9 @@ describe('PromptResult', () => {
 
     fireEvent.click(screen.getByLabelText('result_provider_aria'));
     fireEvent.click(screen.getByText('provider_dialog_confirm'));
-    expect(mockHandleProvider).toHaveBeenCalledWith('ChatGPT');
+    expect(mockHandleProvider).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'ChatGPT' }),
+    );
   });
 
   it('sluit de dialog bij klik op annuleren', () => {

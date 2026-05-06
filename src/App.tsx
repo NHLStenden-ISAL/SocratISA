@@ -4,7 +4,7 @@
  */
 
 import './App.css'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -17,11 +17,6 @@ import type { GenerationEvent } from './types'
 import { Footer } from './components/Footer/Footer'
 import { Dialog } from './components/Dialog/Dialog'
 
-
-/** Mapping van routes naar paginatitels. */
-const PAGE_TITLES: Record<string, string> = {
-  '/': 'SocratISA',
-}
 
 function App() {
   const { t } = useTranslation()
@@ -37,11 +32,11 @@ function App() {
 
   useEffect(function updateDocumentTitle() {
     const titles: Record<string, string> = {
-      ...PAGE_TITLES,
+      '/': 'SocratISA',
       '/survey': t('title_survey'),
       '/result': t('title_result'),
     }
-    document.title = titles[location.pathname] || 'SocratISA'
+    document.title = titles[location.pathname] ?? 'SocratISA'
   }, [location.pathname, t])
 
   useEffect(function abortGenerationOnLeave() {
@@ -73,9 +68,7 @@ function App() {
     navigate('/survey')
   }
 
-  const closeLangDialog = useCallback(function closeLangDialog() {
-    setShowLangDialog(false)
-  }, [])
+  const closeLangDialog = () => setShowLangDialog(false)
 
   useEffect(function scrollToTopOnNavigate() {
     window.scrollTo(0, 0)

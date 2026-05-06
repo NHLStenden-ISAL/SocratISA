@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../contexts/useServices';
+import type { Provider } from '../types';
 
 const STORAGE_KEY_EDIT = 'socratisa_result_edited_prompt';
 
@@ -89,8 +90,8 @@ export function usePromptResult(initialPrompt: string) {
     }
   };
 
-  const handleProvider = (providerName: string) => {
-    const url = providerService.buildUrl(providerName, prompt);
+  const handleProvider = (provider: Provider) => {
+    const url = providerService.buildUrl(provider, prompt);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

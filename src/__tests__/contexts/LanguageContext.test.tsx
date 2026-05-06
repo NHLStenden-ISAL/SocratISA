@@ -28,7 +28,7 @@ describe('LanguageContext', () => {
     }
 
     expect(() => render(<BadComponent />)).toThrow(
-      'useLanguage must be used within a LanguageProvider',
+      'useLanguage moet binnen een LanguageProvider worden gebruikt',
     );
 
     consoleError.mockRestore();

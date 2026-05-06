@@ -37,7 +37,6 @@ function createWrapper(services: Partial<Services> = {}) {
       getAnswer: mockGetAnswer,
       toSurveyAnswers: mockToSurveyAnswers,
       reset: vi.fn(),
-      isComplete: vi.fn().mockReturnValue(true),
     } as unknown as Services['surveyService'],
     webLLMService: {
       isWebGPUAvailable: vi.fn().mockReturnValue(true),

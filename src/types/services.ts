@@ -3,7 +3,6 @@ import type { SurveyAnswers, Provider } from '.';
 export interface ISurveyService {
   setAnswer(questionId: string, value: string): void;
   getAnswer(questionId: string): string;
-  isComplete(): boolean;
   toSurveyAnswers(): SurveyAnswers;
   reset(): void;
 }
@@ -69,5 +68,5 @@ export interface IPromptGeneratorService {
 
 export interface IProviderService {
   getProviders(): Provider[];
-  buildUrl(providerName: string, prompt: string): string;
+  buildUrl(provider: Provider, prompt: string): string;
 }

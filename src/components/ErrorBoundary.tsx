@@ -2,33 +2,18 @@ import { Component, type ReactNode } from 'react';
 import i18n from '../i18n';
 
 interface Props { children: ReactNode }
-interface State { hasError: boolean; language: string }
+interface State { hasError: boolean }
 
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = {
-    hasError: false,
-    language: i18n.resolvedLanguage ?? i18n.language ?? 'nl',
-  };
+  state: State = { hasError: false };
 
   static getDerivedStateFromError() {
     return { hasError: true };
   }
 
-  componentDidMount() {
-    i18n.on('languageChanged', this.handleLanguageChanged);
-  }
-
-  componentWillUnmount() {
-    i18n.off('languageChanged', this.handleLanguageChanged);
-  }
-
-  private handleLanguageChanged = (language: string) => {
-    this.setState({ language });
-  };
-
   render() {
     if (this.state.hasError) {
-      const t = i18n.getFixedT(this.state.language);
+      const t = i18n.getFixedT(i18n.resolvedLanguage ?? 'nl');
       return (
         <div className="panel error-boundary" role="alert">
           <h2>{t('error_boundary_title')}</h2>

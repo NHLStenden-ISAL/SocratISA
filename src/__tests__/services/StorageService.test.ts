@@ -61,25 +61,7 @@ describe('StorageService', () => {
       expect(store['settings']).toBe(JSON.stringify(data));
     });
 
-    it('logt een waarschuwing bij een quotum-overschrijding', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const error = new Error('QuotaExceededError');
-      error.name = 'QuotaExceededError';
-
-      vi.stubGlobal('localStorage', {
-        getItem: vi.fn(),
-        setItem: vi.fn(() => {
-          throw error;
-        }),
-      });
-
-      StorageService.set('groot', 'data');
-      expect(warnSpy).toHaveBeenCalled();
-
-      warnSpy.mockRestore();
-    });
-
-    it('logt een waarschuwing bij een algemene fout', () => {
+    it('negeert een fout bij opslaan zonder te loggen', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       vi.stubGlobal('localStorage', {
@@ -89,11 +71,8 @@ describe('StorageService', () => {
         }),
       });
 
-      StorageService.set('sleutel', 'waarde');
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('StorageService: opslaan van "sleutel" mislukt'),
-        expect.any(Error),
-      );
+      expect(() => StorageService.set('sleutel', 'waarde')).not.toThrow();
+      expect(warnSpy).not.toHaveBeenCalled();
 
       warnSpy.mockRestore();
     });

@@ -39,10 +39,8 @@ export class ProviderService implements IProviderService {
     return this.providers;
   }
 
-  /** Bouw een URL voor een specifieke provider. */
-  buildUrl(providerName: string, prompt: string): string {
-    const provider = this.providers.find((p) => p.name === providerName);
-    if (!provider) throw new Error(`Unknown provider: ${providerName}`);
+  /** Bouw een URL voor een gegeven provider. */
+  buildUrl(provider: Provider, prompt: string): string {
     return provider.buildUrl(prompt);
   }
 }

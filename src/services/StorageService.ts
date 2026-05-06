@@ -17,9 +17,8 @@ export class StorageService {
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-    } catch (err) {
-      console.warn(`StorageService: opslaan van "${key}" mislukt`, err);
+    } catch {
+      // Negeer storage errors
     }
   }
-
 }

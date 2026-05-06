@@ -1,6 +1,5 @@
 /**
- * Footer: voettekst met privacyinformatie en disclaimer.
- * Bevat meldingen over lokale verwerking, GDPR/AVG en attributie.
+ * Footer: voettekst met privacyinformatie, disclaimer en copyright.
  */
 
 import { useTranslation } from 'react-i18next';

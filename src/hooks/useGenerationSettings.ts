@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'socratisa_throttle_ms';
 
@@ -12,7 +12,7 @@ export function useGenerationSettings() {
     }
   });
 
-  useEffect(() => {
+  useEffect(function persistThrottleMs() {
     try {
       localStorage.setItem(STORAGE_KEY, String(throttleMs));
     } catch {
@@ -20,9 +20,9 @@ export function useGenerationSettings() {
     }
   }, [throttleMs]);
 
-  const setThrottleMs = useCallback((value: number) => {
+  const setThrottleMs = (value: number) => {
     setThrottleMsState(Math.max(0, Math.min(100, value)));
-  }, []);
+  };
 
   return { throttleMs, setThrottleMs };
 }

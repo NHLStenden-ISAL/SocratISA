@@ -11,7 +11,7 @@ import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
-import type { GenerationStats } from '../../types';
+import type { GenerationStats, Provider } from '../../types';
 import './PromptResult.css';
 
 const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
@@ -63,7 +63,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
   const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
-  const [pendingProvider, setPendingProvider] = useState<string | null>(null);
+  const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
 
@@ -86,8 +86,8 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     providers,
   } = usePromptResult(prompt);
 
-  const openProviderDialog = (providerName: string) => {
-    setPendingProvider(providerName);
+  const openProviderDialog = (provider: Provider) => {
+    setPendingProvider(provider);
     setShowProviderDialog(true);
   };
 
@@ -220,7 +220,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
               <button
                 key={provider.name}
                 className="provider-btn"
-                onClick={() => openProviderDialog(provider.name)}
+                onClick={() => openProviderDialog(provider)}
                 aria-label={t('result_provider_aria', { provider: provider.name })}
               >
                 {provider.name}
@@ -250,7 +250,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
             </>
           }
         >
-          <p>{t('provider_dialog_body', { provider: pendingProvider ?? '' })}</p>
+          <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
         </Dialog>
 
         <div className="result-footer">

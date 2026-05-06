@@ -22,8 +22,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   );
 
   useEffect(function syncLanguage() {
-    document.documentElement.lang = lang.toLowerCase();
-    i18n.changeLanguage(lang.toLowerCase());
+    const langLower = lang.toLowerCase();
+    document.documentElement.lang = langLower;
+    i18n.changeLanguage(langLower);
   }, [lang, i18n]);
 
   const toggleLang = () => {

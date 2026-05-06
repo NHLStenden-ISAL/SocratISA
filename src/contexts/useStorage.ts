@@ -14,7 +14,7 @@ export const StorageContext = createContext<IStorage | undefined>(undefined);
 export function useStorage(): IStorage {
   const context = useContext(StorageContext);
   if (!context) {
-    throw new Error('useStorage must be used within a StorageProvider');
+    throw new Error('useStorage moet binnen een StorageProvider worden gebruikt');
   }
   return context;
 }

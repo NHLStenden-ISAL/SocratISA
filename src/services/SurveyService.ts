@@ -45,11 +45,6 @@ export class SurveyService implements ISurveyService {
     return this.answers[questionId] ?? '';
   }
 
-  /** Controleer of alle vragen beantwoord zijn. */
-  isComplete(): boolean {
-    return SURVEY_QUESTIONS.every((q) => !!this.answers[q.id]?.trim());
-  }
-
   /** Converteer opgeslagen antwoorden naar SurveyAnswers. */
   toSurveyAnswers(): SurveyAnswers {
     return {
