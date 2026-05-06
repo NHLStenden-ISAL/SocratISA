@@ -37,7 +37,7 @@ export type GenerationEvent =
   | { type: 'progress'; info: ProgressInfo }
   | { type: 'firstToken'; text: string }
   | { type: 'token'; text: string }
-  | { type: 'complete'; text: string; stats?: GenerationStats }
+  | { type: 'complete'; text: string; stats?: GenerationStats; warning?: string }
   | { type: 'error'; error: Error };
 
 export interface GenerationStats {

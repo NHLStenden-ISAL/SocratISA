@@ -14,7 +14,7 @@ import { WebLLMService } from '../../services/WebLLMService';
 import type { SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 interface PromptGeneratorProps {
-  onComplete: (prompt: string, stats?: { ttft: number; totalTime: number; tps: number }) => void;
+  onComplete: (prompt: string, stats?: { ttft: number; totalTime: number; tps: number }, warning?: string) => void;
 }
 
 /** Haalt aanhalingstekens of codeblokken van de prompt af en voegt de suffix toe. */
@@ -105,7 +105,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete(stripQuotesAndSuffix(event.text, t('prompt_suffix')), event.stats);
+          onComplete(stripQuotesAndSuffix(event.text, t('prompt_suffix')), event.stats, event.warning);
           break;
         case 'error':
           if (rafRef.current) {

@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo, faHome, faTrashCan, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
@@ -33,10 +33,12 @@ export const PromptResult = () => {
       return undefined;
     }
   });
+  const [warning, setWarning] = useState<string | undefined>();
 
-  const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats) {
+  const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats, w?: string) {
     setPrompt(p);
     setStats(s);
+    setWarning(w);
     try {
       sessionStorage.setItem(STORAGE_KEY_PROMPT, p);
       if (s) {
@@ -53,10 +55,10 @@ export const PromptResult = () => {
     return <PromptGenerator onComplete={handleComplete} />;
   }
 
-  return <PromptResultView prompt={prompt} stats={stats} />;
+  return <PromptResultView prompt={prompt} stats={stats} warning={warning} />;
 };
 
-function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
+function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: GenerationStats; warning?: string }) {
   const { t } = useTranslation();
   const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -143,9 +145,20 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
               <span className="stat-value">{stats.tps}</span>
             </div>
             <div className="stat-item">
+              <span className="stat-label">{t('result_stat_generate')}</span>
+              <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
+            </div>
+            <div className="stat-item">
               <span className="stat-label">{t('result_stat_total')}</span>
               <span className="stat-value">{formatMs(stats.totalTime)}</span>
             </div>
+          </div>
+        )}
+
+        {warning && (
+          <div className="memory-warning" role="alert">
+            <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
+            <span>{t(warning)}</span>
           </div>
         )}
 

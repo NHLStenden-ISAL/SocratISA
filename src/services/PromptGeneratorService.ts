@@ -167,6 +167,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     } catch (err) {
       if (!abortCtrl.signal.aborted) {
         console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
+        const isMemoryError = err instanceof Error && /memory|out of memory|allocate|oom|alloc/i.test(err.message);
         try {
           const raw = this.fallbackService.generatePrompt(answers, translate);
           this.currentText = this.cleanOutput(raw);
@@ -175,7 +176,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
           this.emit({ type: 'token', text: this.currentText });
           this.complete = true;
           this.generating = false;
-          this.emit({ type: 'complete', text: this.currentText });
+          this.emit({ type: 'complete', text: this.currentText, warning: isMemoryError ? 'memory_warning' : undefined });
         } catch (fallbackErr) {
           this.generating = false;
           this.emit({ type: 'error', error: fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)) });
