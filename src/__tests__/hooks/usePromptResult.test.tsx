@@ -41,6 +41,7 @@ describe('usePromptResult', () => {
     vi.stubGlobal('navigator', {
       clipboard: { writeText: writeTextMock },
     });
+    sessionStorage.clear();
   });
 
   it('geeft het initiele prompt terug', () => {

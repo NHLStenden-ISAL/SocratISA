@@ -239,7 +239,7 @@ describe('useSurvey', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/result', expect.any(Object));
   });
 
-  it('updateert progressText bij progress events', () => {
+  it('updateert progressInfo bij progress events', () => {
     let eventHandler: ((event: GenerationEvent) => void) | null = null;
     mockSubscribe.mockImplementation((handler) => {
       eventHandler = handler;
@@ -261,11 +261,11 @@ describe('useSurvey', () => {
 
     act(() => {
       if (eventHandler) {
-        eventHandler({ type: 'progress', text: 'Laden...' });
+        eventHandler({ type: 'progress', info: { text: 'Loading...', percentage: 0, isDownloading: false } });
       }
     });
 
-    expect(result.current.progressText).toBe('Laden...');
+    expect(result.current.progressInfo).toEqual({ text: 'Loading...', percentage: 0, isDownloading: false });
   });
 
   it('roept abort en navigeert naar home bij handleCancel', () => {

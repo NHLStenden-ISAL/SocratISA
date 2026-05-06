@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     storage.get<Theme>('theme', 'light')
   );
 
-  useEffect(() => {
+  useEffect(function syncTheme() {
     document.documentElement.setAttribute('data-theme', theme);
     storage.set('theme', theme);
   }, [theme, storage]);

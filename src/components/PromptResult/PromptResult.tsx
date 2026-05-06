@@ -3,22 +3,54 @@
  * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faTrashCan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
+import { useServices } from '../../contexts/useServices';
 import type { GenerationStats } from '../../types';
 import './PromptResult.css';
 
+const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
+const STORAGE_KEY_STATS = 'socratisa_result_stats';
+
 export const PromptResult = () => {
-  const [prompt, setPrompt] = useState<string | null>(null);
-  const [stats, setStats] = useState<GenerationStats | undefined>(undefined);
+  const [prompt, setPrompt] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY_PROMPT);
+    } catch {
+      return null;
+    }
+  });
+  const [stats, setStats] = useState<GenerationStats | undefined>(() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_STATS);
+      return raw ? JSON.parse(raw) : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+
+  const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats) {
+    setPrompt(p);
+    setStats(s);
+    try {
+      sessionStorage.setItem(STORAGE_KEY_PROMPT, p);
+      if (s) {
+        sessionStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(s));
+      } else {
+        sessionStorage.removeItem(STORAGE_KEY_STATS);
+      }
+    } catch {
+      // Negeer storage errors
+    }
+  }, []);
 
   if (prompt === null) {
-    return <PromptGenerator onComplete={(p, s) => { setPrompt(p); setStats(s); }} />;
+    return <PromptGenerator onComplete={handleComplete} />;
   }
 
   return <PromptResultView prompt={prompt} stats={stats} />;
@@ -26,11 +58,14 @@ export const PromptResult = () => {
 
 function PromptResultView({ prompt, stats }: { prompt: string; stats?: GenerationStats }) {
   const { t } = useTranslation();
+  const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [pendingProvider, setPendingProvider] = useState<string | null>(null);
+  const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
+  const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
 
-  useEffect(() => {
+  useEffect(function focusHeading() {
     headingRef.current?.focus();
   }, []);
   const {
@@ -65,6 +100,27 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
   const closeProviderDialog = () => {
     setShowProviderDialog(false);
     setPendingProvider(null);
+  };
+
+  const handleClearCache = async () => {
+    setShowClearCacheDialog(false);
+    setClearCacheStatus('clearing');
+    try {
+      await webLLMService.clearModelCache();
+      setClearCacheStatus('done');
+    } catch {
+      setClearCacheStatus('error');
+    }
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([displayPrompt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'socratisa-prompt.txt';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
@@ -108,6 +164,10 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
               {displayPrompt}
             </div>
           )}
+        </div>
+
+        <div className="prompt-meta">
+          {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
         </div>
 
         {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
@@ -154,6 +214,11 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
               </button>
             ))}
           </div>
+          <div className="download-row">
+            <button className="download-txt-btn" onClick={handleDownload} aria-label={t('result_download_aria')}>
+              <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> {t('result_download')}
+            </button>
+          </div>
         </div>
 
         <Dialog
@@ -182,8 +247,40 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
+          <button
+            className="footer-btn"
+            onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
+            disabled={clearCacheStatus === 'clearing'}
+            aria-label={t('home_clear_cache')}
+          >
+            <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
+          </button>
+          {clearCacheStatus !== 'idle' && (
+            <span className="cache-status-text" role="status" aria-live="polite">
+              {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : clearCacheStatus === 'done' ? t('home_cache_cleared') : t('home_cache_clear_error')}
+            </span>
+          )}
         </div>
       </div>
+
+      <Dialog
+        isOpen={showClearCacheDialog}
+        onClose={() => setShowClearCacheDialog(false)}
+        title={t('home_clear_cache_dialog_title')}
+        titleId="clear-cache-dialog-title"
+        actions={
+          <>
+            <button className="dialog-btn secondary" onClick={() => setShowClearCacheDialog(false)}>
+              {t('home_preload_dialog_dismiss')}
+            </button>
+            <button className="dialog-btn primary" onClick={handleClearCache}>
+              {t('home_clear_cache_dialog_confirm')}
+            </button>
+          </>
+        }
+      >
+        <p>{t('home_clear_cache_dialog_body')}</p>
+      </Dialog>
     </div>
   );
 }

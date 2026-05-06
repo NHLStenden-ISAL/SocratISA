@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../contexts/useServices';
 
+const STORAGE_KEY_EDIT = 'socratisa_result_edited_prompt';
+
 async function copyPromptText(prompt: string): Promise<void> {
   if (!navigator.clipboard?.writeText) {
     throw new Error('Clipboard API niet beschikbaar');
@@ -21,7 +23,14 @@ export function usePromptResult(initialPrompt: string) {
   const navigate = useNavigate();
   const { providerService } = useServices();
 
-  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [edits, setEdits] = useState<Record<string, string>>(() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_EDIT);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -30,6 +39,18 @@ export function usePromptResult(initialPrompt: string) {
 
   const prompt = edits[i18n.language] ?? initialPrompt;
   const setPrompt = (value: string) => setEdits(prev => ({ ...prev, [i18n.language]: value }));
+
+  useEffect(() => {
+    try {
+      if (Object.keys(edits).length > 0) {
+        sessionStorage.setItem(STORAGE_KEY_EDIT, JSON.stringify(edits));
+      } else {
+        sessionStorage.removeItem(STORAGE_KEY_EDIT);
+      }
+    } catch {
+      // Negeer storage errors
+    }
+  }, [edits]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {

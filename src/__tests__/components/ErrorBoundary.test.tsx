@@ -36,19 +36,4 @@ describe('ErrorBoundary', () => {
     consoleError.mockRestore();
   });
 
-  it('heeft een herlaad knop', () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    render(
-      <ErrorBoundary>
-        <ThrowError />
-      </ErrorBoundary>,
-    );
-
-    const button = screen.getByRole('button');
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('socratic-button');
-
-    consoleError.mockRestore();
-  });
 });

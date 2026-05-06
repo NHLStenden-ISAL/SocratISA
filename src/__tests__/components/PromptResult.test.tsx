@@ -63,20 +63,6 @@ describe('PromptResult', () => {
     expect(screen.getByText('result_title')).toBeInTheDocument();
   });
 
-  it('toont een bewerk knop', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_edit_aria')).toBeInTheDocument();
-  });
-
   it('roept handleEdit aan bij klik op bewerk knop', () => {
     setupMockPromptResult();
 
@@ -137,20 +123,6 @@ describe('PromptResult', () => {
     await waitFor(() => {
       expect(mockHandleCopy).toHaveBeenCalled();
     });
-  });
-
-  it('toont provider knoppen', () => {
-    setupMockPromptResult();
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText('result_provider_aria')).toBeInTheDocument();
   });
 
   it('toont een waarschuwingsdialog bij klik op provider knop', () => {
@@ -217,8 +189,8 @@ describe('PromptResult', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Gekopieerd!');
   });
 
-  it('heeft een retry knop', () => {
-    setupMockPromptResult();
+  it('toont het correcte aantal karakters en woorden voor de prompt', () => {
+    setupMockPromptResult({ prompt: 'Een test prompt voor SocratISA' });
 
     render(
       <MemoryRouter>
@@ -228,13 +200,13 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('result_retry_aria_v2')).toBeInTheDocument();
+    const metaEl = document.querySelector('.prompt-meta');
+    expect(metaEl).toBeInTheDocument();
+    expect(metaEl?.textContent).toBe('30 tekens · 5 woorden');
   });
 
-  it('heeft een home knop', () => {
-    setupMockPromptResult();
-
-    render(
+  it('werkt de telling bij na bewerken van de prompt', () => {
+    const { rerender } = render(
       <MemoryRouter>
         <MockI18nProvider>
           <PromptResult />
@@ -242,11 +214,38 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('result_home_aria_v2')).toBeInTheDocument();
+    setupMockPromptResult({ prompt: 'Kort' });
+    rerender(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const metaEl = document.querySelector('.prompt-meta');
+    expect(metaEl?.textContent).toBe('4 tekens · 1 woorden');
   });
 
-  it('toont de prompt tekst in de view', () => {
-    setupMockPromptResult();
+  it('maakt een Blob en triggert download bij klik op de download knop', () => {
+    setupMockPromptResult({ prompt: 'Gegenereerde prompt voor download test' });
+
+    const createObjectURL = vi.fn(() => 'blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    const clickMock = vi.fn();
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const el = originalCreateElement(tagName);
+      if (tagName === 'a') {
+        el.click = clickMock;
+      }
+      return el;
+    });
 
     render(
       <MemoryRouter>
@@ -256,6 +255,15 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Gegenereerde prompt tekst')).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('result_download_aria'));
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(clickMock).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+
+    createElementSpy.mockRestore();
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
   });
 });

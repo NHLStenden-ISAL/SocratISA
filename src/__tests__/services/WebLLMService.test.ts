@@ -213,7 +213,7 @@ describe('WebLLMService', () => {
       const onProgress = vi.fn();
       await service.preloadModel(onProgress);
       await service.preloadModel(onProgress);
-      expect(onProgress).toHaveBeenCalledWith('Model al geladen');
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ percentage: 100, isDownloading: false }));
     });
 
   });

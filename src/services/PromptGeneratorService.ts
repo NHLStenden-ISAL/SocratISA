@@ -11,6 +11,7 @@ import type {
   IFallbackService,
   GenerationEvent,
   GenerationStats,
+  ProgressInfo,
 } from '../types';
 
 export class PromptGeneratorService implements IPromptGeneratorService {
@@ -18,7 +19,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private fallbackService: IFallbackService;
   private listeners = new Set<(event: GenerationEvent) => void>();
   private currentText = '';
-  private lastProgress = '';
+  private lastProgress: ProgressInfo | null = null;
   private generating = false;
   private complete = false;
   private abortCtrl: AbortController | null = null;
@@ -35,11 +36,12 @@ export class PromptGeneratorService implements IPromptGeneratorService {
 
   subscribe(listener: (event: GenerationEvent) => void): void {
     this.listeners.add(listener);
-    if (this.generating && this.lastProgress) {
-      listener({ type: 'progress', text: this.lastProgress });
+    if (this.generating && this.lastProgress !== null) {
+      listener({ type: 'progress', info: this.lastProgress });
     }
     if (this.generating && this.currentText) {
-      listener({ type: 'token', text: this.currentText });
+      const displayText = this.stripThinkTag(this.currentText);
+      listener({ type: 'token', text: displayText });
     } else if (this.complete) {
       listener({ type: 'complete', text: this.currentText, stats: this.lastStats });
     }
@@ -49,18 +51,21 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.listeners.delete(listener);
   }
 
+  private hasSeenCloseThink = false;
+
   private emit(event: GenerationEvent): void {
     this.listeners.forEach(l => l(event));
   }
 
   private cleanOutput(text: string): string {
-    return text.replace(/\[EINDE\]|\[END\]/g, '').trim();
+    const cleaned = this.stripThinkTag(text);
+    return cleaned.replace(/\[EINDE\]|\[END\]/g, '').trim();
   }
 
   reset(): void {
     this.abort();
     this.currentText = '';
-    this.lastProgress = '';
+    this.lastProgress = null;
     this.generating = false;
     this.complete = false;
     this.startTime = 0;
@@ -68,16 +73,25 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.tokenCount = 0;
     this.gpuUsed = false;
     this.lastStats = undefined;
+    this.hasSeenCloseThink = false;
+  }
+
+  private stripThinkTag(text: string): string {
+    const closeIdx = text.lastIndexOf('</think>');
+    if (closeIdx === -1) {
+      return text;
+    }
+    return text.substring(closeIdx + '</think>'.length).trim();
   }
 
   async preload(
     _translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
-    const wrappedOnProgress = (text: string) => {
-      this.lastProgress = text;
-      onProgress?.(text);
-      this.emit({ type: 'progress', text });
+    const wrappedOnProgress = (info: ProgressInfo) => {
+      this.lastProgress = info;
+      onProgress?.(info);
+      this.emit({ type: 'progress', info });
     };
     await this.webLLMService.preloadModel(wrappedOnProgress);
   }
@@ -86,7 +100,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     answers: SurveyAnswers,
     gpuAvailable: boolean,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
     if (this.generating) return;
     this.reset();
@@ -102,10 +116,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       if (gpuAvailable) {
         let firstTokenSent = false;
 
-        const wrappedOnProgress = (text: string) => {
-          this.lastProgress = text;
-          onProgress?.(text);
-          this.emit({ type: 'progress', text });
+        const wrappedOnProgress = (info: ProgressInfo) => {
+          this.lastProgress = info;
+          onProgress?.(info);
+          this.emit({ type: 'progress', info });
         };
 
         for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {
@@ -115,13 +129,21 @@ export class PromptGeneratorService implements IPromptGeneratorService {
           }
           this.currentText += token;
 
-          if (!firstTokenSent && this.currentText.trim().length > 0) {
+          if (!this.hasSeenCloseThink) {
+            this.hasSeenCloseThink = this.currentText.includes('</think>');
+          }
+
+          if (!this.hasSeenCloseThink) continue;
+
+          const displayText = this.stripThinkTag(this.currentText);
+
+          if (!firstTokenSent && displayText.trim().length > 0) {
             firstTokenSent = true;
             this.firstTokenTime = performance.now();
-            this.emit({ type: 'firstToken', text: this.currentText });
-          } else {
+            this.emit({ type: 'firstToken', text: displayText });
+          } else if (firstTokenSent) {
             this.tokenCount += 1;
-            this.emit({ type: 'token', text: this.currentText });
+            this.emit({ type: 'token', text: displayText });
           }
         }
 
@@ -134,7 +156,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
         }
       } else {
         const raw = this.fallbackService.generatePrompt(answers, translate);
-        this.currentText = raw;
+        this.currentText = this.cleanOutput(raw);
         this.firstTokenTime = performance.now();
         this.emit({ type: 'firstToken', text: this.currentText });
         this.emit({ type: 'token', text: this.currentText });
@@ -147,7 +169,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
         console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
         try {
           const raw = this.fallbackService.generatePrompt(answers, translate);
-          this.currentText = raw;
+          this.currentText = this.cleanOutput(raw);
           this.firstTokenTime = performance.now();
           this.emit({ type: 'firstToken', text: this.currentText });
           this.emit({ type: 'token', text: this.currentText });

@@ -3,16 +3,31 @@
  * Single Responsibility: detectie van WebGPU en generatie van prompts.
  */
 import type * as webllm from '@mlc-ai/web-llm';
-import type { SurveyAnswers, IWebLLMService } from '../types';
+import { deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
+import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 
 /** Naam van het te gebruiken model. */
-const MODEL_ID = 'Llama-3.2-3B-Instruct-q4f32_1-MLC';
+const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
 
-type ProgressCallback = (text: string) => void;
+const APP_CONFIG: webllm.AppConfig = {
+  model_list: [
+    {
+      model: 'https://huggingface.co/mlc-ai/Qwen3.5-4B-q4f32_1-MLC',
+      model_id: MODEL_ID,
+      model_lib:
+        'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
+      overrides: {
+        context_window_size: 4096,
+      },
+    },
+  ],
+};
 
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
+  private static clearingCache = false;
+  static throttleMs = 0;
 
   /** Controleer of WebGPU beschikbaar is in de browser. */
   static isWebGPUAvailable(): boolean {
@@ -68,35 +83,81 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  private static isAvailableForUse(): boolean {
+    return !WebLLMService.clearingCache;
+  }
+
+  /** Wis de modelcache. */
+  async clearModelCache(): Promise<void> {
+    if (WebLLMService.clearingCache) return;
+    WebLLMService.clearingCache = true;
+    try {
+      if (WebLLMService.engine) {
+        try {
+          await WebLLMService.engine.unload();
+        } catch (err) {
+          console.warn('WebLLMService: engine unload bij cache wissen:', err);
+        }
+        WebLLMService.engine = null;
+      }
+      WebLLMService.enginePromise = null;
+
+      await deleteModelAllInfoInCache(MODEL_ID, APP_CONFIG);
+    } finally {
+      WebLLMService.clearingCache = false;
+    }
+  }
+
+  private static parseProgressReport(report: { text: string; progress: number }): ProgressInfo {
+    const rawText = report.text || '';
+    const pct = Math.round(report.progress * 100);
+    const isDownloading = rawText.startsWith('Fetching param cache');
+    const mbMatch = rawText.match(/(\d+)MB/);
+    const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
+
+    return {
+      text: isDownloading ? 'Downloading model' : 'Retrieving from cache',
+      percentage: pct,
+      isDownloading,
+      mbFetched,
+    };
+  }
+
   /** Laad het model vooraf zonder te genereren. */
-  async preloadModel(onProgress?: (text: string) => void): Promise<void> {
+  async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
+    if (!WebLLMService.isAvailableForUse()) {
+      throw new Error('WebLLM is bezig met cache wissen');
+    }
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
     if (WebLLMService.engine) {
-      onProgress?.('Model al geladen');
+      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
       return;
     }
 
     if (WebLLMService.enginePromise) {
       await WebLLMService.enginePromise;
-      onProgress?.('Model al geladen');
+      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
       return;
     }
 
     const webllmModule = await import('@mlc-ai/web-llm');
 
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+      appConfig: APP_CONFIG,
       initProgressCallback: (report) => {
-        const pct = Math.round(report.progress * 100);
-        const text = report.text || 'Model downloaden';
-        onProgress?.(`${text} (${pct}%)`);
+        onProgress?.(WebLLMService.parseProgressReport(report));
       },
     });
 
     WebLLMService.engine = await WebLLMService.enginePromise;
     WebLLMService.enginePromise = null;
+  }
+
+  static getModelId(): string {
+    return MODEL_ID;
   }
 
   /** Koppel leerstijl key aan stijl-aanwijzing key. */
@@ -124,8 +185,11 @@ export class WebLLMService implements IWebLLMService {
   async *generatePromptStream(
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: ProgressCallback,
+    onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string> {
+    if (!WebLLMService.isAvailableForUse()) {
+      throw new Error('WebLLM is bezig met cache wissen');
+    }
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
@@ -134,15 +198,14 @@ export class WebLLMService implements IWebLLMService {
 
     if (!WebLLMService.engine) {
       if (WebLLMService.enginePromise) {
-        onProgress?.(translate('webllm_progress_loading'));
+        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
         await WebLLMService.enginePromise;
       } else {
-        onProgress?.(translate('webllm_progress_loading'));
+        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
         WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+          appConfig: APP_CONFIG,
           initProgressCallback: (report) => {
-            const pct = Math.round(report.progress * 100);
-            const text = report.text || translate('webllm_progress_downloading');
-            onProgress?.(`${text} (${pct}%)`);
+            onProgress?.(WebLLMService.parseProgressReport(report));
           },
         });
         WebLLMService.engine = await WebLLMService.enginePromise;
@@ -153,8 +216,9 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.engine) {
       throw new Error('WebLLM engine niet geladen');
     }
+    await WebLLMService.engine.resetChat();
 
-    onProgress?.(translate('webllm_progress_generating'));
+    onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
     const userMessage = translate('webllm_user_message', {
@@ -165,18 +229,21 @@ export class WebLLMService implements IWebLLMService {
     const stream = await WebLLMService.engine.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: `${userMessage}\n\n<think>\n\n</think>\n\n` },
       ],
       temperature: 0.3,
       max_tokens: 1500,
-      presence_penalty: 1.2,
       stop: ['[EINDE]', '[END]'],
       stream: true,
+      enable_thinking: false,
     } as webllm.ChatCompletionRequestStreaming);
 
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
+      if (WebLLMService.throttleMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, WebLLMService.throttleMs));
+      }
     }
   }
 }

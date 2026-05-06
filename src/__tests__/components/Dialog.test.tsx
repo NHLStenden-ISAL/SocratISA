@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Dialog } from '../../components/Dialog/Dialog';
 import { MockI18nProvider } from '../helpers/mockI18n';
 
@@ -70,5 +70,48 @@ describe('Dialog', () => {
 
     expect(screen.getByText('Annuleer')).toBeInTheDocument();
     expect(screen.getByText('Bevestig')).toBeInTheDocument();
+  });
+
+  it('verplaatst focus naar de eerste knop bij openen en herstelt focus bij sluiten', async () => {
+    const onClose = vi.fn();
+
+    const { rerender } = render(
+      <div>
+        <button data-testid="trigger">Open dialog</button>
+        <Dialog isOpen={false} onClose={onClose} title="Test" actions={<button>Sluit</button>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </div>,
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    rerender(
+      <div>
+        <button data-testid="trigger">Open dialog</button>
+        <Dialog isOpen={true} onClose={onClose} title="Test" actions={<button>Sluit</button>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </div>,
+    );
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByText('Sluit'));
+    });
+
+    rerender(
+      <div>
+        <button data-testid="trigger">Open dialog</button>
+        <Dialog isOpen={false} onClose={onClose} title="Test" actions={<button>Sluit</button>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </div>,
+    );
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(trigger);
+    });
   });
 });

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PromptGeneratorService } from '../../services/PromptGeneratorService';
-import type { IWebLLMService, IFallbackService, SurveyAnswers, GenerationEvent } from '../../types';
+import type { IWebLLMService, IFallbackService, SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
   async function* mockGenerator(
     _answers: SurveyAnswers,
     _translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (text: string) => void,
+    onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string> {
-    onProgress?.('laden...');
+    onProgress?.({ text: 'Loading...', percentage: 0, isDownloading: false });
     for (const token of tokens) {
       yield token;
     }
@@ -18,12 +18,13 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     isWebGPUAvailable: vi.fn().mockReturnValue(true),
     canUseWebGPU: vi.fn().mockResolvedValue(true),
     detectGPU: vi.fn().mockResolvedValue('MockGPU'),
-    preloadModel: vi.fn().mockImplementation((_onProgress?: (text: string) => void) => {
-      _onProgress?.('Model laden...');
+    preloadModel: vi.fn().mockImplementation((_onProgress?: (info: ProgressInfo) => void) => {
+      _onProgress?.({ text: 'Loading model...', percentage: 0, isDownloading: false });
       return Promise.resolve();
     }),
     generatePromptStream: vi.fn().mockImplementation(mockGenerator),
     interruptGenerate: vi.fn().mockResolvedValue(undefined),
+    clearModelCache: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -115,7 +116,7 @@ describe('PromptGeneratorService', () => {
 
   describe('start met GPU', () => {
     it('emitt firstToken, token en complete events in de juiste volgorde', async () => {
-      webLLMService = createMockWebLLMService(['Hallo', ' wereld', '!']);
+      webLLMService = createMockWebLLMService(['<think>nadenken</think> Hallo', ' wereld', '!']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
       const events: GenerationEvent[] = [];

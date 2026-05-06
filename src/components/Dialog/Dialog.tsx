@@ -19,7 +19,7 @@ export interface DialogProps {
 export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', children, actions }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+  const handleKeyDown = useCallback(function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       onClose();
       return;
@@ -40,8 +40,11 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
     }
   }, [onClose]);
 
-  useEffect(() => {
+  useEffect(function manageDialogFocus() {
     if (!isOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
     const timer = setTimeout(() => {
       const firstButton = dialogRef.current?.querySelector('button');
       firstButton?.focus();
@@ -50,6 +53,7 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
     return () => {
       clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
     };
   }, [isOpen, handleKeyDown]);
 

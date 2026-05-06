@@ -75,7 +75,7 @@ export const SocraticSurvey = () => {
   const {
     step,
     isGenerating,
-    progressText,
+    progressInfo,
     inputError,
     setInputError,
     currentQ,
@@ -87,7 +87,7 @@ export const SocraticSurvey = () => {
     totalSteps,
   } = useSurvey();
   if (isGenerating) {
-    return <LoadingScreen progressText={progressText} />;
+    return <LoadingScreen progressInfo={progressInfo} />;
   }
 
   return (

@@ -89,8 +89,13 @@
   min-height: 44px;
 }
 
-.toggle-btn:hover {
+.toggle-btn:hover:not(:disabled) {
   border-color: var(--accent);
+}
+
+.toggle-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {

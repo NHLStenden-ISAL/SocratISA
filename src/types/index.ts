@@ -12,6 +12,7 @@ export type {
   IProviderService,
   GenerationEvent,
   GenerationStats,
+  ProgressInfo,
 } from './services';
 
 /** Antwoorden van de Socratische vragenlijst. */
