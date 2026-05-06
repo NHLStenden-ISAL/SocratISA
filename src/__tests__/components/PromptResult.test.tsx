@@ -189,5 +189,81 @@ describe('PromptResult', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Gekopieerd!');
   });
 
+  it('toont het correcte aantal karakters en woorden voor de prompt', () => {
+    setupMockPromptResult({ prompt: 'Een test prompt voor SocratISA' });
 
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const metaEl = document.querySelector('.prompt-meta');
+    expect(metaEl).toBeInTheDocument();
+    expect(metaEl?.textContent).toBe('30 tekens · 5 woorden');
+  });
+
+  it('werkt de telling bij na bewerken van de prompt', () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    setupMockPromptResult({ prompt: 'Kort' });
+    rerender(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const metaEl = document.querySelector('.prompt-meta');
+    expect(metaEl?.textContent).toBe('4 tekens · 1 woorden');
+  });
+
+  it('maakt een Blob en triggert download bij klik op de download knop', () => {
+    setupMockPromptResult({ prompt: 'Gegenereerde prompt voor download test' });
+
+    const createObjectURL = vi.fn(() => 'blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    const clickMock = vi.fn();
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const el = originalCreateElement(tagName);
+      if (tagName === 'a') {
+        el.click = clickMock;
+      }
+      return el;
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_download_aria'));
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(clickMock).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+
+    createElementSpy.mockRestore();
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
+  });
 });

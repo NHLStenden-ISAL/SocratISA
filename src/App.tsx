@@ -77,6 +77,10 @@ function App() {
     setShowLangDialog(false)
   }, [])
 
+  useEffect(function scrollToTopOnNavigate() {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   useEffect(function trackGenerationState() {
     const handler = (event: GenerationEvent) => {
       switch (event.type) {

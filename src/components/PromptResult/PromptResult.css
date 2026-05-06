@@ -100,6 +100,15 @@
   box-sizing: border-box;
 }
 
+.prompt-meta {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text);
+  opacity: 0.5;
+  margin-bottom: 12px;
+  font-family: var(--sans);
+}
+
 .copy-feedback {
   text-align: center;
   font-family: var(--sans);
@@ -196,6 +205,31 @@
 .provider-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.download-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.download-txt-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  transition: opacity 0.2s;
+}
+
+.download-txt-btn:hover {
+  opacity: 0.8;
 }
 
 .result-footer {

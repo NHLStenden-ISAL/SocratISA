@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo, faHome, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faTrashCan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
@@ -113,6 +113,16 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
     }
   };
 
+  const handleDownload = () => {
+    const blob = new Blob([displayPrompt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'socratisa-prompt.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 
   return (
@@ -154,6 +164,10 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
               {displayPrompt}
             </div>
           )}
+        </div>
+
+        <div className="prompt-meta">
+          {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
         </div>
 
         {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
@@ -199,6 +213,11 @@ function PromptResultView({ prompt, stats }: { prompt: string; stats?: Generatio
                 {provider.name}
               </button>
             ))}
+          </div>
+          <div className="download-row">
+            <button className="download-txt-btn" onClick={handleDownload} aria-label={t('result_download_aria')}>
+              <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> {t('result_download')}
+            </button>
           </div>
         </div>
 

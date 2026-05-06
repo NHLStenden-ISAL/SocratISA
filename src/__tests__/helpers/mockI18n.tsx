@@ -9,8 +9,8 @@ mockI18n.use(initReactI18next).init({
   fallbackLng: 'nl',
   interpolation: { escapeValue: false },
   resources: {
-    nl: { translation: {} },
-    en: { translation: {} },
+    nl: { translation: { result_meta: '{{chars}} tekens · {{words}} woorden' } },
+    en: { translation: { result_meta: '{{chars}} characters · {{words}} words' } },
   },
 });
 

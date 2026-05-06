@@ -42,6 +42,9 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
 
   useEffect(function manageDialogFocus() {
     if (!isOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
     const timer = setTimeout(() => {
       const firstButton = dialogRef.current?.querySelector('button');
       firstButton?.focus();
@@ -50,6 +53,7 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
     return () => {
       clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
     };
   }, [isOpen, handleKeyDown]);
 
