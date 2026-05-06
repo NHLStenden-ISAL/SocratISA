@@ -3,7 +3,6 @@
  * Single Responsibility: detectie van WebGPU en generatie van prompts.
  */
 import type * as webllm from '@mlc-ai/web-llm';
-import { deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
 import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 
 /** Naam van het te gebruiken model. */
@@ -102,6 +101,7 @@ export class WebLLMService implements IWebLLMService {
       }
       WebLLMService.enginePromise = null;
 
+      const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
       await deleteModelAllInfoInCache(MODEL_ID, APP_CONFIG);
     } finally {
       WebLLMService.clearingCache = false;
