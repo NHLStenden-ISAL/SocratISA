@@ -1,6 +1,5 @@
 /**
- * Types: centrale type-definities voor SocratISA.
- * Bevat interfaces voor services, antwoorden, en configuratie.
+ * Types: barrel export voor alle type-definities.
  */
 import type { TranslationKey } from './i18n-keys';
 
@@ -15,14 +14,14 @@ export type {
   ProgressInfo,
 } from './services';
 
-/** Antwoorden van de Socratische vragenlijst. */
+// Antwoorden van de Socratische vragenlijst.
 export interface SurveyAnswers {
   subject: string;
   topic: string;
   styleKey: string;
 }
 
-/** Opbouw van een survey vraag. */
+// Opbouw van een survey vraag.
 export interface Question {
   id: string;
   questionKey: TranslationKey;
@@ -31,14 +30,14 @@ export interface Question {
   type: 'text' | 'select';
 }
 
-/** Configuratie voor een AI-provider. */
+// Configuratie voor een AI-provider.
 export interface Provider {
   name: string;
   buildUrl: (prompt: string) => string;
 }
 
-/** Taalopties. */
-export type Language = 'NL' | 'EN';
+// Taalopties
+export type Language = 'nl' | 'en';
 
-/** Themaopties. */
+// Themaopties
 export type Theme = 'light' | 'dark';

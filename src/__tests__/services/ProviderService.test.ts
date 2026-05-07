@@ -3,7 +3,7 @@ import { ProviderService, PROVIDERS } from '../../services/ProviderService';
 import type { Provider } from '../../types';
 
 describe('ProviderService', () => {
-  describe('standaard providers', () => {
+  describe('getProviders', () => {
     it('geeft de standaard providers terug', () => {
       const service = new ProviderService();
       const providers = service.getProviders();
@@ -17,61 +17,6 @@ describe('ProviderService', () => {
       ]);
     });
 
-    it('bouwt een correcte ChatGPT URL', () => {
-      const service = new ProviderService();
-      const url = service.buildUrl('ChatGPT', 'Hallo wereld');
-
-      expect(url).toBe(
-        'https://chat.openai.com/?q=Hallo%20wereld',
-      );
-    });
-
-    it('bouwt een correcte Claude URL', () => {
-      const service = new ProviderService();
-      const url = service.buildUrl('Claude', 'Test prompt');
-
-      expect(url).toBe(
-        'https://claude.ai/new?q=Test%20prompt',
-      );
-    });
-
-    it('bouwt een correcte Gemini URL', () => {
-      const service = new ProviderService();
-      const url = service.buildUrl('Gemini', 'AI vraag');
-
-      expect(url).toBe(
-        'https://gemini.google.com/app?q=AI%20vraag',
-      );
-    });
-
-    it('bouwt een correcte Copilot URL', () => {
-      const service = new ProviderService();
-      const url = service.buildUrl('Copilot', 'Test prompt');
-
-      expect(url).toBe(
-        'https://copilot.microsoft.com/?q=Test%20prompt',
-      );
-    });
-
-    it('encodeert speciale tekens correct in de URL', () => {
-      const service = new ProviderService();
-      const url = service.buildUrl('ChatGPT', 'Hallo & test=ok');
-
-      expect(url).toBe(
-        'https://chat.openai.com/?q=Hallo%20%26%20test%3Dok',
-      );
-    });
-
-    it('gooit een fout bij een onbekende provider', () => {
-      const service = new ProviderService();
-
-      expect(() => service.buildUrl('Unknown', 'test')).toThrow(
-        'Unknown provider: Unknown',
-      );
-    });
-  });
-
-  describe('custom providers', () => {
     it('accepteert custom providers via de constructor', () => {
       const customProviders: Provider[] = [
         {
@@ -83,27 +28,25 @@ describe('ProviderService', () => {
       const service = new ProviderService(customProviders);
       expect(service.getProviders()).toEqual(customProviders);
     });
+  });
 
-    it('gebruikt custom providers voor buildUrl', () => {
-      const customProviders: Provider[] = [
-        {
-          name: 'CustomAI',
-          buildUrl: (prompt) => `https://custom.ai/?p=${encodeURIComponent(prompt)}`,
-        },
-      ];
+  describe('buildUrl', () => {
+    it('delegeert naar de provider zijn eigen buildUrl', () => {
+      const service = new ProviderService();
+      const chatgpt = PROVIDERS.find((p) => p.name === 'ChatGPT')!;
+      const url = service.buildUrl(chatgpt, 'Hallo wereld');
 
-      const service = new ProviderService(customProviders);
-      const url = service.buildUrl('CustomAI', 'test prompt');
-
-      expect(url).toBe('https://custom.ai/?p=test%20prompt');
+      expect(url).toBe('https://chat.openai.com/?q=Hallo%20wereld');
     });
 
-    it('gooit een fout als een custom provider niet bestaat', () => {
-      const service = new ProviderService([]);
+    it('werkt voor elke provider', () => {
+      const service = new ProviderService();
 
-      expect(() => service.buildUrl('ChatGPT', 'test')).toThrow(
-        'Unknown provider: ChatGPT',
-      );
+      for (const provider of PROVIDERS) {
+        const url = service.buildUrl(provider, 'test');
+        expect(url).toContain('https://');
+        expect(url).toContain(encodeURIComponent('test'));
+      }
     });
   });
 

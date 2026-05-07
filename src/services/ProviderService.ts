@@ -1,10 +1,8 @@
 /**
  * ProviderService: beheert AI-provider configuraties.
- * Single Responsibility: alleen verantwoordelijk voor provider-links.
  */
 import type { Provider, IProviderService } from '../types';
 
-/** Standaard AI-providers. */
 export const PROVIDERS: Provider[] = [
   {
     name: 'ChatGPT',
@@ -39,10 +37,8 @@ export class ProviderService implements IProviderService {
     return this.providers;
   }
 
-  /** Bouw een URL voor een specifieke provider. */
-  buildUrl(providerName: string, prompt: string): string {
-    const provider = this.providers.find((p) => p.name === providerName);
-    if (!provider) throw new Error(`Unknown provider: ${providerName}`);
+  // Return link voor gegeven provider
+  buildUrl(provider: Provider, prompt: string): string {
     return provider.buildUrl(prompt);
   }
 }

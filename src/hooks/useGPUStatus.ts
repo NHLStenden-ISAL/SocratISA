@@ -1,6 +1,5 @@
 /**
- * useGPUStatus: hook die de WebGPU-beschikbaarheid en GPU-naam bijhoudt.
- * Wordt eenmalig bij mount uitgevoerd.
+ * useGPUStatus: hook die de eenmalig GPU status en naam checked en het resultaat beheert.
  */
 import { useState, useEffect } from 'react';
 import { useServices } from '../contexts/useServices';
@@ -17,7 +16,7 @@ export function useGPUStatus(): GPUStatus {
   const [gpuName, setGpuName] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
+  useEffect(function detectGpuOnMount() {
     let cancelled = false;
 
     async function check() {
@@ -39,6 +38,7 @@ export function useGPUStatus(): GPUStatus {
     }
 
     check();
+
     return () => { cancelled = true; };
   }, [webLLMService]);
 

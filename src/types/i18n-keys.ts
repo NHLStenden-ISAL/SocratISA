@@ -1,5 +1,5 @@
 /**
- * i18n-keys: type-safe vertaalsleutels, afgeleid van de NL bron.
+ * i18n-keys: vertaal-sleutels met nl als source of truth.
  */
 import nl from '../locales/nl.json';
 

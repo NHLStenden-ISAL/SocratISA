@@ -1,3 +1,6 @@
+/**
+ * setup: imiteert localStorage.
+ */
 import '@testing-library/jest-dom'
 
 const store: Record<string, string> = {};

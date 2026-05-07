@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { useSurvey } from '../../hooks';
+import { useGPUStatus } from '../../hooks/useGPUStatus';
 import { ServiceProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
 import type { Services } from '../../contexts';
 import type { GenerationEvent } from '../../types';
+
+vi.mock('../../hooks/useGPUStatus');
 
 const mockNavigate = vi.fn();
 const mockSubscribe = vi.fn();
@@ -37,7 +40,6 @@ function createWrapper(services: Partial<Services> = {}) {
       getAnswer: mockGetAnswer,
       toSurveyAnswers: mockToSurveyAnswers,
       reset: vi.fn(),
-      isComplete: vi.fn().mockReturnValue(true),
     } as unknown as Services['surveyService'],
     webLLMService: {
       isWebGPUAvailable: vi.fn().mockReturnValue(true),
@@ -82,6 +84,7 @@ describe('useSurvey', () => {
     mockAbort.mockClear();
     mockSetAnswer.mockClear();
     mockGetAnswer.mockReturnValue('');
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'MockGPU', isChecking: false });
   });
 
   it('start bij stap 0', () => {
@@ -179,6 +182,8 @@ describe('useSurvey', () => {
     mockSubscribe.mockImplementation((handler) => {
       eventHandler = handler;
     });
+
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'MockGPU', isChecking: false });
 
     const { result } = renderHook(() => useSurvey(), {
       wrapper: createWrapper(),
@@ -283,6 +288,7 @@ describe('useSurvey', () => {
 
   it('gebruikt fallback als gpu niet beschikbaar is', () => {
     vi.mocked(mockStart).mockClear();
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: false, gpuName: null, isChecking: false });
 
     const wrapper = createWrapper({
       webLLMService: {

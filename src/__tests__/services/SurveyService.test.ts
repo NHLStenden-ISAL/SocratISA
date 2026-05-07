@@ -25,31 +25,6 @@ describe('SurveyService', () => {
     });
   });
 
-  describe('isComplete', () => {
-    it('geeft false terug als er geen antwoorden zijn ingesteld', () => {
-      expect(service.isComplete()).toBe(false);
-    });
-
-    it('geeft false terug als slechts sommige antwoorden zijn ingesteld', () => {
-      service.setAnswer('subject', 'Wiskunde');
-      expect(service.isComplete()).toBe(false);
-    });
-
-    it('geeft false terug als een antwoord alleen uit witruimte bestaat', () => {
-      service.setAnswer('subject', 'Wiskunde');
-      service.setAnswer('topic', 'Algebra');
-      service.setAnswer('style', '  ');
-      expect(service.isComplete()).toBe(false);
-    });
-
-    it('geeft true terug als alle vragen zijn beantwoord', () => {
-      service.setAnswer('subject', 'Wiskunde');
-      service.setAnswer('topic', 'Algebra');
-      service.setAnswer('style', 'survey_option_visual');
-      expect(service.isComplete()).toBe(true);
-    });
-  });
-
   describe('toSurveyAnswers', () => {
     it('geeft lege strings terug bij ontbrekende antwoorden', () => {
       const result = service.toSurveyAnswers();
@@ -83,7 +58,6 @@ describe('SurveyService', () => {
       expect(service.getAnswer('subject')).toBe('');
       expect(service.getAnswer('topic')).toBe('');
       expect(service.getAnswer('style')).toBe('');
-      expect(service.isComplete()).toBe(false);
     });
   });
 

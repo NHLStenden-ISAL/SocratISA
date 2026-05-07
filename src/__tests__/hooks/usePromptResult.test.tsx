@@ -129,8 +129,10 @@ describe('usePromptResult', () => {
       wrapper: createWrapper(),
     });
 
+    const chatgpt = result.current.providers.find((p) => p.name === 'ChatGPT')!;
+
     act(() => {
-      result.current.handleProvider('ChatGPT');
+      result.current.handleProvider(chatgpt);
     });
 
     expect(openMock).toHaveBeenCalledWith(

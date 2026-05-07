@@ -10,6 +10,7 @@ describe('WebLLMService', () => {
 
   beforeEach(() => {
     service = new WebLLMService();
+    WebLLMService.resetGpuCache();
   });
 
   describe('isWebGPUAvailable', () => {

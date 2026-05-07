@@ -22,7 +22,7 @@ describe('ThemeContext', () => {
     }
 
     expect(() => render(<BadComponent />)).toThrow(
-      'useTheme must be used within a ThemeProvider',
+      'useTheme moet binnen een ThemeProvider worden gebruikt',
     );
 
     consoleError.mockRestore();

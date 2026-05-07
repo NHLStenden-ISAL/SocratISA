@@ -1,9 +1,7 @@
 /**
  * ServiceProvider: injecteert alle services via React Context.
- * Single Responsibility: instantiëren en beschikbaar stellen van services.
  */
-
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ServiceContext, defaultServices, type Services } from './useServices';
 
 interface ServiceProviderProps {

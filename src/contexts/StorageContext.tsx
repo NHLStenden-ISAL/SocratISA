@@ -1,5 +1,5 @@
 /**
- * StorageProvider: injecteerbare storage via React Context.
+ * StorageProvider: injecteert storage via React Context.
  */
 import { type ReactNode } from 'react';
 import { StorageService } from '../services';

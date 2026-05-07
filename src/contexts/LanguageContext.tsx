@@ -1,6 +1,5 @@
 /**
- * LanguageProvider: beheert NL/EN taal state.
- * Encapsuleert taal-logica, persisteert naar localStorage en sync met i18next.
+ * LanguageProvider: beheert nl/en taal state.
  */
 import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,22 +11,22 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
-/** Provider component die taal state beschikbaar stelt aan de componenten. */
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n } = useTranslation();
   const storage = useStorage();
-  const fallbackLanguage: Language = i18n.resolvedLanguage?.toUpperCase() === 'EN' ? 'EN' : 'NL';
+  const fallbackLanguage: Language = i18n.resolvedLanguage?.startsWith('en') ? 'en' : 'nl';
+
   const [lang, setLang] = useState<Language>(() =>
     storage.get<Language>('lang', fallbackLanguage)
   );
 
   useEffect(function syncLanguage() {
-    document.documentElement.lang = lang.toLowerCase();
-    i18n.changeLanguage(lang.toLowerCase());
+    document.documentElement.lang = lang;
+    i18n.changeLanguage(lang);
   }, [lang, i18n]);
 
   const toggleLang = () => {
-    const newLang: Language = lang === 'NL' ? 'EN' : 'NL';
+    const newLang: Language = lang === 'nl' ? 'en' : 'nl';
     setLang(newLang);
     storage.set('lang', newLang);
   };
