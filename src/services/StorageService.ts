@@ -1,9 +1,7 @@
 /**
- * StorageService: abstracte opslagoperaties via localStorage.
- * Encapsuleert alle localStorage interacties achter een schone interface.
+ * StorageService: abstraheert localStorage operaties.
  */
 export class StorageService {
-  /** Haal een waarde op uit localStorage. */
   static get<T>(key: string, fallback: T): T {
     try {
       const value = localStorage.getItem(key);
@@ -13,7 +11,6 @@ export class StorageService {
     }
   }
 
-  /** Sla een waarde op in localStorage. */
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));

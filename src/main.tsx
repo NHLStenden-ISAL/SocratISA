@@ -1,4 +1,6 @@
-/** Applicatie-instap: initialiseert React, i18n, FontAwesome en React Router. */
+/** 
+ * main: configuratie van de webapplicatie en dependencies.
+ */
 
 import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'

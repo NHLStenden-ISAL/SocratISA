@@ -1,8 +1,6 @@
 /**
  * ServiceProvider: injecteert alle services via React Context.
- * Optioneel: laat testen toe om eigen services mee te geven.
  */
-
 import { type ReactNode } from 'react';
 import { ServiceContext, defaultServices, type Services } from './useServices';
 

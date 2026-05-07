@@ -109,8 +109,8 @@ function App() {
       </div>
 
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
-        <button className="toggle-btn" onClick={handleLangToggle} disabled={isGenerating} aria-label={t('aria_switch_lang_v2', { visible: lang === 'NL' ? 'EN' : 'NL', lang: lang === 'NL' ? 'English' : 'Nederlands' })}>
-          {lang === 'NL' ? 'EN' : 'NL'}
+        <button className="toggle-btn" onClick={handleLangToggle} disabled={isGenerating} aria-label={t('aria_switch_lang_v2', { visible: lang === 'nl' ? 'EN' : 'NL', lang: lang === 'nl' ? 'English' : 'Nederlands' })}>
+          {lang === 'nl' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
           <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} aria-hidden="true" />

@@ -1,3 +1,6 @@
+/**
+ * ErrorBoundary: overlay die runtime-fouten vangt en een gebruikersvriendelijke melding toont.
+ */
 import { Component, type ReactNode } from 'react';
 import i18n from '../i18n';
 
@@ -14,6 +17,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const t = i18n.getFixedT(i18n.resolvedLanguage ?? 'nl');
+
       return (
         <div className="panel error-boundary" role="alert">
           <h2>{t('error_boundary_title')}</h2>

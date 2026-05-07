@@ -1,4 +1,8 @@
+/**
+ * useServices: geeft toegang tot de services aan de componenten.
+ */
 import { createContext, useContext } from 'react';
+
 import {
   SurveyService,
   WebLLMService,
@@ -6,6 +10,7 @@ import {
   ProviderService,
   PromptGeneratorService,
 } from '../services';
+
 import type {
   ISurveyService,
   IWebLLMService,

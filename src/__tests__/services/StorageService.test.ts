@@ -20,9 +20,9 @@ describe('StorageService', () => {
 
   describe('get', () => {
     it('haalt een opgeslagen waarde op', () => {
-      store['taal'] = JSON.stringify('NL');
-      const result = StorageService.get<string>('taal', 'EN');
-      expect(result).toBe('NL');
+      store['taal'] = JSON.stringify('nl');
+      const result = StorageService.get<string>('taal', 'en');
+      expect(result).toBe('nl');
     });
 
     it('geeft de fallback terug als de sleutel ontbreekt', () => {
@@ -37,9 +37,9 @@ describe('StorageService', () => {
     });
 
     it('kan objecten ophalen', () => {
-      const data = { theme: 'dark', lang: 'NL' };
+      const data = { theme: 'dark', lang: 'nl' };
       store['settings'] = JSON.stringify(data);
-      const result = StorageService.get<typeof data>('settings', { theme: 'light', lang: 'EN' });
+      const result = StorageService.get<typeof data>('settings', { theme: 'light', lang: 'en' });
       expect(result).toEqual(data);
     });
 
@@ -51,8 +51,8 @@ describe('StorageService', () => {
 
   describe('set', () => {
     it('slaat een waarde op', () => {
-      StorageService.set('taal', 'EN');
-      expect(store['taal']).toBe(JSON.stringify('EN'));
+      StorageService.set('taal', 'en');
+      expect(store['taal']).toBe(JSON.stringify('en'));
     });
 
     it('slaat een object op als JSON', () => {

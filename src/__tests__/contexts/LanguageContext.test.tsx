@@ -36,7 +36,7 @@ describe('LanguageContext', () => {
 
   it('laadt de initiele taal uit storage', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('EN'),
+      get: vi.fn().mockReturnValue('en'),
       set: vi.fn(),
     };
 
@@ -50,12 +50,12 @@ describe('LanguageContext', () => {
       </StorageProvider>,
     );
 
-    expect(screen.getByTestId('lang').textContent).toBe('EN');
+    expect(screen.getByTestId('lang').textContent).toBe('en');
   });
 
   it('valt terug op NL als storage geen waarde heeft', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('NL'),
+      get: vi.fn().mockReturnValue('nl'),
       set: vi.fn(),
     };
 
@@ -69,12 +69,12 @@ describe('LanguageContext', () => {
       </StorageProvider>,
     );
 
-    expect(screen.getByTestId('lang').textContent).toBe('NL');
+    expect(screen.getByTestId('lang').textContent).toBe('nl');
   });
 
   it('wisselt de taal en slaat deze op bij toggle', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('NL'),
+      get: vi.fn().mockReturnValue('nl'),
       set: vi.fn(),
     };
 
@@ -92,13 +92,13 @@ describe('LanguageContext', () => {
       screen.getByTestId('toggle').click();
     });
 
-    expect(screen.getByTestId('lang').textContent).toBe('EN');
-    expect(mockStorage.set).toHaveBeenCalledWith('lang', 'EN');
+    expect(screen.getByTestId('lang').textContent).toBe('en');
+    expect(mockStorage.set).toHaveBeenCalledWith('lang', 'en');
   });
 
   it('update document.documentElement.lang bij taalwissel', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('NL'),
+      get: vi.fn().mockReturnValue('nl'),
       set: vi.fn(),
     };
 

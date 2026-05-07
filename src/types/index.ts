@@ -1,6 +1,5 @@
 /**
- * Types: centrale type-definities voor SocratISA.
- * Bevat interfaces voor services, antwoorden, en configuratie.
+ * Types: barrel export voor alle type-definities.
  */
 import type { TranslationKey } from './i18n-keys';
 
@@ -38,7 +37,7 @@ export interface Provider {
 }
 
 /** Taalopties. */
-export type Language = 'NL' | 'EN';
+export type Language = 'nl' | 'en';
 
 /** Themaopties. */
 export type Theme = 'light' | 'dark';

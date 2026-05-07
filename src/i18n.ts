@@ -1,4 +1,6 @@
-/** i18n-configuratie: laadt NL/EN vertalingen en onthoudt de taalkeuze. */
+/**
+ * i8n: intiele configuratie van i8n en voorkeurstaal.
+ */
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -15,33 +17,20 @@ function isSupportedLanguage(value: string): value is SupportedLanguage {
 }
 
 function getStoredLanguage(): SupportedLanguage | null {
-  if (typeof localStorage === 'undefined') {
-    return null;
-  }
+  const rawValue = localStorage.getItem('lang');
+  if (!rawValue) return null;
 
   try {
-    const rawValue = localStorage.getItem('lang');
-    if (!rawValue) {
-      return null;
-    }
-
     const parsedValue = JSON.parse(rawValue);
-    if (typeof parsedValue !== 'string') {
-      return null;
-    }
+    if (typeof parsedValue !== 'string') return null;
 
-    const normalizedValue = parsedValue.toLowerCase();
-    return isSupportedLanguage(normalizedValue) ? normalizedValue : null;
+    return isSupportedLanguage(parsedValue) ? parsedValue : null;
   } catch {
     return null;
   }
 }
 
 function getBrowserLanguage(): SupportedLanguage | null {
-  if (typeof navigator === 'undefined') {
-    return null;
-  }
-
   const normalizedValue = navigator.language.toLowerCase().slice(0, 2);
   return isSupportedLanguage(normalizedValue) ? normalizedValue : null;
 }

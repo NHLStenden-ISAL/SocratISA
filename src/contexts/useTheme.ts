@@ -1,5 +1,5 @@
 /**
- * useTheme: hook voor toegang tot de theme context.
+ * useTheme: geeft toegang tot de thema context aan de componenten.
  */
 import { useContext, createContext } from 'react';
 import type { Theme } from '../types';
@@ -11,11 +11,11 @@ export interface ThemeContextValue {
 
 export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-/** Hook om toegang te krijgen tot de theme context. */
 export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme moet binnen een ThemeProvider worden gebruikt');
   }
+
   return context;
 }

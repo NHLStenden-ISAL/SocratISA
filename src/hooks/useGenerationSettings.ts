@@ -1,27 +1,27 @@
-import { useState, useEffect } from 'react';
+/**
+ * useGenerationSettings: beheert voorkeursinstellingen voor de AI generatie.
+ */
+import { useState } from 'react';
 
 const STORAGE_KEY = 'socratisa_throttle_ms';
 
 export function useGenerationSettings() {
   const [throttleMs, setThrottleMsState] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? Math.max(0, Math.min(100, parseInt(raw, 10))) : 0;
-    } catch {
-      return 0;
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+
+    if (!raw) return 0;
+
+    const parsed = parseInt(raw, 10);
+
+    return Math.max(0, Math.min(100, parsed));
   });
 
-  useEffect(function persistThrottleMs() {
-    try {
-      localStorage.setItem(STORAGE_KEY, String(throttleMs));
-    } catch {
-      // Negeer storage error
-    }
-  }, [throttleMs]);
-
   const setThrottleMs = (value: number) => {
-    setThrottleMsState(Math.max(0, Math.min(100, value)));
+    const clamped = Math.max(0, Math.min(100, value));
+
+    setThrottleMsState(clamped);
+
+    localStorage.setItem(STORAGE_KEY, String(clamped));
   };
 
   return { throttleMs, setThrottleMs };

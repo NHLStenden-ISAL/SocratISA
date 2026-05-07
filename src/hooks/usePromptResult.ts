@@ -20,17 +20,13 @@ async function copyPromptText(prompt: string): Promise<void> {
 }
 
 export function usePromptResult(initialPrompt: string) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { providerService } = useServices();
 
-  const [edits, setEdits] = useState<Record<string, string>>(() => {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY_EDIT);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
+  const [edits, setEdits] = useState<string | null>(() => {
+    const raw = sessionStorage.getItem(STORAGE_KEY_EDIT);
+    return raw ? raw : null;
   });
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -38,20 +34,11 @@ export function usePromptResult(initialPrompt: string) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const prompt = edits[i18n.language] ?? initialPrompt;
-  const setPrompt = (value: string) => setEdits(prev => ({ ...prev, [i18n.language]: value }));
-
-  useEffect(() => {
-    try {
-      if (Object.keys(edits).length > 0) {
-        sessionStorage.setItem(STORAGE_KEY_EDIT, JSON.stringify(edits));
-      } else {
-        sessionStorage.removeItem(STORAGE_KEY_EDIT);
-      }
-    } catch {
-      // Negeer storage errors
-    }
-  }, [edits]);
+  const prompt = edits ?? initialPrompt;
+  const setPrompt = (value: string) => {
+    setEdits(value);
+    sessionStorage.setItem(STORAGE_KEY_EDIT, value);
+  };
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {

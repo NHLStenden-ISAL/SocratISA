@@ -1,10 +1,8 @@
 /**
- * SurveyService: verzamelt en valideert survey-antwoorden.
- * Single Responsibility: alleen verantwoordelijk voor survey-data logica.
+ * SurveyService: beheert, verzamelt en valideert survey-antwoorden.
  */
 import type { SurveyAnswers, Question, ISurveyService } from '../types';
 
-/** Vaste vragen voor de socratische vragenlijst. */
 export const SURVEY_QUESTIONS: Question[] = [
   {
     id: 'subject',
@@ -35,17 +33,14 @@ export const SURVEY_QUESTIONS: Question[] = [
 export class SurveyService implements ISurveyService {
   private answers: Record<string, string> = {};
 
-  /** Sla een antwoord op voor een specifieke vraag. */
   setAnswer(questionId: string, value: string): void {
     this.answers[questionId] = value;
   }
 
-  /** Haal een specifiek antwoord op. */
   getAnswer(questionId: string): string {
     return this.answers[questionId] ?? '';
   }
 
-  /** Converteer opgeslagen antwoorden naar SurveyAnswers. */
   toSurveyAnswers(): SurveyAnswers {
     return {
       subject: this.answers['subject'] ?? '',
@@ -54,7 +49,6 @@ export class SurveyService implements ISurveyService {
     };
   }
 
-  /** Reset alle antwoorden. */
   reset(): void {
     this.answers = {};
   }
