@@ -28,7 +28,7 @@ export class WebLLMService implements IWebLLMService {
   private static gpuAvailable: boolean | null = null;
   static throttleMs = 0;
 
-  // Check (intergrated) GPU naam en ondersteuning met WebGPU
+  // Check (integrated) GPU naam en ondersteuning met WebGPU
   static isWebGPUAvailable(): boolean {
     if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
     return typeof navigator !== 'undefined' && 'gpu' in navigator;
@@ -106,7 +106,7 @@ export class WebLLMService implements IWebLLMService {
     return MODEL_ID;
   }
 
-  // Initaliseer AI model in achtergrond
+  // Initialiseer AI model in achtergrond
   async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');

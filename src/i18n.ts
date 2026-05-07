@@ -47,7 +47,7 @@ if (typeof document !== 'undefined') {
   document.documentElement.lang = initialLanguage;
 }
 
-// Initilaiseer i18n
+// Initialiseer i18n
 i18n.use(initReactI18next).init({
   resources: {
     nl: { translation: nl },
