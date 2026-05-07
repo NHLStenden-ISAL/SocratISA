@@ -37,6 +37,7 @@ export class ProviderService implements IProviderService {
     return this.providers;
   }
 
+  // Return link voor gegeven provider
   buildUrl(provider: Provider, prompt: string): string {
     return provider.buildUrl(prompt);
   }

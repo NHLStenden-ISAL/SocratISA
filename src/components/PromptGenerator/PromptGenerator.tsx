@@ -1,12 +1,9 @@
 /**
- * PromptGenerator: UI component for the prompt generation phase.
- * Handles loading state until the first token, then streams tokens.
- * Calls onComplete with the cleaned prompt when generation finishes.
+ * PromptGenerator: beheert de state en UI van de prompt generatie.
  */
-
 import { useState, useEffect, useRef, useCallback } from 'react';
-
 import { useLocation, useNavigate } from 'react-router-dom';
+import { formatProgressText } from '../../utils/progress';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
 import { useGenerationSettings } from '../../hooks/useGenerationSettings';
@@ -15,30 +12,6 @@ import type { SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 interface PromptGeneratorProps {
   onComplete: (prompt: string, stats?: { ttft: number; totalTime: number; tps: number }, warning?: string) => void;
-}
-
-/** Haalt aanhalingstekens of codeblokken van de prompt af en voegt de suffix toe. */
-function stripQuotesAndSuffix(raw: string, suffix: string): string {
-  let text = raw.trim();
-
-  const codeBlock = text.match(/```(?:\w*\n)?([\s\S]*?)```/);
-  if (codeBlock) {
-    text = codeBlock[1].trim();
-  } else if (text.startsWith('`') && text.endsWith('`')) {
-    text = text.slice(1, -1).trim();
-  } else if (text.startsWith('"') && text.endsWith('"')) {
-    text = text.slice(1, -1).trim();
-  } else if (text.startsWith('\u201c') && text.endsWith('\u201d')) {
-    text = text.slice(1, -1).trim();
-  } else if (text.startsWith('\u2018') && text.endsWith('\u2019')) {
-    text = text.slice(1, -1).trim();
-  } else if (text.startsWith("'") && text.endsWith("'")) {
-    text = text.slice(1, -1).trim();
-  }
-
-  text = text.replace(/\[EINDE\]?/g, '').replace(/\[END\]?/g, '').trim();
-
-  return text + suffix;
 }
 
 export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
@@ -54,15 +27,14 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const loadingRef = useRef<HTMLDivElement>(null);
 
   const { throttleMs, setThrottleMs } = useGenerationSettings();
-
   useEffect(function syncThrottleMs() {
     WebLLMService.throttleMs = throttleMs;
   }, [throttleMs]);
 
+  // Render tekst soepel token voor token
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
   const lastFlushedRef = useRef('');
-
   const flushPendingText = useCallback(function flushPendingText() {
     rafRef.current = 0;
     if (pendingTextRef.current !== lastFlushedRef.current) {
@@ -77,16 +49,18 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     }
   }, [phase]);
 
+  // Hou generatie token voor token bij en voeg het achtervoegsel toe wanneer het klaar is
   useEffect(function subscribeToGeneration() {
     if (promptGeneratorService.getIsComplete()) {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      onComplete(stripQuotesAndSuffix(promptGeneratorService.getCurrentText(), t('prompt_suffix')), promptGeneratorService.getStats());
+      onComplete((promptGeneratorService.getCurrentText() + t('prompt_suffix')).trim(), promptGeneratorService.getStats());
       return;
     }
 
+    // Beheert generatie status
     const handleEvent = (event: GenerationEvent) => {
       switch (event.type) {
         case 'progress':
@@ -105,7 +79,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete(stripQuotesAndSuffix(event.text, t('prompt_suffix')), event.stats, event.warning);
+          onComplete((event.text + t('prompt_suffix')).trim(), event.stats, event.warning);
           break;
         case 'error':
           if (rafRef.current) {
@@ -117,9 +91,9 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       }
     };
 
+    // Bekijk GPU beschikbaarheid en survey-antwoorden, start generatie met antwoorden zo mogelijk
     const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
     const gpuAvailable: boolean = location.state?.gpuAvailable ?? false;
-
     if (!promptGeneratorService.getIsGenerating()) {
       promptGeneratorService.reset();
       promptGeneratorService.start(answers, gpuAvailable, t, setProgressInfo);
@@ -136,14 +110,9 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     };
   }, [location, t, promptGeneratorService, onComplete, flushPendingText]);
 
-  const gpuAvailable = (() => {
-    try {
-      return (location.state as { gpuAvailable?: boolean } | undefined)?.gpuAvailable ?? false;
-    } catch {
-      return false;
-    }
-  })();
+  const gpuAvailable = (location.state as { gpuAvailable?: boolean } | undefined)?.gpuAvailable ?? false;
 
+  // Error scherm
   if (generationError) {
     return (
       <div className="result-container">
@@ -167,6 +136,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     );
   }
 
+  // Generatie snelheid slider
   const speedControl = gpuAvailable && (
     <div className="generation-setting">
       <div className="slider-header">
@@ -194,6 +164,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     </div>
   );
 
+  // Laad UI
   if (phase === 'loading') {
     const showProgress = progressInfo && progressInfo.percentage > 0;
     return (
@@ -207,12 +178,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             </div>
           )}
           <p>
-            {showProgress
-              ? (progressInfo.isDownloading ? t('home_preload_downloading') : t('home_preload_cache'))
-                  + (progressInfo.mbFetched != null ? ': ' + progressInfo.mbFetched + ' MB' : '')
-                  + ' (' + progressInfo.percentage + '%)'
-              : (progressInfo?.text || t('result_generating'))
-            }
+            {formatProgressText(progressInfo, t, 'result_generating')}
           </p>
         </div>
       </div>
@@ -220,6 +186,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   }
 
   return (
+    // Prompt resultaat container
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">

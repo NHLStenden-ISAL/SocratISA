@@ -1,5 +1,5 @@
 /**
- * FallbackService: genereert een prompt via een template die de survey antwoorden verwerkt.
+ * FallbackService: genereert een prompt via een template die de survey-antwoorden verwerkt.
  */
 import type { SurveyAnswers, IFallbackService } from '../types';
 import type { TranslationKey } from '../types/i18n-keys';
@@ -16,6 +16,7 @@ export class FallbackService implements IFallbackService {
     return STYLE_HINT_MAP[styleKey] || 'style_hint_default';
   }
 
+  // Geef survey-antwoorden door aan template
   generatePrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = this.getStyleHintKey(answers.styleKey);
     return translate('prompt_template', {

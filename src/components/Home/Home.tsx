@@ -1,13 +1,13 @@
 /**
  * Home: hoofdpagina met informatie over generatieve AI en Socratisch leren, samen met een CTA naar de vragenlijst.
  */
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
+import { formatProgressText } from '../../utils/progress';
 import type { ProgressInfo } from '../../types';
 import './Home.css'
 
@@ -25,7 +25,8 @@ export const Home = () => {
     if (isChecking) return;
     navigate('/survey');
   };
-
+  
+  // Laad AI model in de achtergrond wel/niet gebaseerd op popup keuze 
   const handlePreload = async () => {
     setShowPreloadOffer(false);
     setPreloadStatus('loading');
@@ -56,20 +57,24 @@ export const Home = () => {
 
   return (
     <>
+      {/* Titel */}
       <div className="article">
         <h1>{t('home_title')}</h1>
         
+        {/* Introductie */}
         <section className="article-text">
           <p>{t('home_intro_1')}</p>
           <p>{t('home_intro_2')}</p>
         </section>
 
+        {/* Uitleg AI */}
         <h2>{t('home_practice_title')}</h2>
         <section className="article-text">
           <p>{t('home_practice_1')}</p>
           <p>{t('home_practice_2')}</p>
         </section>
 
+        {/* Voorbeelden van AI applicaties */}
         <h2>{t('home_apps_title')}</h2>
         <section className="article-text">
           <p>{t('home_apps_intro')}</p>
@@ -92,12 +97,14 @@ export const Home = () => {
           <p>{t('home_apps_outro')}</p>
         </section>
 
+        {/* Goed/Slecht AI gebruik */}
         <h2>{t('home_pitfalls_title')}</h2>
         <section className="article-text">
           <p>{t('home_pitfalls_1')}</p>
           <p>{t('home_pitfalls_2')}</p>
         </section>
 
+        {/* Goed/Slecht AI gebruik voorbeelden */}
         <section className="pitfalls-grid" aria-label={t('home_pitfalls_title')}>
           <div className="pitfall-box bad">
             <h3>{t('pitfall_no_check_title')}</h3>
@@ -125,6 +132,7 @@ export const Home = () => {
           </div>
         </section>
 
+        {/* Socratisch methode */}
         <h2>{t('home_socratic_title')}</h2>
         <section className="article-text">
           <p>{t('home_socratic_1')}</p>
@@ -132,16 +140,20 @@ export const Home = () => {
           <p>{t('home_socratic_3')}</p>
         </section>
 
+        {/* Conclusie en CTA */}
         <h2>{t('home_action_title')}</h2>
         <section className="article-text">
           <p>{t('home_action_1')}</p>
           <p>{t('home_action_2')}</p>
         </section>
 
+        {/* Knop naar survey */}
         <div className="button-container">
           <button className="socratic-button" onClick={handleCTA} aria-label={t('home_cta_aria_v2')}>
             {t('home_cta')}
           </button>
+
+          {/* Model laad UI */}
           {preloadStatus === 'loading' && (
             <div className="preload-status" role="status" aria-live="polite"
                  title={preloadProgress?.isDownloading ? t('home_preload_tooltip') : undefined}>
@@ -151,12 +163,7 @@ export const Home = () => {
                   <div className="progress-bar-fill" style={{ width: `${preloadProgress?.percentage ?? 0}%` }}></div>
                 </div>
                 <span className="preload-text">
-                  {preloadProgress && preloadProgress.percentage > 0
-                    ? (preloadProgress.isDownloading ? t('home_preload_downloading') : t('home_preload_cache'))
-                        + (preloadProgress.mbFetched != null ? ': ' + preloadProgress.mbFetched + ' MB' : '')
-                        + ' (' + preloadProgress.percentage + '%)'
-                    : t('home_preload_loading')
-                  }
+                  {formatProgressText(preloadProgress, t, 'home_preload_loading')}
                 </span>
               </div>
             </div>
@@ -174,6 +181,7 @@ export const Home = () => {
         </div>
       </div>
 
+      {/* Preload popup */}
       <Dialog
         isOpen={showPreloadOffer}
         onClose={dismissPreloadOffer}

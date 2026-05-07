@@ -1,8 +1,6 @@
 /**
- * PromptResult: toont de gegenereerde Socratische prompt
- * en biedt knoppen om te kopiëren of door te gaan naar een AI-provider.
+ * PromptResult: toont de gegenereerde prompt samen met actie knoppen.
  */
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,43 +9,41 @@ import { usePromptResult } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
+import { safeSessionStorage } from '../../utils/storage';
 import type { GenerationStats, Provider } from '../../types';
 import './PromptResult.css';
 
 const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
 const STORAGE_KEY_STATS = 'socratisa_result_stats';
 
+// Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status 
 export const PromptResult = () => {
   const [prompt, setPrompt] = useState<string | null>(() => {
-    try {
-      return sessionStorage.getItem(STORAGE_KEY_PROMPT);
-    } catch {
-      return null;
-    }
+    return safeSessionStorage.getItem(STORAGE_KEY_PROMPT);
   });
-  const [stats, setStats] = useState<GenerationStats | undefined>(() => {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY_STATS);
-      return raw ? JSON.parse(raw) : undefined;
-    } catch {
-      return undefined;
-    }
-  });
-  const [warning, setWarning] = useState<string | undefined>();
 
+  const [stats, setStats] = useState<GenerationStats | undefined>(() => {
+    const raw = safeSessionStorage.getItem(STORAGE_KEY_STATS);
+    if (raw) {
+      try {
+        return JSON.parse(raw) as GenerationStats;
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  });
+
+  const [warning, setWarning] = useState<string | undefined>();
   const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats, w?: string) {
     setPrompt(p);
     setStats(s);
     setWarning(w);
-    try {
-      sessionStorage.setItem(STORAGE_KEY_PROMPT, p);
-      if (s) {
-        sessionStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(s));
-      } else {
-        sessionStorage.removeItem(STORAGE_KEY_STATS);
-      }
-    } catch {
-      // Negeer storage errors
+    safeSessionStorage.setItem(STORAGE_KEY_PROMPT, p);
+    if (s) {
+      safeSessionStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(s));
+    } else {
+      safeSessionStorage.removeItem(STORAGE_KEY_STATS);
     }
   }, []);
 
@@ -70,6 +66,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
   useEffect(function focusHeading() {
     headingRef.current?.focus();
   }, []);
+
   const {
     prompt: displayPrompt,
     isEditing,
@@ -86,6 +83,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     providers,
   } = usePromptResult(prompt);
 
+  // Ga wel/niet naar AI-provider gebaseerd op popup keuze
   const openProviderDialog = (provider: Provider) => {
     setPendingProvider(provider);
     setShowProviderDialog(true);
@@ -104,6 +102,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     setPendingProvider(null);
   };
 
+  // Verwijder WebLLM model van de browser cache
   const handleClearCache = async () => {
     setShowClearCacheDialog(false);
     setClearCacheStatus('clearing');
@@ -115,6 +114,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     }
   };
 
+  // Download prompt als .txt
   const handleDownload = () => {
     const blob = new Blob([displayPrompt], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -128,12 +128,14 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 
   return (
+    // Titel
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
           <h1 ref={headingRef} tabIndex={-1}>{t('result_title')}</h1>
         </div>
 
+        {/* Generatie statistieken */}
         {stats && (
           <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
             <div className="stat-item">
@@ -155,6 +157,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           </div>
         )}
 
+        {/* Waarschuwing */}
         {warning && (
           <div className="memory-warning" role="alert">
             <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
@@ -162,6 +165,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           </div>
         )}
 
+        {/* Resultaat prompt */}
         <div className="prompt-display">
           {isEditing ? (
             <textarea
@@ -179,12 +183,15 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           )}
         </div>
 
+        {/* Teken/Woorden statistieken */}
         <div className="prompt-meta">
           {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
         </div>
 
+        {/* Bewerk/Kopieer confirmatie */}
         {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
 
+        {/* Bewerk/Kopieer knoppen */}
         <div className="prompt-actions">
           {isEditing ? (
             <button
@@ -213,6 +220,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           </button>
         </div>
 
+        {/* AI-provider knoppen */}
         <div className="provider-section">
           <p className="provider-cta">{t('result_cta')}</p>
           <div className="provider-grid">
@@ -234,6 +242,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           </div>
         </div>
 
+        {/* Popup naar AI-provider */}
         <Dialog
           isOpen={showProviderDialog}
           onClose={closeProviderDialog}
@@ -253,6 +262,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
         </Dialog>
 
+        {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
         <div className="result-footer">
           <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
@@ -276,6 +286,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
         </div>
       </div>
 
+      {/* Popup verwijder model cache */}
       <Dialog
         isOpen={showClearCacheDialog}
         onClose={() => setShowClearCacheDialog(false)}

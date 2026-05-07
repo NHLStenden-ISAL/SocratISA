@@ -1,5 +1,9 @@
+/**
+ * LoadingScreen: laadscherm tussen pagina's dat optioneel voortgang van het AI model ophalen weergeeft.
+ */
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatProgressText } from '../../utils/progress';
 import type { ProgressInfo } from '../../types'
 import './LoadingScreen.css'
 
@@ -27,12 +31,7 @@ export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
           </div>
         )}
         <p>
-          {showProgress
-            ? (progressInfo.isDownloading ? t('home_preload_downloading') : t('home_preload_cache'))
-                + (progressInfo.mbFetched != null ? ': ' + progressInfo.mbFetched + ' MB' : '')
-                + ' (' + progressInfo.percentage + '%)'
-            : (progressInfo?.text || t('generic_loading'))
-          }
+          {formatProgressText(progressInfo, t)}
         </p>
       </div>
     </div>

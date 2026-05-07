@@ -3,7 +3,7 @@
  */
 import type { SurveyAnswers, Provider } from '.';
 
-/** Service voor het beheren van survey antwoorden. */
+// Service voor het beheren van survey antwoorden.
 export interface ISurveyService {
   setAnswer(questionId: string, value: string): void;
   getAnswer(questionId: string): string;
@@ -11,7 +11,7 @@ export interface ISurveyService {
   reset(): void;
 }
 
-/** Informatie over de voortgang van AI model ophalen. */
+// Informatie over de voortgang van AI model ophalen.
 export interface ProgressInfo {
   text: string;
   percentage: number;
@@ -19,7 +19,7 @@ export interface ProgressInfo {
   mbFetched?: number;
 }
 
-/** Service voor WebLLM functionaliteit en modelbeheer. */
+// Service voor WebLLM functionaliteit en modelbeheer.
 export interface IWebLLMService {
   isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
@@ -34,12 +34,12 @@ export interface IWebLLMService {
   clearModelCache(): Promise<void>;
 }
 
-/** Service voor fallback prompt generatie. */
+// Service voor fallback prompt generatie.
 export interface IFallbackService {
   generatePrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string;
 }
 
-/** Event types voor prompt generatie. */
+// Event types voor prompt generatie.
 export type GenerationEvent =
   | { type: 'progress'; info: ProgressInfo }
   | { type: 'firstToken'; text: string }
@@ -47,14 +47,14 @@ export type GenerationEvent =
   | { type: 'complete'; text: string; stats?: GenerationStats; warning?: string }
   | { type: 'error'; error: Error };
 
-/** Statistieken over de AI generatie. */
+// Statistieken over de AI generatie.
 export interface GenerationStats {
   ttft: number;
   totalTime: number;
   tps: number;
 }
 
-/** Service voor het genereren van prompts met events. */
+// Service voor het genereren van prompts met events.
 export interface IPromptGeneratorService {
   subscribe(listener: (event: GenerationEvent) => void): void;
   unsubscribe(listener: (event: GenerationEvent) => void): void;
@@ -76,7 +76,7 @@ export interface IPromptGeneratorService {
   getStats(): GenerationStats | undefined;
 }
 
-/** Service voor het beheren van AI-providers. */
+// Service voor het beheren van AI-providers.
 export interface IProviderService {
   getProviders(): Provider[];
   buildUrl(provider: Provider, prompt: string): string;

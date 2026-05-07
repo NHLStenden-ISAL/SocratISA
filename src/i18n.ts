@@ -1,7 +1,6 @@
 /**
- * i8n: intiele configuratie van i8n en voorkeurstaal.
+ * i18n: initiele configuratie van i18n en voorkeurstaal.
  */
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import nl from './locales/nl.json';
@@ -16,6 +15,7 @@ function isSupportedLanguage(value: string): value is SupportedLanguage {
   return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage);
 }
 
+// Zoek voor opgeslagen voorkeurstaal
 function getStoredLanguage(): SupportedLanguage | null {
   const rawValue = localStorage.getItem('lang');
   if (!rawValue) return null;
@@ -30,11 +30,13 @@ function getStoredLanguage(): SupportedLanguage | null {
   }
 }
 
+// Zoek voor browser voorkeurstaal
 function getBrowserLanguage(): SupportedLanguage | null {
   const normalizedValue = navigator.language.toLowerCase().slice(0, 2);
   return isSupportedLanguage(normalizedValue) ? normalizedValue : null;
 }
 
+// Fallback naar Nederlands als beide niks geven
 function getInitialLanguage(): SupportedLanguage {
   return getStoredLanguage() ?? getBrowserLanguage() ?? DEFAULT_LANGUAGE;
 }
@@ -45,6 +47,7 @@ if (typeof document !== 'undefined') {
   document.documentElement.lang = initialLanguage;
 }
 
+// Initilaiseer i18n
 i18n.use(initReactI18next).init({
   resources: {
     nl: { translation: nl },

@@ -1,7 +1,6 @@
 /** 
  * main: configuratie van de webapplicatie en dependencies.
  */
-
 import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'

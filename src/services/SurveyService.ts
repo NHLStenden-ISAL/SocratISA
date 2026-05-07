@@ -1,5 +1,5 @@
 /**
- * SurveyService: beheert, verzamelt en valideert survey-antwoorden.
+ * SurveyService: beheert en verzamelt survey-antwoorden.
  */
 import type { SurveyAnswers, Question, ISurveyService } from '../types';
 

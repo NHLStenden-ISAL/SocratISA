@@ -1,7 +1,6 @@
 /**
  * Footer: voettekst met privacyinformatie, disclaimer en copyright.
  */
-
 import { useTranslation } from 'react-i18next';
 import './Footer.css';
 

@@ -1,9 +1,7 @@
 /**
- * Dialog: herbruikbare toegankelijke popup-component.
- * Bevat focus-trap, Escape-toets en overlay-klik om te sluiten.
+ * Dialog: popup dat een gegeven titel, inhoud en keuze tekst weergeeft.
  */
-
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 import './Dialog.css';
 
@@ -19,43 +17,48 @@ export interface DialogProps {
 export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', children, actions }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback(function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      onClose();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    if (!focusable || focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }, [onClose]);
-
   useEffect(function manageDialogFocus() {
     if (!isOpen) return;
 
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previouslyFocused = document.activeElement;
 
-    const timer = setTimeout(() => {
-      const firstButton = dialogRef.current?.querySelector('button');
-      firstButton?.focus();
-    }, 0);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused?.focus();
+    const firstButton = dialogRef.current?.querySelector('button');
+    firstButton?.focus();
+
+    // Geeft keyboard shortcuts voor de popup navigeren met focus trap
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
-  }, [isOpen, handleKeyDown]);
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previouslyFocused instanceof HTMLElement) {
+        previouslyFocused.focus();
+      }
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

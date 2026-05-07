@@ -1,8 +1,6 @@
 /**
- * App: layoutcomponent van SocratISA.
- * Rendert de actieve route via Outlet, taal en thema via React Context.
+ * App: beheert de algemene layout van de webapplicatie.
  */
-
 import './App.css'
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,6 +14,7 @@ import { useGPUStatus } from './hooks'
 import type { GenerationEvent } from './types'
 import { Footer } from './components/Footer/Footer'
 import { Dialog } from './components/Dialog/Dialog'
+import { safeSessionStorage } from './utils/storage'
 
 
 function App() {
@@ -27,9 +26,10 @@ function App() {
   const { promptGeneratorService } = useServices()
   const { isAvailable, gpuName, isChecking } = useGPUStatus()
   const [showLangDialog, setShowLangDialog] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(() => promptGeneratorService.getIsGenerating())
+  const [isGenerating, setIsGenerating] = useState(false)
   const previousPathRef = useRef(location.pathname)
 
+  // Verander website titel per pagina
   useEffect(function updateDocumentTitle() {
     const titles: Record<string, string> = {
       '/': 'SocratISA',
@@ -39,21 +39,19 @@ function App() {
     document.title = titles[location.pathname] ?? 'SocratISA'
   }, [location.pathname, t])
 
+  // Stop AI generatie bij verlating result pagina
   useEffect(function abortGenerationOnLeave() {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
       promptGeneratorService.abort()
       setIsGenerating(false)
-      try {
-        sessionStorage.removeItem('socratisa_result_prompt')
-        sessionStorage.removeItem('socratisa_result_stats')
-        sessionStorage.removeItem('socratisa_result_edited_prompt')
-      } catch {
-        // Negeer storage errors
-      }
+      safeSessionStorage.removeItem('socratisa_result_prompt')
+      safeSessionStorage.removeItem('socratisa_result_stats')
+      safeSessionStorage.removeItem('socratisa_result_edited_prompt')
     }
     previousPathRef.current = location.pathname
   }, [location.pathname, promptGeneratorService])
 
+  // Verander taal/Verander taal met confirmatie)
   const handleLangToggle = () => {
     if (location.pathname === '/result') {
       setShowLangDialog(true)
@@ -96,9 +94,11 @@ function App() {
   }, [promptGeneratorService])
 
   return (
+    // Header
     <div className="panel">
       <div className="status-indicator" role="status">
         <span className={`status-dot ${isChecking ? '' : isAvailable ? 'webgpu' : 'fallback'}`} aria-hidden="true"></span>
+        {/* WebGPU beschikbaarheid */}
         <span className="status-text">
           {isChecking
             ? t('status_checking_gpu')
@@ -108,6 +108,7 @@ function App() {
         </span>
       </div>
 
+      {/* Taal/Thema knoppen */}
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
         <button className="toggle-btn" onClick={handleLangToggle} disabled={isGenerating} aria-label={t('aria_switch_lang_v2', { visible: lang === 'nl' ? 'EN' : 'NL', lang: lang === 'nl' ? 'English' : 'Nederlands' })}>
           {lang === 'nl' ? 'EN' : 'NL'}
@@ -117,6 +118,7 @@ function App() {
         </button>
       </nav>
 
+      {/* Popup AI model ophalen in achtergrond */}
       <Dialog
         isOpen={showLangDialog}
         onClose={closeLangDialog}
@@ -136,10 +138,12 @@ function App() {
         <p>{t('lang_dialog_body')}</p>
       </Dialog>
 
+      {/* Actuele pagina */}
       <main id="main-content">
         <Outlet />
       </main>
 
+      {/* Footer */}
       <Footer />
     </div>
   )

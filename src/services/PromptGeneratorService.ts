@@ -1,9 +1,6 @@
 /**
- * PromptGeneratorService: orkestreert de prompt-generatie.
- * Single Responsibility: coördineren van generatie via WebGPU of fallback,
- * en streamen van tokens naar subscribers.
+ * PromptGeneratorService: Beheert de prompt-generatie status en statistieken.
  */
-
 import type {
   SurveyAnswers,
   IPromptGeneratorService,
@@ -34,11 +31,13 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.fallbackService = fallbackService;
   }
 
+  // Beheert AI generatie status 
   subscribe(listener: (event: GenerationEvent) => void): void {
     this.listeners.add(listener);
     if (this.generating && this.lastProgress !== null) {
       listener({ type: 'progress', info: this.lastProgress });
     }
+
     if (this.generating && this.currentText) {
       const displayText = this.stripThinkTag(this.currentText);
       listener({ type: 'token', text: displayText });
@@ -51,15 +50,22 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.listeners.delete(listener);
   }
 
-  private hasSeenCloseThink = false;
-
   private emit(event: GenerationEvent): void {
     this.listeners.forEach(l => l(event));
   }
 
+  // Verwijder de begin aan einde tags van de resultaat prompt
   private cleanOutput(text: string): string {
     const cleaned = this.stripThinkTag(text);
     return cleaned.replace(/\[EINDE\]|\[END\]/g, '').trim();
+  }
+
+  private stripThinkTag(text: string): string {
+    const closeIdx = text.lastIndexOf('</think>');
+    if (closeIdx === -1) {
+      return text.replace(/<\/?think>/g, '').trim();
+    }
+    return text.substring(closeIdx + '</think>'.length).trim();
   }
 
   reset(): void {
@@ -73,17 +79,9 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.tokenCount = 0;
     this.gpuUsed = false;
     this.lastStats = undefined;
-    this.hasSeenCloseThink = false;
   }
 
-  private stripThinkTag(text: string): string {
-    const closeIdx = text.lastIndexOf('</think>');
-    if (closeIdx === -1) {
-      return text;
-    }
-    return text.substring(closeIdx + '</think>'.length).trim();
-  }
-
+  // Haal AI model op in de achtergrond
   async preload(
     _translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (info: ProgressInfo) => void,
@@ -96,6 +94,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     await this.webLLMService.preloadModel(wrappedOnProgress);
   }
 
+  // Start prompt generatie met de gegeven survey-antwoord
   async start(
     answers: SurveyAnswers,
     gpuAvailable: boolean,
@@ -113,79 +112,96 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.abortCtrl = abortCtrl;
 
     try {
+      // Maak prompt met/zonder AI model gebaseerd op WebGPU beschikbaarheid 
       if (gpuAvailable) {
-        let firstTokenSent = false;
-
-        const wrappedOnProgress = (info: ProgressInfo) => {
-          this.lastProgress = info;
-          onProgress?.(info);
-          this.emit({ type: 'progress', info });
-        };
-
-        for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {
-          if (abortCtrl.signal.aborted) {
-            this.generating = false;
-            break;
-          }
-          this.currentText += token;
-
-          if (!this.hasSeenCloseThink) {
-            this.hasSeenCloseThink = this.currentText.includes('</think>');
-          }
-
-          if (!this.hasSeenCloseThink) continue;
-
-          const displayText = this.stripThinkTag(this.currentText);
-
-          if (!firstTokenSent && displayText.trim().length > 0) {
-            firstTokenSent = true;
-            this.firstTokenTime = performance.now();
-            this.emit({ type: 'firstToken', text: displayText });
-          } else if (firstTokenSent) {
-            this.tokenCount += 1;
-            this.emit({ type: 'token', text: displayText });
-          }
-        }
-
-        if (!abortCtrl.signal.aborted) {
-          this.currentText = this.cleanOutput(this.currentText);
-          this.complete = true;
-          this.generating = false;
-          this.lastStats = this.buildStats();
-          this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
-        }
+        await this.startGpuGeneration(answers, translate, abortCtrl, onProgress);
       } else {
-        const raw = this.fallbackService.generatePrompt(answers, translate);
-        this.currentText = this.cleanOutput(raw);
-        this.firstTokenTime = performance.now();
-        this.emit({ type: 'firstToken', text: this.currentText });
-        this.emit({ type: 'token', text: this.currentText });
-        this.complete = true;
-        this.generating = false;
-        this.emit({ type: 'complete', text: this.currentText });
+        this.runFallbackGeneration(answers, translate);
       }
     } catch (err) {
       if (!abortCtrl.signal.aborted) {
-        console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
-        const isMemoryError = err instanceof Error && /memory|out of memory|allocate|oom|alloc/i.test(err.message);
-        try {
-          const raw = this.fallbackService.generatePrompt(answers, translate);
-          this.currentText = this.cleanOutput(raw);
-          this.firstTokenTime = performance.now();
-          this.emit({ type: 'firstToken', text: this.currentText });
-          this.emit({ type: 'token', text: this.currentText });
-          this.complete = true;
-          this.generating = false;
-          this.emit({ type: 'complete', text: this.currentText, warning: isMemoryError ? 'memory_warning' : undefined });
-        } catch (fallbackErr) {
-          this.generating = false;
-          this.emit({ type: 'error', error: fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)) });
-        }
+        await this.handleGenerationError(err, answers, translate);
       }
     } finally {
       if (this.abortCtrl === abortCtrl) {
         this.abortCtrl = null;
       }
+    }
+  }
+
+  // Genereer prompt met AI model token voor token
+  private async startGpuGeneration(
+    answers: SurveyAnswers,
+    translate: (key: string, options?: Record<string, string>) => string,
+    abortCtrl: AbortController,
+    onProgress?: (info: ProgressInfo) => void,
+  ): Promise<void> {
+    let firstTokenSent = false;
+
+    const wrappedOnProgress = (info: ProgressInfo) => {
+      this.lastProgress = info;
+      onProgress?.(info);
+      this.emit({ type: 'progress', info });
+    };
+
+    for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {
+      if (abortCtrl.signal.aborted) {
+        this.generating = false;
+        break;
+      }
+      this.currentText += token;
+
+      const displayText = this.stripThinkTag(this.currentText);
+
+      if (displayText.length === 0) continue;
+
+      if (!firstTokenSent) {
+        firstTokenSent = true;
+        this.firstTokenTime = performance.now();
+        this.emit({ type: 'firstToken', text: displayText });
+      } else {
+        this.tokenCount += 1;
+        this.emit({ type: 'token', text: displayText });
+      }
+    }
+
+    if (!abortCtrl.signal.aborted) {
+      this.currentText = this.cleanOutput(this.currentText);
+      this.complete = true;
+      this.generating = false;
+      this.lastStats = this.buildStats();
+      this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
+    }
+  }
+
+  // Maak prompt met template
+  private runFallbackGeneration(
+    answers: SurveyAnswers,
+    translate: (key: string, options?: Record<string, string>) => string,
+    warning?: string,
+  ): void {
+    const raw = this.fallbackService.generatePrompt(answers, translate);
+    this.currentText = this.cleanOutput(raw);
+    this.firstTokenTime = performance.now();
+    this.emit({ type: 'firstToken', text: this.currentText });
+    this.emit({ type: 'token', text: this.currentText });
+    this.complete = true;
+    this.generating = false;
+    this.emit({ type: 'complete', text: this.currentText, warning });
+  }
+
+  private async handleGenerationError(
+    err: unknown,
+    answers: SurveyAnswers,
+    translate: (key: string, options?: Record<string, string>) => string,
+  ): Promise<void> {
+    console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
+    const isMemoryError = err instanceof Error && /memory|out of memory|allocate|oom|alloc/i.test(err.message);
+    try {
+      this.runFallbackGeneration(answers, translate, isMemoryError ? 'memory_warning' : undefined);
+    } catch (fallbackErr) {
+      this.generating = false;
+      this.emit({ type: 'error', error: fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)) });
     }
   }
 
@@ -216,8 +232,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     return this.lastStats;
   }
 
+  // Bereken totale tijd/generatie tijd/tijd tot eerste token/tokens per seconden
   private buildStats(): GenerationStats | undefined {
     if (!this.gpuUsed) return undefined;
+
     const completeTime = performance.now();
     const totalTime = completeTime - this.startTime;
     const ttft = this.firstTokenTime ? this.firstTokenTime - this.startTime : totalTime;
