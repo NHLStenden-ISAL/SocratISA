@@ -193,7 +193,7 @@
 @media (max-width: 768px) {
   .article {
     margin: 20px auto;
-    padding: 0 4px;
+    padding: 0 20px;
   }
   .article-text p {
     font-size: 1.05rem;
@@ -212,6 +212,8 @@
 @media (max-width: 640px) {
   .article {
     margin: 8px auto 20px;
+    padding: 0 16px;
+    line-height: 1.7;
   }
   .article-text {
     margin-bottom: 28px;

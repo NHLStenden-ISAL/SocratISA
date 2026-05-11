@@ -129,7 +129,7 @@
   "home_preload_loading": "Downloading model...",
   "home_preload_ready": "Model is ready to use!",
   "home_preload_error": "Download failed, please try again.",
-  "memory_warning": "Not enough memory to run the AI model locally. The prompt was generated using a template instead. Close other tabs or applications and regenerate for a more tailored result.",
+  "memory_warning": "Not enough working memory to run the AI model. The following prompt will use a template. Close other tabs or applications and regenerate for a more tailored result.",
   "home_preload_downloading": "Downloading",
   "home_preload_cache": "Retrieving from cache",
   "home_preload_tooltip": "Subsequent visits will be faster since the model is cached on your device.",
