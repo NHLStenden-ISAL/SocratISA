@@ -138,7 +138,28 @@ describe('PromptResult', () => {
 
     fireEvent.click(screen.getByLabelText('result_provider_aria'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('provider_dialog_body')).toBeInTheDocument();
     expect(mockHandleProvider).not.toHaveBeenCalled();
+  });
+
+  it('toont een andere dialog tekst voor clipboardOnly providers zoals Gemini/Copilot', () => {
+    setupMockPromptResult({
+      providers: [
+        { name: 'Gemini', clipboardOnly: true, buildUrl: () => 'https://gemini.google.com/app' },
+      ],
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('provider_dialog_body_clipboard')).toBeInTheDocument();
   });
 
   it('roept handleProvider aan na bevestigen in de dialog', () => {

@@ -79,7 +79,11 @@ export function usePromptResult(initialPrompt: string) {
   };
 
   // Ga naar AI-provider website
-  const handleProvider = (provider: Provider) => {
+  const handleProvider = async (provider: Provider) => {
+    if (provider.clipboardOnly) {
+      await copyPromptText(prompt);
+    }
+
     const url = providerService.buildUrl(provider, prompt);
     window.open(url, '_blank', 'noopener,noreferrer');
   };

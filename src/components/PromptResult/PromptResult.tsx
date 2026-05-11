@@ -259,7 +259,11 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
             </>
           }
         >
-          <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
+          {pendingProvider?.clipboardOnly ? (
+            <p>{t('provider_dialog_body_clipboard', { provider: pendingProvider.name })}</p>
+          ) : (
+            <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
+          )}
         </Dialog>
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}

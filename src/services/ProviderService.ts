@@ -16,13 +16,13 @@ export const PROVIDERS: Provider[] = [
   },
   {
     name: 'Gemini',
-    buildUrl: (prompt) =>
-      `https://gemini.google.com/app?q=${encodeURIComponent(prompt)}`,
+    clipboardOnly: true,
+    buildUrl: () => 'https://gemini.google.com/app',
   },
   {
     name: 'Copilot',
-    buildUrl: (prompt) =>
-      `https://copilot.microsoft.com/?q=${encodeURIComponent(prompt)}`,
+    clipboardOnly: true,
+    buildUrl: () => 'https://copilot.microsoft.com/',
   },
 ];
 

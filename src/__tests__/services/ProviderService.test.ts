@@ -39,13 +39,17 @@ describe('ProviderService', () => {
       expect(url).toBe('https://chat.openai.com/?q=Hallo%20wereld');
     });
 
-    it('werkt voor elke provider', () => {
+    it('bevat de juiste URL voor elke provider', () => {
       const service = new ProviderService();
 
       for (const provider of PROVIDERS) {
         const url = service.buildUrl(provider, 'test');
         expect(url).toContain('https://');
-        expect(url).toContain(encodeURIComponent('test'));
+        if (provider.clipboardOnly) {
+          expect(url).not.toContain(encodeURIComponent('test'));
+        } else {
+          expect(url).toContain(encodeURIComponent('test'));
+        }
       }
     });
   });
@@ -54,9 +58,13 @@ describe('ProviderService', () => {
     it('bevat de verwachte standaard providers', () => {
       expect(PROVIDERS).toHaveLength(4);
       expect(PROVIDERS[0].name).toBe('ChatGPT');
+      expect(PROVIDERS[0].clipboardOnly).toBeUndefined();
       expect(PROVIDERS[1].name).toBe('Claude');
+      expect(PROVIDERS[1].clipboardOnly).toBeUndefined();
       expect(PROVIDERS[2].name).toBe('Gemini');
+      expect(PROVIDERS[2].clipboardOnly).toBe(true);
       expect(PROVIDERS[3].name).toBe('Copilot');
+      expect(PROVIDERS[3].clipboardOnly).toBe(true);
     });
   });
 });

@@ -121,6 +121,7 @@
   "home_preload_dialog_body": "Would you like to download the ~2 GB AI model now? Do not do this on mobile data. It will be ready to use when you start the survey.",
   "provider_dialog_title": "Open AI provider",
   "provider_dialog_body": "You are about to go to {{provider}}. Make sure to check the generated prompt before continuing. Your prompt will be sent via URL parameters.",
+  "provider_dialog_body_clipboard": "You are about to go to {{provider}}. Make sure to check the generated prompt before continuing. Your prompt will be copied to your clipboard so you can paste it there yourself.",
   "provider_dialog_cancel": "Cancel",
   "provider_dialog_confirm": "Continue",
   "home_preload_dialog_confirm": "Yes, download",

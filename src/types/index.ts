@@ -34,6 +34,7 @@ export interface Question {
 export interface Provider {
   name: string;
   buildUrl: (prompt: string) => string;
+  clipboardOnly?: boolean;
 }
 
 // Taalopties
