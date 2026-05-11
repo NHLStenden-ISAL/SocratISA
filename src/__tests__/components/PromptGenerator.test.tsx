@@ -15,6 +15,7 @@ const mockGetIsComplete = vi.fn().mockReturnValue(false);
 const mockGetIsGenerating = vi.fn().mockReturnValue(false);
 const mockGetCurrentText = vi.fn().mockReturnValue('');
 const mockGetStats = vi.fn().mockReturnValue(undefined);
+const mockGetLastWarning = vi.fn().mockReturnValue(undefined);
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -35,6 +36,7 @@ vi.mock('../../contexts/useServices', () => ({
       getIsGenerating: mockGetIsGenerating,
       getCurrentText: mockGetCurrentText,
       getStats: mockGetStats,
+      getLastWarning: mockGetLastWarning,
     },
   })),
 }));
@@ -165,7 +167,31 @@ describe('PromptGenerator', () => {
       </MemoryRouter>,
     );
 
-    expect(mockOnComplete).toHaveBeenCalled();
+    expect(mockOnComplete).toHaveBeenCalledWith(
+      expect.stringContaining('Al voltooid'),
+      undefined,
+      undefined,
+    );
+  });
+
+  it('geeft waarschuwing door met warning als generatie al voltooid is', () => {
+    mockGetIsComplete.mockReturnValue(true);
+    mockGetCurrentText.mockReturnValue('Al voltooid');
+    mockGetLastWarning.mockReturnValue('memory_warning');
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+        <MockI18nProvider>
+          <PromptGenerator onComplete={mockOnComplete} />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    expect(mockOnComplete).toHaveBeenCalledWith(
+      expect.stringContaining('Al voltooid'),
+      undefined,
+      'memory_warning',
+    );
   });
 
   it('updateert progress tekst bij progress events', async () => {

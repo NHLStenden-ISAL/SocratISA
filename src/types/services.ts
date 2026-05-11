@@ -32,6 +32,7 @@ export interface IWebLLMService {
   ): AsyncGenerator<string>;
   interruptGenerate(): Promise<void>;
   clearModelCache(): Promise<void>;
+  resetEngine(): void;
 }
 
 // Service voor fallback prompt generatie.
@@ -74,6 +75,7 @@ export interface IPromptGeneratorService {
   getIsGenerating(): boolean;
   getIsComplete(): boolean;
   getStats(): GenerationStats | undefined;
+  getLastWarning(): string | undefined;
 }
 
 // Service voor het beheren van AI-providers.

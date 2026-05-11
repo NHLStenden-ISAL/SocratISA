@@ -25,6 +25,7 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     generatePromptStream: vi.fn().mockImplementation(mockGenerator),
     interruptGenerate: vi.fn().mockResolvedValue(undefined),
     clearModelCache: vi.fn().mockResolvedValue(undefined),
+    resetEngine: vi.fn(),
   };
 }
 

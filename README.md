@@ -12,16 +12,14 @@ Dit project richt zich op privacy, educeren over bewust AI gebruik en de vaardig
 
 ### Tech Stack
 
-| Laag | Technologie |
-|------|-------------|
-| Taal | TypeScript 6.0 |
-| UI | React 19, React Router 7 |
-| Bundelaar | Vite 8 |
-| Testen | Vitest 4, React Testing Library |
-| Linting | ESLint 10 + typescript-eslint |
-| I18n | i18next 26 + react-i18next |
-| Iconen | FontAwesome 7 |
-| Lokale AI | WebLLM 0.2 + WebGPU |
+- Taal: TypeScript
+- UI: React, React Router
+- Bundelaar: Vite
+- Testen: Vitest, React Testing Library
+- Linting: ESLint + typescript-eslint
+- I18n: i18next + react-i18next
+- Iconen: FontAwesome
+- Lokale AI: WebLLM + WebGPU
 
 ## Architectuur
 
@@ -48,25 +46,21 @@ Alle lagen communiceren via dependency injection met React Context.
 
 ## Mapstructuur
 
-| Map | Doel |
-|-----|------|
-| `public/` | Statische bestanden |
-| `src/components/` | UI-componenten |
-| `src/contexts/` | React context providers en hooks |
-| `src/hooks/` | React hooks voor state-logica |
-| `src/services/` | Bedrijfslogica en externe integraties |
-| `src/types/` | TypeScript typedefinities |
-| `src/utils/` | Kleine hulpfuncties |
-| `src/locales/` | Vertaal JSON-bestanden |
-| `src/__tests__/` | Unit- en componenttesten |
+- `public/` - Statische bestanden
+- `src/components/` - UI-componenten
+- `src/contexts/` - React context providers en hooks
+- `src/hooks/` - React hooks voor state-logica
+- `src/services/` - Bedrijfslogica en externe integraties
+- `src/types/` - TypeScript typedefinities
+- `src/utils/` - Kleine hulpfuncties
+- `src/locales/` - Vertaal JSON-bestanden
+- `src/__tests__/` - Unit- en componenttesten
 
 ## Commands
 
-| Commando | Wat het doet |
-|----------|-------------|
-| `bun run dev` | Start dev-server |
-| `bun run build` | Type-check (`tsc -b`) gevolgd door productiebuild (`vite build`) |
-| `bun run preview` | Start server vanuit de productiebuild |
-| `bun run lint` | Draai ESLint over het hele project |
-| `bun run test` | Draai alle tests via vitest |
-| `bun run test:coverage` | Draai Vitest met V8 coverage reporter |
+- `bun run dev` - Start dev-server
+- `bun run build` - Type-check (`tsc -b`) gevolgd door productiebuild (`vite build`)
+- `bun run preview` - Start server vanuit de productiebuild
+- `bun run lint` - Draai ESLint over het hele project
+- `bun run test` - Draai alle tests via vitest
+- `bun run test:coverage` - Draai Vitest met V8 coverage reporter

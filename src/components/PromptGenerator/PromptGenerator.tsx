@@ -56,7 +56,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      onComplete((promptGeneratorService.getCurrentText() + t('prompt_suffix')).trim(), promptGeneratorService.getStats());
+      onComplete((promptGeneratorService.getCurrentText() + t('prompt_suffix')).trim(), promptGeneratorService.getStats(), promptGeneratorService.getLastWarning());
       return;
     }
 

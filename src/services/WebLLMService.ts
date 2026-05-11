@@ -142,7 +142,13 @@ export class WebLLMService implements IWebLLMService {
       },
     });
 
-    WebLLMService.engine = await WebLLMService.enginePromise;
+    try {
+      WebLLMService.engine = await WebLLMService.enginePromise;
+    } catch (err) {
+      WebLLMService.enginePromise = null;
+      WebLLMService.engine = null;
+      throw err;
+    }
     WebLLMService.enginePromise = null;
   }
 
@@ -194,6 +200,15 @@ export class WebLLMService implements IWebLLMService {
     if (WebLLMService.engine) {
       await WebLLMService.engine.interruptGenerate();
     }
+  }
+
+  resetEngine(): void {
+    WebLLMService.resetEngine();
+  }
+
+  static resetEngine(): void {
+    WebLLMService.engine = null;
+    WebLLMService.enginePromise = null;
   }
 
   // Pak meerkeuze antwoord en maak de systeem prompt met alle survey-antwoorden
