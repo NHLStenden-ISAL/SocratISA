@@ -74,6 +74,7 @@
   "result_retry": "Opnieuw genereren",
   "result_home": "Terug naar start",
   "result_meta": "{{chars}} tekens \u00b7 {{words}} woorden",
+  "result_meta_tokens": "{{tokens}} tokens",
   "result_download": "Downloaden als .txt",
   "result_download_aria": "Download de prompt als een tekstbestand",
   "result_copied": "Gekopieerd!",

@@ -27,6 +27,7 @@ export class WebLLMService implements IWebLLMService {
   private static clearingCache = false;
   private static gpuAvailable: boolean | null = null;
   static throttleMs = 0;
+  private lastCompletionTokens: number | null = null;
 
   // Check (integrated) GPU naam en ondersteuning met WebGPU
   static isWebGPUAvailable(): boolean {
@@ -196,6 +197,10 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  getLastCompletionTokens(): number | null {
+    return this.lastCompletionTokens;
+  }
+
   // Stop huidige generatie
   async interruptGenerate(): Promise<void> {
     if (WebLLMService.engine) {
@@ -278,10 +283,16 @@ export class WebLLMService implements IWebLLMService {
       max_tokens: 1500,
       stop: ['[EINDE]', '[END]'],
       stream: true,
+      stream_options: { include_usage: true },
       enable_thinking: false,
     } as webllm.ChatCompletionRequestStreaming);
 
+    this.lastCompletionTokens = null;
     for await (const chunk of stream) {
+      if (chunk.usage) {
+        this.lastCompletionTokens = chunk.usage.completion_tokens ?? null;
+      }
+
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
       if (WebLLMService.throttleMs > 0) {

@@ -171,7 +171,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       this.currentText = this.cleanOutput(this.currentText);
       this.complete = true;
       this.generating = false;
-      this.lastStats = this.buildStats();
+      this.lastStats = this.buildStats(this.webLLMService.getLastCompletionTokens() ?? undefined);
       this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
     }
   }
@@ -242,7 +242,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   }
 
   // Bereken totale tijd/generatie tijd/tijd tot eerste token/tokens per seconden
-  private buildStats(): GenerationStats | undefined {
+  private buildStats(completionTokens?: number): GenerationStats | undefined {
     if (!this.gpuUsed) return undefined;
 
     const completeTime = performance.now();
@@ -252,6 +252,6 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       ? (completeTime - this.firstTokenTime) / 1000
       : totalTime / 1000;
     const tps = generationDuration > 0 ? Math.round(this.tokenCount / generationDuration) : 0;
-    return { ttft: Math.round(ttft), totalTime: Math.round(totalTime), tps };
+    return { ttft: Math.round(ttft), totalTime: Math.round(totalTime), tps, completionTokens };
   }
 }

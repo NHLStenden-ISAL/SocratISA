@@ -74,6 +74,7 @@
   "result_retry": "Regenerate",
   "result_home": "Back to start",
   "result_meta": "{{chars}} characters \u00b7 {{words}} words",
+  "result_meta_tokens": "{{tokens}} tokens",
   "result_download": "Download as .txt",
   "result_download_aria": "Download the prompt as a text file",
   "result_copied": "Copied!",

@@ -183,9 +183,12 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           )}
         </div>
 
-        {/* Teken/Woorden statistieken */}
+        {/* Teken/Woorden/Token statistieken */}
         <div className="prompt-meta">
           {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
+          {stats?.completionTokens !== undefined && (
+            <> · {t('result_meta_tokens', { tokens: stats.completionTokens })}</>
+          )}
         </div>
 
         {/* Bewerk/Kopieer knoppen */}

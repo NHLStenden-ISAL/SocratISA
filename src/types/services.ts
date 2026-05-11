@@ -33,6 +33,7 @@ export interface IWebLLMService {
   interruptGenerate(): Promise<void>;
   clearModelCache(): Promise<void>;
   resetEngine(): void;
+  getLastCompletionTokens(): number | null;
 }
 
 // Service voor fallback prompt generatie.
@@ -53,6 +54,7 @@ export interface GenerationStats {
   ttft: number;
   totalTime: number;
   tps: number;
+  completionTokens?: number;
 }
 
 // Service voor het genereren van prompts met events.
