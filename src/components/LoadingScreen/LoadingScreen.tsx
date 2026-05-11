@@ -19,7 +19,7 @@ export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
     containerRef.current?.focus()
   }, [])
 
-  const showProgress = progressInfo && progressInfo.percentage > 0;
+  const showProgress = progressInfo && progressInfo.percentage >= 0;
 
   return (
     <div className="loading-screen" role="status" aria-live="polite" tabIndex={-1} ref={containerRef}>
@@ -29,6 +29,9 @@ export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
           <div className="loading-progress-track">
             <div className="loading-progress-fill" style={{ width: `${progressInfo.percentage}%` }}></div>
           </div>
+        )}
+        {progressInfo?.isDownloading && (
+          <p className="loading-eta">{t('home_preload_eta')}</p>
         )}
         <p>
           {formatProgressText(progressInfo, t)}

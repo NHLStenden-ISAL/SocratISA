@@ -15,7 +15,8 @@ const APP_CONFIG: webllm.AppConfig = {
       model_lib:
         'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
       overrides: {
-        context_window_size: 4096,
+        context_window_size: 2048,
+        max_history_size: 1,
       },
     },
   ],
@@ -162,12 +163,16 @@ export class WebLLMService implements IWebLLMService {
     const mbMatch = rawText.match(/(\d+)MB/);
     const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
 
-    return {
-      text: isDownloading ? 'Downloading model' : 'Retrieving from cache',
-      percentage: pct,
-      isDownloading,
-      mbFetched,
-    };
+    let text: string;
+    if (isDownloading) {
+      text = 'Downloading model';
+    } else if (pct > 0) {
+      text = 'Retrieving from cache';
+    } else {
+      text = '';
+    }
+
+    return { text, percentage: pct, isDownloading, mbFetched };
   }
 
   private static isAvailableForUse(): boolean {

@@ -166,16 +166,18 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
   // Laad UI
   if (phase === 'loading') {
-    const showProgress = progressInfo && progressInfo.percentage > 0;
     return (
       <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}
            title={progressInfo?.isDownloading ? t('home_preload_tooltip') : undefined}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
-          {showProgress && (
+          {progressInfo && (
             <div className="loading-progress-track">
               <div className="loading-progress-fill" style={{ width: `${progressInfo.percentage}%` }}></div>
             </div>
+          )}
+          {progressInfo?.isDownloading && (
+            <p className="loading-eta">{t('home_preload_eta')}</p>
           )}
           <p>
             {formatProgressText(progressInfo, t, 'result_generating')}

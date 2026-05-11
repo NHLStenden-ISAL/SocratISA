@@ -44,6 +44,15 @@
   to { transform: rotate(360deg); }
 }
 
+.loading-eta {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--text);
+  opacity: 0.5;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
 .loading-progress-track {
   width: 260px;
   max-width: 80vw;

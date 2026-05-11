@@ -67,6 +67,13 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     headingRef.current?.focus();
   }, []);
 
+  useEffect(function autoDismissCacheFeedback() {
+    if (clearCacheStatus === 'done' || clearCacheStatus === 'error') {
+      const timer = setTimeout(() => setClearCacheStatus('idle'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [clearCacheStatus]);
+
   const {
     prompt: displayPrompt,
     isEditing,
@@ -186,7 +193,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
         {/* Teken/Woorden/Token statistieken */}
         <div className="prompt-meta">
           {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
-          {stats?.completionTokens !== undefined && (
+          {!isEditing && displayPrompt === prompt && stats?.completionTokens !== undefined && (
             <> · {t('result_meta_tokens', { tokens: stats.completionTokens })}</>
           )}
         </div>
@@ -285,12 +292,13 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           >
             <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
           </button>
-          {clearCacheStatus !== 'idle' && (
-            <span className="cache-status-text" role="status" aria-live="polite">
-              {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : clearCacheStatus === 'done' ? t('home_cache_cleared') : t('home_cache_clear_error')}
-            </span>
-          )}
         </div>
+
+        {clearCacheStatus !== 'idle' && (
+          <span className="cache-status-text" role="status" aria-live="polite">
+            {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : (t(clearCacheStatus === 'done' ? 'home_cache_cleared' : 'home_cache_clear_error'))}
+          </span>
+        )}
       </div>
 
       {/* Popup verwijder model cache */}

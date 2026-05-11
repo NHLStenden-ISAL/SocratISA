@@ -162,6 +162,9 @@ export const Home = () => {
                 <div className="progress-bar-track">
                   <div className="progress-bar-fill" style={{ width: `${preloadProgress?.percentage ?? 0}%` }}></div>
                 </div>
+                {preloadProgress?.isDownloading && (
+                  <span className="loading-eta">{t('home_preload_eta')}</span>
+                )}
                 <span className="preload-text">
                   {formatProgressText(preloadProgress, t, 'home_preload_loading')}
                 </span>

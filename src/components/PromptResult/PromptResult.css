@@ -305,9 +305,13 @@ html[data-theme="dark"] .memory-warning {
 }
 
 .cache-status-text {
+  display: block;
+  text-align: center;
   font-family: var(--sans);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--accent);
+  margin-bottom: 12px;
+  animation: fadeIn 0.2s ease;
 }
 
 .footer-btn {
