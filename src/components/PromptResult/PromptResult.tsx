@@ -139,19 +139,19 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
         {stats && (
           <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_ttft')}</span>
+              <span className="stat-label" data-tip={t('result_stat_ttft_tip')}>{t('result_stat_ttft')}</span>
               <span className="stat-value">{formatMs(stats.ttft)}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_tps')}</span>
+              <span className="stat-label" data-tip={t('result_stat_tps_tip')}>{t('result_stat_tps')}</span>
               <span className="stat-value">{stats.tps}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_generate')}</span>
+              <span className="stat-label" data-tip={t('result_stat_generate_tip')}>{t('result_stat_generate')}</span>
               <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_total')}</span>
+              <span className="stat-label" data-tip={t('result_stat_total_tip')}>{t('result_stat_total')}</span>
               <span className="stat-value">{formatMs(stats.totalTime)}</span>
             </div>
           </div>
@@ -188,9 +188,6 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
         </div>
 
-        {/* Bewerk/Kopieer confirmatie */}
-        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
-
         {/* Bewerk/Kopieer knoppen */}
         <div className="prompt-actions">
           {isEditing ? (
@@ -219,6 +216,9 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
             {t('result_copy')}
           </button>
         </div>
+
+        {/* Bewerk/Kopieer confirmatie */}
+        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
 
         {/* AI-provider knoppen */}
         <div className="provider-section">

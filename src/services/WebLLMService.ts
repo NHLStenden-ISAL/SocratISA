@@ -137,6 +137,7 @@ export class WebLLMService implements IWebLLMService {
 
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
       appConfig: APP_CONFIG,
+      logLevel: 'ERROR',
       initProgressCallback: (report) => {
         onProgress?.(WebLLMService.parseProgressReport(report));
       },

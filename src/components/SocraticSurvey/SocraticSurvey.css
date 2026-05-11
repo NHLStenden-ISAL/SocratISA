@@ -91,7 +91,8 @@
 .survey-card h2 {
   font-size: 2.5rem;
   margin-bottom: 16px;
-  line-height: 1.1;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .survey-card .description {
@@ -229,6 +230,8 @@ html[data-theme="dark"] .back-btn {
   .survey-card h1,
   .survey-card h2 {
     font-size: 2rem;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
   }
 
   .text-input-form input {
@@ -244,6 +247,8 @@ html[data-theme="dark"] .back-btn {
   .survey-card h1,
   .survey-card h2 {
     font-size: 1.6rem;
+    line-height: 1.5;
+    letter-spacing: -0.015em;
   }
 
   .survey-card .description {
