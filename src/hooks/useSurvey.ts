@@ -10,6 +10,14 @@ import { safeSessionStorage, STORAGE_KEYS } from '../utils/storage';
 import { useGPUStatus } from './useGPUStatus';
 import type { GenerationEvent, ProgressInfo } from '../types';
 
+// Haal AI-model/fallback keuze uit storage
+function getGPUChoice(isAvailable: boolean | null): boolean {
+  const stored = safeSessionStorage.getItem(STORAGE_KEYS.GPU_CHOICE);
+  if (stored === 'true') return true;
+  if (stored === 'false') return false;
+  return isAvailable === true;
+}
+
 export function useSurvey() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -22,8 +30,7 @@ export function useSurvey() {
   const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [inputError, setInputError] = useState(false);
   const { isAvailable } = useGPUStatus();
-  const gpuAvailable = isAvailable === true;
-
+  const gpuAvailable = getGPUChoice(isAvailable);
   const currentQ = SURVEY_QUESTIONS[step];
 
   // Sla keuze antwoord op

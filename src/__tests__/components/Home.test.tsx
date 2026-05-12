@@ -61,7 +61,7 @@ describe('Home', () => {
     expect(screen.getByText('home_cta')).toBeInTheDocument();
   });
 
-  it('toont automatisch een preload dialoog als GPU beschikbaar is', async () => {
+  it('toont automatisch een preload dialoog als GPU beschikbaar is', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -76,9 +76,7 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('home_preload_dialog_title')).toBeInTheDocument();
   });
 
@@ -118,9 +116,9 @@ describe('Home', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('navigeert direct naar survey bij klik op CTA', () => {
+  it('toont een keuzedialoog bij klik op CTA', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+      isAvailable: false,
       gpuName: null,
       isChecking: false,
     });
@@ -136,10 +134,61 @@ describe('Home', () => {
     const ctaButton = screen.getByLabelText('home_cta_aria_v2');
     fireEvent.click(ctaButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/survey');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('home_cta_dialog_title')).toBeInTheDocument();
+    expect(screen.getByText('home_cta_dialog_ai')).toBeInTheDocument();
+    expect(screen.getByText('home_cta_dialog_fallback')).toBeInTheDocument();
   });
 
-  it('sluit de preload dialoog bij klik op de overlay', async () => {
+  it('navigeert naar survey met GPU bij kiezen voor AI-model', () => {
+    vi.mocked(useGPUStatus).mockReturnValue({
+      isAvailable: false,
+      gpuName: null,
+      isChecking: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <Home />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    fireEvent.click(ctaButton);
+
+    const aiButton = screen.getByText('home_cta_dialog_ai');
+    fireEvent.click(aiButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { gpuAvailable: true } });
+  });
+
+  it('navigeert naar survey zonder GPU bij kiezen voor fallback', () => {
+    vi.mocked(useGPUStatus).mockReturnValue({
+      isAvailable: false,
+      gpuName: null,
+      isChecking: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <Home />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    fireEvent.click(ctaButton);
+
+    const fallbackButton = screen.getByText('home_cta_dialog_fallback');
+    fireEvent.click(fallbackButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { gpuAvailable: false } });
+  });
+
+  it('sluit de preload dialoog bij klik op de overlay', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -154,19 +203,15 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const overlay = document.querySelector('.dialog-overlay');
     fireEvent.click(overlay!);
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('sluit de preload dialoog bij klik op dismiss', async () => {
+  it('sluit de preload dialoog bij klik op dismiss', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -181,16 +226,12 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const dismissButton = screen.getByText('home_preload_dialog_dismiss');
     fireEvent.click(dismissButton);
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('start preload en toont status bij klik op confirm', async () => {
@@ -208,16 +249,12 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toBeInTheDocument();
@@ -243,9 +280,7 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
@@ -270,9 +305,7 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
