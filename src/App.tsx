@@ -1,33 +1,32 @@
 /**
  * App: beheert de algemene layout van de webapplicatie.
  */
-import './App.css'
-import { useEffect, useState, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
-import { useTheme } from './contexts/useTheme'
-import { useLanguage } from './contexts/useLanguage'
-import { useServices } from './contexts/useServices'
-import { useGPUStatus } from './hooks'
-import type { GenerationEvent } from './types'
-import { Footer } from './components/Footer/Footer'
-import { Dialog } from './components/Dialog/Dialog'
-import { safeSessionStorage } from './utils/storage'
-
+import './App.css';
+import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { useTheme } from './contexts/useTheme';
+import { useLanguage } from './contexts/useLanguage';
+import { useServices } from './contexts/useServices';
+import { useGPUStatus } from './hooks';
+import type { GenerationEvent } from './types';
+import { Footer } from './components/Footer/Footer';
+import { Dialog } from './components/Dialog/Dialog';
+import { safeSessionStorage, STORAGE_KEYS } from './utils/storage';
 
 function App() {
-  const { t } = useTranslation()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { theme, toggleTheme } = useTheme()
-  const { lang, toggleLang } = useLanguage()
-  const { promptGeneratorService } = useServices()
-  const { isAvailable, gpuName, isChecking } = useGPUStatus()
-  const [showLangDialog, setShowLangDialog] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const previousPathRef = useRef(location.pathname)
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { lang, toggleLang } = useLanguage();
+  const { promptGeneratorService } = useServices();
+  const { isAvailable, gpuName, isChecking } = useGPUStatus();
+  const [showLangDialog, setShowLangDialog] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const previousPathRef = useRef(location.pathname);
 
   // Verander website titel per pagina
   useEffect(function updateDocumentTitle() {
@@ -35,63 +34,66 @@ function App() {
       '/': 'SocratISA',
       '/survey': t('title_survey'),
       '/result': t('title_result'),
-    }
-    document.title = titles[location.pathname] ?? 'SocratISA'
-  }, [location.pathname, t])
+    };
+    document.title = titles[location.pathname] ?? 'SocratISA';
+  }, [location.pathname, t]);
 
   // Stop AI generatie bij verlating result pagina
   useEffect(function abortGenerationOnLeave() {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
-      promptGeneratorService.abort()
-      setIsGenerating(false)
-      safeSessionStorage.removeItem('socratisa_result_prompt')
-      safeSessionStorage.removeItem('socratisa_result_stats')
-      safeSessionStorage.removeItem('socratisa_result_edited_prompt')
+      promptGeneratorService.abort();
+      setIsGenerating(false);
+      safeSessionStorage.removeItem(STORAGE_KEYS.PROMPT);
+      safeSessionStorage.removeItem(STORAGE_KEYS.STATS);
+      safeSessionStorage.removeItem(STORAGE_KEYS.EDITED_PROMPT);
     }
-    previousPathRef.current = location.pathname
-  }, [location.pathname, promptGeneratorService])
+    previousPathRef.current = location.pathname;
+  }, [location.pathname, promptGeneratorService]);
 
-  // Verander taal/Verander taal met confirmatie)
+  // Verander taal
   const handleLangToggle = () => {
     if (location.pathname === '/result') {
-      setShowLangDialog(true)
+      setShowLangDialog(true);
     } else {
-      toggleLang()
+      toggleLang();
     }
-  }
+  };
 
+  // Verander taal (met confirmatie)
   const confirmLangToggle = () => {
-    toggleLang()
-    setShowLangDialog(false)
-    navigate('/survey')
-  }
+    toggleLang();
+    setShowLangDialog(false);
+    navigate('/survey');
+  };
 
-  const closeLangDialog = () => setShowLangDialog(false)
+  const closeLangDialog = () => setShowLangDialog(false);
 
+  // Scroll naar top bij navigatie
   useEffect(function scrollToTopOnNavigate() {
-    window.scrollTo(0, 0)
-  }, [location.pathname])
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
+  // Volg AI generatie status
   useEffect(function trackGenerationState() {
     const handler = (event: GenerationEvent) => {
       switch (event.type) {
         case 'firstToken':
         case 'token':
-          setIsGenerating(true)
-          break
+          setIsGenerating(true);
+          break;
         case 'complete':
         case 'error':
-          setIsGenerating(false)
-          break
+          setIsGenerating(false);
+          break;
       }
-    }
+    };
 
-    promptGeneratorService.subscribe(handler)
+    promptGeneratorService.subscribe(handler);
 
     return () => {
-      promptGeneratorService.unsubscribe(handler)
-    }
-  }, [promptGeneratorService])
+      promptGeneratorService.unsubscribe(handler);
+    };
+  }, [promptGeneratorService]);
 
   return (
     // Header
@@ -110,7 +112,15 @@ function App() {
 
       {/* Taal/Thema knoppen */}
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
-        <button className="toggle-btn" onClick={handleLangToggle} disabled={isGenerating} aria-label={t('aria_switch_lang_v2', { visible: lang === 'nl' ? 'EN' : 'NL', lang: lang === 'nl' ? 'English' : 'Nederlands' })}>
+        <button
+          className="toggle-btn"
+          onClick={handleLangToggle}
+          disabled={isGenerating}
+          aria-label={t('aria_switch_lang_v2', {
+            visible: lang === 'nl' ? 'EN' : 'NL',
+            lang: lang === 'nl' ? 'English' : 'Nederlands',
+          })}
+        >
           {lang === 'nl' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
@@ -146,7 +156,7 @@ function App() {
       {/* Footer */}
       <Footer />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

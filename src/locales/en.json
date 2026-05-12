@@ -127,7 +127,7 @@
   "provider_dialog_confirm": "Continue",
   "home_preload_dialog_confirm": "Yes, download",
   "home_preload_dialog_dismiss": "No, thanks",
-  "home_preload_loading": "Downloading model...",
+  "home_preload_loading": "Retrieving model...",
   "home_preload_ready": "Model is ready to use!",
   "home_preload_error": "Download failed, please try again.",
   "memory_warning": "Not enough working memory to run the AI model. The following prompt will use a template. Close other tabs or applications and regenerate for a more tailored result.",

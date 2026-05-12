@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SURVEY_QUESTIONS } from '../services';
 import { useServices } from '../contexts/useServices';
-import { safeSessionStorage } from '../utils/storage';
+import { safeSessionStorage, STORAGE_KEYS } from '../utils/storage';
 import { useGPUStatus } from './useGPUStatus';
 import type { GenerationEvent, ProgressInfo } from '../types';
 
@@ -38,12 +38,15 @@ export function useSurvey() {
   // Volgende/Vorige vraag met validatie
   const handleNext = (value: string) => {
     if (isSubmittingRef.current) return;
+
     isSubmittingRef.current = true;
+
     if (!value.trim().length) {
       setInputError(true);
       isSubmittingRef.current = false;
       return;
     }
+
     surveyService.setAnswer(currentQ.id, value);
     setInputError(false);
     advanceStep();
@@ -59,28 +62,33 @@ export function useSurvey() {
 
   const handleBack = () => {
     if (step > 0) {
-      setInputError(false)
-      setStep(prev => prev - 1)
+      setInputError(false);
+      setStep(prev => prev - 1);
     }
-  }
+  };
 
   // Hou antwoord opgeslagen bij vraag navigatie
   useEffect(function syncAnswerOnStepChange() {
-    isSubmittingRef.current = false
+    isSubmittingRef.current = false;
+
     if (currentQ.type === 'text' && inputRef.current) {
-      const prevAnswer = surveyService.getAnswer(currentQ.id)
-      inputRef.current.value = prevAnswer
-      inputRef.current.focus()
+      const prevAnswer = surveyService.getAnswer(currentQ.id);
+      inputRef.current.value = prevAnswer;
+      inputRef.current.focus();
     }
-  }, [step, currentQ.type, currentQ.id, surveyService])
+  }, [step, currentQ.type, currentQ.id, surveyService]);
 
   // Ga naar result bij error of eerste token gegenereerd
   useEffect(function navigateOnFirstToken() {
     if (!isGenerating) return;
 
-    if (promptGeneratorService.getIsComplete() || promptGeneratorService.getCurrentText()) {
+    const navigateToResult = () => {
       const answers = surveyService.toSurveyAnswers();
       navigate('/result', { state: { answers, gpuAvailable } });
+    };
+
+    if (promptGeneratorService.getIsComplete()) {
+      navigateToResult();
       return;
     }
 
@@ -88,9 +96,9 @@ export function useSurvey() {
       if (event.type === 'progress') {
         setProgressInfo(event.info);
       }
+
       if (event.type === 'firstToken' || event.type === 'complete' || event.type === 'error') {
-        const answers = surveyService.toSurveyAnswers();
-        navigate('/result', { state: { answers, gpuAvailable } });
+        navigateToResult();
       }
     };
 
@@ -101,9 +109,9 @@ export function useSurvey() {
   // Stuur antwoorden naar prompt generator
   const finishSurvey = () => {
     setIsGenerating(true);
-    safeSessionStorage.removeItem('socratisa_result_prompt');
-    safeSessionStorage.removeItem('socratisa_result_stats');
-    safeSessionStorage.removeItem('socratisa_result_edited_prompt');
+    safeSessionStorage.removeItem(STORAGE_KEYS.PROMPT);
+    safeSessionStorage.removeItem(STORAGE_KEYS.STATS);
+    safeSessionStorage.removeItem(STORAGE_KEYS.EDITED_PROMPT);
     promptGeneratorService.reset();
     promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressInfo);
   };

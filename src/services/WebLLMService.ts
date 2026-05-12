@@ -7,6 +7,7 @@ import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 // Gebruikte model
 const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
 
+// Model definitie
 const APP_CONFIG: webllm.AppConfig = {
   model_list: [
     {
@@ -45,6 +46,7 @@ export class WebLLMService implements IWebLLMService {
       type AdapterWithInfo = { info?: { vendor?: string; architecture?: string; device?: string; description?: string } };
       const info = (adapter as AdapterWithInfo).info;
       if (!info) return true;
+
       const fields = [info.vendor, info.architecture, info.device, info.description]
         .filter(Boolean)
         .join(' ')
@@ -58,7 +60,9 @@ export class WebLLMService implements IWebLLMService {
 
   static async canUseWebGPU(): Promise<boolean> {
     if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
+
     if (!WebLLMService.isWebGPUAvailable()) return false;
+
     try {
       type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
       const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
@@ -66,6 +70,7 @@ export class WebLLMService implements IWebLLMService {
         WebLLMService.gpuAvailable = false;
         return false;
       }
+
       const hardware = WebLLMService.isHardwareAdapter(adapter);
       WebLLMService.gpuAvailable = hardware;
       return hardware;
@@ -113,18 +118,19 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
+
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
     if (WebLLMService.engine) {
-      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
+      onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
     if (WebLLMService.enginePromise) {
       await WebLLMService.enginePromise;
-      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
+      onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
@@ -136,7 +142,6 @@ export class WebLLMService implements IWebLLMService {
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
     const webllmModule = await import('@mlc-ai/web-llm');
-
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
       appConfig: APP_CONFIG,
       logLevel: 'ERROR',
@@ -163,16 +168,7 @@ export class WebLLMService implements IWebLLMService {
     const mbMatch = rawText.match(/(\d+)MB/);
     const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
 
-    let text: string;
-    if (isDownloading) {
-      text = 'Downloading model';
-    } else if (pct > 0) {
-      text = 'Retrieving from cache';
-    } else {
-      text = '';
-    }
-
-    return { text, percentage: pct, isDownloading, mbFetched };
+    return { percentage: pct, isDownloading, mbFetched };
   }
 
   private static isAvailableForUse(): boolean {
@@ -182,7 +178,9 @@ export class WebLLMService implements IWebLLMService {
   // Verwijder model uit browser cache
   async clearModelCache(): Promise<void> {
     if (WebLLMService.clearingCache) return;
+
     WebLLMService.clearingCache = true;
+
     try {
       if (WebLLMService.engine) {
         try {
@@ -218,11 +216,15 @@ export class WebLLMService implements IWebLLMService {
   }
 
   static resetEngine(): void {
+    const engine = WebLLMService.engine;
     WebLLMService.engine = null;
     WebLLMService.enginePromise = null;
+    if (engine) {
+      void engine.unload();
+    }
   }
 
-  // Pak meerkeuze antwoord en maak de systeem prompt met alle survey-antwoorden
+  // Pak meerkeuze antwoord
   private getStyleHintKey(styleKey: string): string {
     const map: Record<string, string> = {
       survey_option_visual: 'style_hint_visual',
@@ -233,6 +235,7 @@ export class WebLLMService implements IWebLLMService {
     return map[styleKey] || 'style_hint_default';
   }
 
+  // Maak de systeem prompt met alle survey-antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = this.getStyleHintKey(answers.styleKey);
     return translate('webllm_system_prompt', {
@@ -251,6 +254,7 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
+
     if (!WebLLMService.isWebGPUAvailable()) {
       throw new Error('WebGPU niet beschikbaar');
     }
@@ -268,17 +272,19 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.engine) {
       throw new Error('WebLLM engine niet geladen');
     }
+
     await WebLLMService.engine.resetChat();
 
     onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
+
     const userMessage = translate('webllm_user_message', {
       subject: answers.subject,
       topic: answers.topic,
     });
 
-    // Stream generatie met optionele buffer
+    // Stream generatie met optionele buffer tussen chunks
     const stream = await WebLLMService.engine.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
@@ -300,6 +306,7 @@ export class WebLLMService implements IWebLLMService {
 
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
+
       if (WebLLMService.throttleMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, WebLLMService.throttleMs));
       }

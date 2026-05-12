@@ -186,6 +186,15 @@ describe('PromptGeneratorService', () => {
       await service.start(answers, true, translate);
       expect(service.getIsComplete()).toBe(true);
     });
+
+    it('unloadt het model na GPU generatie', async () => {
+      webLLMService = createMockWebLLMService(['test']);
+      service = new PromptGeneratorService(webLLMService, fallbackService);
+
+      await service.start(answers, true, translate);
+
+      expect(webLLMService.resetEngine).toHaveBeenCalled();
+    });
   });
 
   describe('start zonder GPU (fallback)', () => {
@@ -275,6 +284,7 @@ describe('PromptGeneratorService', () => {
 
       expect(service.getIsGenerating()).toBe(false);
       expect(webLLMService.interruptGenerate).toHaveBeenCalled();
+      expect(webLLMService.resetEngine).toHaveBeenCalled();
     });
 
     it('doet niets als er geen generatie loopt', () => {

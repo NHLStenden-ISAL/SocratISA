@@ -5,16 +5,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult } from '../../hooks';
+import { usePromptResult, useAutoFocus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
-import { safeSessionStorage } from '../../utils/storage';
+import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
 import type { GenerationStats, Provider } from '../../types';
 import './PromptResult.css';
 
-const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
-const STORAGE_KEY_STATS = 'socratisa_result_stats';
+const STORAGE_KEY_PROMPT = STORAGE_KEYS.PROMPT;
+const STORAGE_KEY_STATS = STORAGE_KEYS.STATS;
 
 // Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status 
 export const PromptResult = () => {
@@ -54,7 +54,15 @@ export const PromptResult = () => {
   return <PromptResultView prompt={prompt} stats={stats} warning={warning} />;
 };
 
-function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: GenerationStats; warning?: string }) {
+function PromptResultView({
+  prompt,
+  stats,
+  warning,
+}: {
+  prompt: string;
+  stats?: GenerationStats;
+  warning?: string;
+}) {
   const { t } = useTranslation();
   const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -63,9 +71,7 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
 
-  useEffect(function focusHeading() {
-    headingRef.current?.focus();
-  }, []);
+  useAutoFocus(headingRef);
 
   useEffect(function autoDismissCacheFeedback() {
     if (clearCacheStatus === 'done' || clearCacheStatus === 'error') {

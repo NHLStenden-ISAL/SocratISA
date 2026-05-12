@@ -139,27 +139,6 @@ describe('Home', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/survey');
   });
 
-  it('doet niets bij CTA klik als GPU status nog wordt gecontroleerd', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
-      gpuName: null,
-      isChecking: true,
-    });
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <Home />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
-    fireEvent.click(ctaButton);
-
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
   it('sluit de preload dialoog bij klik op de overlay', async () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,

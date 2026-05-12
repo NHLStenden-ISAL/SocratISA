@@ -31,6 +31,7 @@ export const SocraticSurvey = () => {
 
   return (
     <div className="survey-container">
+
       {/* Survey progressie bar */}
       <div
         className="survey-progress"
@@ -69,8 +70,7 @@ export const SocraticSurvey = () => {
                 className="text-input-form"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const input = e.currentTarget.querySelector('input');
-                  if (input?.value) handleNext(input.value);
+                  if (inputRef.current?.value) handleNext(inputRef.current.value);
                 }}
               >
                 <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
@@ -108,6 +108,7 @@ export const SocraticSurvey = () => {
             )}
           </div>
 
+          {/* Volgende vraag tip */}
           {currentQ.type === 'text' && (
             <>
               {inputError && (

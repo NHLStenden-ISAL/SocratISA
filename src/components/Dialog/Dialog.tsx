@@ -63,6 +63,7 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
   if (!isOpen) return null;
 
   return (
+    // Popup
     <div
       className="dialog-overlay"
       role="dialog"

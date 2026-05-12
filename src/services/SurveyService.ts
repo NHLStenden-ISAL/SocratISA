@@ -4,18 +4,21 @@
 import type { SurveyAnswers, Question, ISurveyService } from '../types';
 
 export const SURVEY_QUESTIONS: Question[] = [
+  // Subject vraag
   {
     id: 'subject',
     questionKey: 'survey_q_subject',
     descriptionKey: 'survey_q_subject_desc',
     type: 'text',
   },
+  // Onderwerp vraag
   {
     id: 'topic',
     questionKey: 'survey_q_topic',
     descriptionKey: 'survey_q_topic_desc',
     type: 'text',
   },
+  // Leerstijl vraag
   {
     id: 'style',
     questionKey: 'survey_q_style',

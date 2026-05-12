@@ -2,6 +2,8 @@
  * StorageService: abstraheert localStorage operaties.
  */
 export class StorageService {
+
+  // Haal waarde uit localStorage
   static get<T>(key: string, fallback: T): T {
     try {
       const value = localStorage.getItem(key);
@@ -11,6 +13,7 @@ export class StorageService {
     }
   }
 
+  // Zet waarde in localStorage
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));

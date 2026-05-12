@@ -9,22 +9,17 @@ import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
 import { formatProgressText } from '../../utils/progress';
 import type { ProgressInfo } from '../../types';
-import './Home.css'
+import './Home.css';
 
 export const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isAvailable, isChecking } = useGPUStatus();
+  const { isAvailable } = useGPUStatus();
   const { promptGeneratorService } = useServices();
   const [showPreloadOffer, setShowPreloadOffer] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
-  
-  const handleCTA = () => {
-    if (isChecking) return;
-    navigate('/survey');
-  };
   
   // Laad AI model in de achtergrond wel/niet gebaseerd op popup keuze 
   const handlePreload = async () => {
@@ -47,13 +42,11 @@ export const Home = () => {
   };
 
   useEffect(function showPreloadDialog() {
-    if (!isChecking && isAvailable && preloadStatus === 'idle' && !showPreloadOffer && !preloadOfferDismissed) {
+    if (isAvailable && preloadStatus === 'idle' && !preloadOfferDismissed) {
       const timer = setTimeout(() => setShowPreloadOffer(true), 0);
       return () => clearTimeout(timer);
     }
-  }, [isChecking, isAvailable, preloadStatus, showPreloadOffer, preloadOfferDismissed]);
-
-
+  }, [isAvailable, preloadStatus, preloadOfferDismissed]);
 
   return (
     <>
@@ -149,7 +142,7 @@ export const Home = () => {
 
         {/* Knop naar survey */}
         <div className="button-container">
-          <button className="socratic-button" onClick={handleCTA} aria-label={t('home_cta_aria_v2')}>
+          <button className="socratic-button" onClick={() => navigate('/survey')} aria-label={t('home_cta_aria_v2')}>
             {t('home_cta')}
           </button>
 

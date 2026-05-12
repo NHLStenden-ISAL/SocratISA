@@ -13,7 +13,7 @@ export interface ISurveyService {
 
 // Informatie over de voortgang van AI model ophalen.
 export interface ProgressInfo {
-  text: string;
+  text?: string;
   percentage: number;
   isDownloading: boolean;
   mbFetched?: number;

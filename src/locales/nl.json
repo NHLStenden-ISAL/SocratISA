@@ -127,7 +127,7 @@
   "provider_dialog_confirm": "Doorgaan",
   "home_preload_dialog_confirm": "Ja, downloaden",
   "home_preload_dialog_dismiss": "Nee, bedankt",
-  "home_preload_loading": "Model wordt gedownload...",
+  "home_preload_loading": "Model wordt opgehaald...",
   "home_preload_ready": "Model is klaar voor gebruik!",
   "home_preload_error": "Download mislukt, probeer het opnieuw.",
   "memory_warning": "Niet genoeg werkgeheugen om het AI-model te draaien. De onderstaande prompt maakt gebruik van een sjabloon. Sluit andere tabbladen of programma's en genereer opnieuw voor een meer op maat gemaakt resultaat.",

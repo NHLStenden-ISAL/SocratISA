@@ -20,6 +20,8 @@ export function useGPUStatus(): GPUStatus {
     let cancelled = false;
 
     async function check() {
+
+      // Check of WebGPU beschikbaar is
       const usable = await webLLMService.canUseWebGPU();
       if (!usable) {
         if (!cancelled) {
@@ -29,6 +31,7 @@ export function useGPUStatus(): GPUStatus {
         return;
       }
 
+      // Haal GPU naam op
       const name = await webLLMService.detectGPU();
       if (!cancelled) {
         setIsAvailable(true);

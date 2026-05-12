@@ -173,6 +173,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       this.generating = false;
       this.lastStats = this.buildStats(this.webLLMService.getLastCompletionTokens() ?? undefined);
       this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
+      this.webLLMService.resetEngine();
     }
   }
 
@@ -200,7 +201,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   ): Promise<void> {
     console.warn('PromptGeneratorService: GPU generatie mislukt, valt terug naar fallback', err);
     this.webLLMService.resetEngine();
-    let warning: string | undefined = 'memory_warning';
+    const warning: string | undefined = 'memory_warning';
 
     try {
       this.runFallbackGeneration(answers, translate, warning);
@@ -219,6 +220,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.generating = false;
     this.complete = false;
     void this.webLLMService.interruptGenerate();
+    this.webLLMService.resetEngine();
   }
 
   getCurrentText(): string {

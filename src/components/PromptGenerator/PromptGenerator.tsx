@@ -167,7 +167,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   // Laad UI
   if (phase === 'loading') {
     return (
-      <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}
+      <div className="loading-screen result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}
            title={progressInfo?.isDownloading ? t('home_preload_tooltip') : undefined}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
