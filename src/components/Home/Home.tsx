@@ -145,14 +145,24 @@ export const Home = () => {
 
         {/* Knop naar survey */}
         <div className="button-container">
-          <button className="socratic-button" onClick={() => setShowCTADialog(true)} aria-label={t('home_cta_aria_v2')}>
+          <button
+            className="socratic-button"
+            onClick={() => {
+              if (preloadStatus !== 'idle') {
+                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+                navigate('/survey', { state: { gpuAvailable: true } });
+              } else {
+                setShowCTADialog(true);
+              }
+            }}
+            aria-label={t('home_cta_aria_v2')}
+          >
             {t('home_cta')}
           </button>
 
           {/* Model laad UI */}
           {preloadStatus === 'loading' && (
-            <div className="preload-status" role="status" aria-live="polite"
-                 title={preloadProgress?.isDownloading ? t('home_preload_tooltip') : undefined}>
+            <div className="preload-status" role="status" aria-live="polite">
               <div className="preload-spinner" aria-hidden="true"></div>
               <div className="preload-progress-area">
                 <div className="progress-bar-track">

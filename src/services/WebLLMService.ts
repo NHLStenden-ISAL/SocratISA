@@ -31,37 +31,9 @@ export class WebLLMService implements IWebLLMService {
   static throttleMs = 0;
   private lastCompletionTokens: number | null = null;
 
-  // Check (integrated) GPU naam en ondersteuning met WebGPU
-  static isWebGPUAvailable(): boolean {
+  // Controleer of WebGPU bruikbaar is
+  async canUseWebGPU(): Promise<boolean> {
     if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
-    return typeof navigator !== 'undefined' && 'gpu' in navigator;
-  }
-
-  isWebGPUAvailable(): boolean {
-    return WebLLMService.isWebGPUAvailable();
-  }
-
-  private static isHardwareAdapter(adapter: unknown): boolean {
-    try {
-      type AdapterWithInfo = { info?: { vendor?: string; architecture?: string; device?: string; description?: string } };
-      const info = (adapter as AdapterWithInfo).info;
-      if (!info) return true;
-
-      const fields = [info.vendor, info.architecture, info.device, info.description]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (/swiftshader|subzero|llvmpipe|softpipe/.test(fields)) return false;
-      return true;
-    } catch {
-      return true;
-    }
-  }
-
-  static async canUseWebGPU(): Promise<boolean> {
-    if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
-
-    if (!WebLLMService.isWebGPUAvailable()) return false;
 
     try {
       type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
@@ -71,42 +43,33 @@ export class WebLLMService implements IWebLLMService {
         return false;
       }
 
-      const hardware = WebLLMService.isHardwareAdapter(adapter);
-      WebLLMService.gpuAvailable = hardware;
-      return hardware;
+      const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
+      if (limits.maxStorageBuffersPerShaderStage < 10) {
+        WebLLMService.gpuAvailable = false;
+        return false;
+      }
+
+      WebLLMService.gpuAvailable = true;
+      return true;
     } catch {
       WebLLMService.gpuAvailable = false;
       return false;
     }
   }
 
-  async canUseWebGPU(): Promise<boolean> {
-    return WebLLMService.canUseWebGPU();
-  }
-
-  static async detectGPU(): Promise<string | null> {
-    try {
-      type NavGPU = { gpu: { requestAdapter(): Promise<{ info?: { description?: string; device?: string; vendor?: string; architecture?: string } } | null> } };
-      if ((navigator as unknown as NavGPU).gpu) {
-        const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
-        if (adapter?.info) {
-          const i = adapter.info;
-          const name = i.description || i.device || [i.vendor, i.architecture].filter(Boolean).join(' ') || '';
-          if (name) return name.toUpperCase();
-        }
-      }
-    } catch (gpuErr) {
-      console.warn('WebLLMService: kon GPU niet detecteren:', gpuErr);
-    }
-    return null;
-  }
-
+  // Haal GPU naam op
   async detectGPU(): Promise<string | null> {
-    return WebLLMService.detectGPU();
-  }
+    try {
+      type NavGPU = { gpu: { requestAdapter(): Promise<{ info: { description?: string; device?: string } } | null> } };
+      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
 
-  static resetGpuCache(): void {
-    WebLLMService.gpuAvailable = null;
+      if (!adapter) return null;
+
+      const name = adapter.info.description || adapter.info.device;
+      return name || null;
+    } catch {
+      return null;
+    }
   }
 
   static getModelId(): string {
@@ -119,7 +82,11 @@ export class WebLLMService implements IWebLLMService {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (!WebLLMService.isWebGPUAvailable()) {
+    if (WebLLMService.gpuAvailable === null) {
+      await this.canUseWebGPU();
+    }
+
+    if (!WebLLMService.gpuAvailable) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
@@ -212,10 +179,6 @@ export class WebLLMService implements IWebLLMService {
   }
 
   resetEngine(): void {
-    WebLLMService.resetEngine();
-  }
-
-  static resetEngine(): void {
     const engine = WebLLMService.engine;
     WebLLMService.engine = null;
     WebLLMService.enginePromise = null;
@@ -255,7 +218,11 @@ export class WebLLMService implements IWebLLMService {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (!WebLLMService.isWebGPUAvailable()) {
+    if (WebLLMService.gpuAvailable === null) {
+      await this.canUseWebGPU();
+    }
+
+    if (!WebLLMService.gpuAvailable) {
       throw new Error('WebGPU niet beschikbaar');
     }
 

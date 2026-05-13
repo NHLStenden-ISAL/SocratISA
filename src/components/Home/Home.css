@@ -186,9 +186,6 @@
   line-height: 1.4;
 }
 
-.preload-status[title] {
-  cursor: help;
-}
 
 .cta-choice-options {
   display: flex;

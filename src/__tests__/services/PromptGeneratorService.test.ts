@@ -15,7 +15,6 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
   }
 
   return {
-    isWebGPUAvailable: vi.fn().mockReturnValue(true),
     canUseWebGPU: vi.fn().mockResolvedValue(true),
     detectGPU: vi.fn().mockResolvedValue('MockGPU'),
     preloadModel: vi.fn().mockImplementation((_onProgress?: (info: ProgressInfo) => void) => {

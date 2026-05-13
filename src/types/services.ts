@@ -21,7 +21,6 @@ export interface ProgressInfo {
 
 // Service voor WebLLM functionaliteit en modelbeheer.
 export interface IWebLLMService {
-  isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
   preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void>;

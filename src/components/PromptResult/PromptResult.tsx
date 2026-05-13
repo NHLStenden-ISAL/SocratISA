@@ -2,6 +2,7 @@
  * PromptResult: toont de gegenereerde prompt samen met actie knoppen.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -70,6 +71,8 @@ function PromptResultView({
   const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
+  const navigate = useNavigate();
+  const [showRetryDialog, setShowRetryDialog] = useState(false);
 
   useAutoFocus(headingRef);
 
@@ -91,7 +94,6 @@ function PromptResultView({
     handleDone,
     handleCopy,
     handleProvider,
-    handleRetry,
     handleHome,
     providers,
   } = usePromptResult(prompt);
@@ -284,7 +286,7 @@ function PromptResultView({
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
         <div className="result-footer">
-          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>
+          <button className="footer-btn" onClick={() => setShowRetryDialog(true)} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
@@ -306,6 +308,45 @@ function PromptResultView({
           </span>
         )}
       </div>
+
+      {/* Popup voor AI-model/fallback generatie keuze */}
+      <Dialog
+        isOpen={showRetryDialog}
+        onClose={() => setShowRetryDialog(false)}
+        title={t('home_cta_dialog_title')}
+        titleId="retry-dialog-title"
+        actions={
+          <button className="dialog-btn secondary" onClick={() => setShowRetryDialog(false)}>
+            {t('provider_dialog_cancel')}
+          </button>
+        }
+      >
+        <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-choice-options">
+          <button
+            className="cta-choice-btn ai"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              setShowRetryDialog(false);
+              navigate('/survey', { state: { gpuAvailable: true } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+          </button>
+          <button
+            className="cta-choice-btn fallback"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              setShowRetryDialog(false);
+              navigate('/survey', { state: { gpuAvailable: false } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+          </button>
+        </div>
+      </Dialog>
 
       {/* Popup verwijder model cache */}
       <Dialog
