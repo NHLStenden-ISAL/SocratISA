@@ -1,5 +1,4 @@
 .site-footer {
-  margin-top: auto;
   padding: 32px 24px 24px;
   border-top: 1px solid var(--border);
   background: var(--code-bg);
@@ -48,7 +47,6 @@
 
 @media (max-width: 768px) {
   .site-footer {
-    margin-top: 36px;
     padding: 28px 20px 20px;
   }
 
@@ -61,7 +59,6 @@
 
 @media (max-width: 640px) {
   .site-footer {
-    margin-top: 28px;
     padding: 24px 16px 20px;
   }
 

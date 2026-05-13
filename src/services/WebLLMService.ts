@@ -7,6 +7,7 @@ import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 // Gebruikte model
 const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
 
+// Model definitie
 const APP_CONFIG: webllm.AppConfig = {
   model_list: [
     {
@@ -15,7 +16,8 @@ const APP_CONFIG: webllm.AppConfig = {
       model_lib:
         'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
       overrides: {
-        context_window_size: 4096,
+        context_window_size: 2048,
+        max_history_size: 1,
       },
     },
   ],
@@ -27,36 +29,12 @@ export class WebLLMService implements IWebLLMService {
   private static clearingCache = false;
   private static gpuAvailable: boolean | null = null;
   static throttleMs = 0;
+  private lastCompletionTokens: number | null = null;
 
-  // Check (integrated) GPU naam en ondersteuning met WebGPU
-  static isWebGPUAvailable(): boolean {
+  // Controleer of WebGPU bruikbaar is
+  async canUseWebGPU(): Promise<boolean> {
     if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
-    return typeof navigator !== 'undefined' && 'gpu' in navigator;
-  }
 
-  isWebGPUAvailable(): boolean {
-    return WebLLMService.isWebGPUAvailable();
-  }
-
-  private static isHardwareAdapter(adapter: unknown): boolean {
-    try {
-      type AdapterWithInfo = { info?: { vendor?: string; architecture?: string; device?: string; description?: string } };
-      const info = (adapter as AdapterWithInfo).info;
-      if (!info) return true;
-      const fields = [info.vendor, info.architecture, info.device, info.description]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (/swiftshader|subzero|llvmpipe|softpipe/.test(fields)) return false;
-      return true;
-    } catch {
-      return true;
-    }
-  }
-
-  static async canUseWebGPU(): Promise<boolean> {
-    if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
-    if (!WebLLMService.isWebGPUAvailable()) return false;
     try {
       type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
       const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
@@ -64,42 +42,34 @@ export class WebLLMService implements IWebLLMService {
         WebLLMService.gpuAvailable = false;
         return false;
       }
-      const hardware = WebLLMService.isHardwareAdapter(adapter);
-      WebLLMService.gpuAvailable = hardware;
-      return hardware;
+
+      const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
+      if (limits.maxStorageBuffersPerShaderStage < 10) {
+        WebLLMService.gpuAvailable = false;
+        return false;
+      }
+
+      WebLLMService.gpuAvailable = true;
+      return true;
     } catch {
       WebLLMService.gpuAvailable = false;
       return false;
     }
   }
 
-  async canUseWebGPU(): Promise<boolean> {
-    return WebLLMService.canUseWebGPU();
-  }
-
-  static async detectGPU(): Promise<string | null> {
-    try {
-      type NavGPU = { gpu: { requestAdapter(): Promise<{ info?: { description?: string; device?: string; vendor?: string; architecture?: string } } | null> } };
-      if ((navigator as unknown as NavGPU).gpu) {
-        const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
-        if (adapter?.info) {
-          const i = adapter.info;
-          const name = i.description || i.device || [i.vendor, i.architecture].filter(Boolean).join(' ') || '';
-          if (name) return name.toUpperCase();
-        }
-      }
-    } catch (gpuErr) {
-      console.warn('WebLLMService: kon GPU niet detecteren:', gpuErr);
-    }
-    return null;
-  }
-
+  // Haal GPU naam op
   async detectGPU(): Promise<string | null> {
-    return WebLLMService.detectGPU();
-  }
+    try {
+      type NavGPU = { gpu: { requestAdapter(): Promise<{ info: { description?: string; device?: string } } | null> } };
+      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
 
-  static resetGpuCache(): void {
-    WebLLMService.gpuAvailable = null;
+      if (!adapter) return null;
+
+      const name = adapter.info.description || adapter.info.device;
+      return name || null;
+    } catch {
+      return null;
+    }
   }
 
   static getModelId(): string {
@@ -111,18 +81,23 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
-    if (!WebLLMService.isWebGPUAvailable()) {
+
+    if (WebLLMService.gpuAvailable === null) {
+      await this.canUseWebGPU();
+    }
+
+    if (!WebLLMService.gpuAvailable) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
     if (WebLLMService.engine) {
-      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
+      onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
     if (WebLLMService.enginePromise) {
       await WebLLMService.enginePromise;
-      onProgress?.({ text: 'Model already loaded', percentage: 100, isDownloading: false });
+      onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
@@ -134,15 +109,21 @@ export class WebLLMService implements IWebLLMService {
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
     const webllmModule = await import('@mlc-ai/web-llm');
-
     WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
       appConfig: APP_CONFIG,
+      logLevel: 'ERROR',
       initProgressCallback: (report) => {
         onProgress?.(WebLLMService.parseProgressReport(report));
       },
     });
 
-    WebLLMService.engine = await WebLLMService.enginePromise;
+    try {
+      WebLLMService.engine = await WebLLMService.enginePromise;
+    } catch (err) {
+      WebLLMService.enginePromise = null;
+      WebLLMService.engine = null;
+      throw err;
+    }
     WebLLMService.enginePromise = null;
   }
 
@@ -154,12 +135,7 @@ export class WebLLMService implements IWebLLMService {
     const mbMatch = rawText.match(/(\d+)MB/);
     const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
 
-    return {
-      text: isDownloading ? 'Downloading model' : 'Retrieving from cache',
-      percentage: pct,
-      isDownloading,
-      mbFetched,
-    };
+    return { percentage: pct, isDownloading, mbFetched };
   }
 
   private static isAvailableForUse(): boolean {
@@ -169,7 +145,9 @@ export class WebLLMService implements IWebLLMService {
   // Verwijder model uit browser cache
   async clearModelCache(): Promise<void> {
     if (WebLLMService.clearingCache) return;
+
     WebLLMService.clearingCache = true;
+
     try {
       if (WebLLMService.engine) {
         try {
@@ -189,6 +167,10 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  getLastCompletionTokens(): number | null {
+    return this.lastCompletionTokens;
+  }
+
   // Stop huidige generatie
   async interruptGenerate(): Promise<void> {
     if (WebLLMService.engine) {
@@ -196,7 +178,16 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
-  // Pak meerkeuze antwoord en maak de systeem prompt met alle survey-antwoorden
+  resetEngine(): void {
+    const engine = WebLLMService.engine;
+    WebLLMService.engine = null;
+    WebLLMService.enginePromise = null;
+    if (engine) {
+      void engine.unload();
+    }
+  }
+
+  // Pak meerkeuze antwoord
   private getStyleHintKey(styleKey: string): string {
     const map: Record<string, string> = {
       survey_option_visual: 'style_hint_visual',
@@ -207,6 +198,7 @@ export class WebLLMService implements IWebLLMService {
     return map[styleKey] || 'style_hint_default';
   }
 
+  // Maak de systeem prompt met alle survey-antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = this.getStyleHintKey(answers.styleKey);
     return translate('webllm_system_prompt', {
@@ -225,7 +217,12 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.isAvailableForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
-    if (!WebLLMService.isWebGPUAvailable()) {
+
+    if (WebLLMService.gpuAvailable === null) {
+      await this.canUseWebGPU();
+    }
+
+    if (!WebLLMService.gpuAvailable) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
@@ -242,17 +239,19 @@ export class WebLLMService implements IWebLLMService {
     if (!WebLLMService.engine) {
       throw new Error('WebLLM engine niet geladen');
     }
+
     await WebLLMService.engine.resetChat();
 
     onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
+
     const userMessage = translate('webllm_user_message', {
       subject: answers.subject,
       topic: answers.topic,
     });
 
-    // Stream generatie met optionele buffer
+    // Stream generatie met optionele buffer tussen chunks
     const stream = await WebLLMService.engine.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
@@ -262,12 +261,19 @@ export class WebLLMService implements IWebLLMService {
       max_tokens: 1500,
       stop: ['[EINDE]', '[END]'],
       stream: true,
+      stream_options: { include_usage: true },
       enable_thinking: false,
     } as webllm.ChatCompletionRequestStreaming);
 
+    this.lastCompletionTokens = null;
     for await (const chunk of stream) {
+      if (chunk.usage) {
+        this.lastCompletionTokens = chunk.usage.completion_tokens ?? null;
+      }
+
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
+
       if (WebLLMService.throttleMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, WebLLMService.throttleMs));
       }

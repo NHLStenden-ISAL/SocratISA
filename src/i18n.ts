@@ -5,35 +5,21 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import nl from './locales/nl.json';
 import en from './locales/en.json';
+import { StorageService } from './services/StorageService';
 
 const DEFAULT_LANGUAGE = 'nl';
-const SUPPORTED_LANGUAGES = ['nl', 'en'] as const;
-
-type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
-
-function isSupportedLanguage(value: string): value is SupportedLanguage {
-  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage);
-}
+type SupportedLanguage = 'nl' | 'en';
 
 // Zoek voor opgeslagen voorkeurstaal
 function getStoredLanguage(): SupportedLanguage | null {
-  const rawValue = localStorage.getItem('lang');
-  if (!rawValue) return null;
-
-  try {
-    const parsedValue = JSON.parse(rawValue);
-    if (typeof parsedValue !== 'string') return null;
-
-    return isSupportedLanguage(parsedValue) ? parsedValue : null;
-  } catch {
-    return null;
-  }
+  const value = StorageService.get<string | null>('lang', null);
+  return value === 'nl' || value === 'en' ? value : null;
 }
 
 // Zoek voor browser voorkeurstaal
 function getBrowserLanguage(): SupportedLanguage | null {
   const normalizedValue = navigator.language.toLowerCase().slice(0, 2);
-  return isSupportedLanguage(normalizedValue) ? normalizedValue : null;
+  return normalizedValue === 'nl' || normalizedValue === 'en' ? normalizedValue : null;
 }
 
 // Fallback naar Nederlands als beide niks geven

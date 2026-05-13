@@ -13,7 +13,7 @@ export interface ISurveyService {
 
 // Informatie over de voortgang van AI model ophalen.
 export interface ProgressInfo {
-  text: string;
+  text?: string;
   percentage: number;
   isDownloading: boolean;
   mbFetched?: number;
@@ -21,7 +21,6 @@ export interface ProgressInfo {
 
 // Service voor WebLLM functionaliteit en modelbeheer.
 export interface IWebLLMService {
-  isWebGPUAvailable(): boolean;
   canUseWebGPU(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
   preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void>;
@@ -32,6 +31,8 @@ export interface IWebLLMService {
   ): AsyncGenerator<string>;
   interruptGenerate(): Promise<void>;
   clearModelCache(): Promise<void>;
+  resetEngine(): void;
+  getLastCompletionTokens(): number | null;
 }
 
 // Service voor fallback prompt generatie.
@@ -52,6 +53,7 @@ export interface GenerationStats {
   ttft: number;
   totalTime: number;
   tps: number;
+  completionTokens?: number;
 }
 
 // Service voor het genereren van prompts met events.
@@ -74,6 +76,7 @@ export interface IPromptGeneratorService {
   getIsGenerating(): boolean;
   getIsComplete(): boolean;
   getStats(): GenerationStats | undefined;
+  getLastWarning(): string | undefined;
 }
 
 // Service voor het beheren van AI-providers.

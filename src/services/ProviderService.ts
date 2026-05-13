@@ -4,25 +4,29 @@
 import type { Provider, IProviderService } from '../types';
 
 export const PROVIDERS: Provider[] = [
+  // ChatGPT met ingevulde prompt 
   {
     name: 'ChatGPT',
     buildUrl: (prompt) =>
       `https://chat.openai.com/?q=${encodeURIComponent(prompt)}`,
   },
+  // Claude met ingevulde prompt
   {
     name: 'Claude',
     buildUrl: (prompt) =>
       `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
   },
+  // Gemini met prompt naar clipboard
   {
     name: 'Gemini',
-    buildUrl: (prompt) =>
-      `https://gemini.google.com/app?q=${encodeURIComponent(prompt)}`,
+    clipboardOnly: true,
+    buildUrl: () => 'https://gemini.google.com/app',
   },
+  // Copilot met prompt naar clipboard
   {
     name: 'Copilot',
-    buildUrl: (prompt) =>
-      `https://copilot.microsoft.com/?q=${encodeURIComponent(prompt)}`,
+    clipboardOnly: true,
+    buildUrl: () => 'https://copilot.microsoft.com/',
   },
 ];
 
@@ -37,7 +41,7 @@ export class ProviderService implements IProviderService {
     return this.providers;
   }
 
-  // Return link voor gegeven provider
+  // Geef link voor gegeven provider
   buildUrl(provider: Provider, prompt: string): string {
     return provider.buildUrl(prompt);
   }

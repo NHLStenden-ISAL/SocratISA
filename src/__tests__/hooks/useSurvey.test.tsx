@@ -42,7 +42,6 @@ function createWrapper(services: Partial<Services> = {}) {
       reset: vi.fn(),
     } as unknown as Services['surveyService'],
     webLLMService: {
-      isWebGPUAvailable: vi.fn().mockReturnValue(true),
       canUseWebGPU: vi.fn().mockResolvedValue(true),
       detectGPU: vi.fn().mockResolvedValue('MockGPU'),
     } as unknown as Services['webLLMService'],
@@ -292,7 +291,6 @@ describe('useSurvey', () => {
 
     const wrapper = createWrapper({
       webLLMService: {
-        isWebGPUAvailable: vi.fn().mockReturnValue(false),
         canUseWebGPU: vi.fn().mockResolvedValue(false),
         detectGPU: vi.fn().mockResolvedValue(null),
       } as unknown as Services['webLLMService'],

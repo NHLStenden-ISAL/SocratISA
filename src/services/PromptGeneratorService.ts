@@ -25,6 +25,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private tokenCount = 0;
   private gpuUsed = false;
   private lastStats: GenerationStats | undefined = undefined;
+  private lastWarning: string | undefined = undefined;
 
   constructor(webLLMService: IWebLLMService, fallbackService: IFallbackService) {
     this.webLLMService = webLLMService;
@@ -42,7 +43,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       const displayText = this.stripThinkTag(this.currentText);
       listener({ type: 'token', text: displayText });
     } else if (this.complete) {
-      listener({ type: 'complete', text: this.currentText, stats: this.lastStats });
+      listener({ type: 'complete', text: this.currentText, stats: this.lastStats, warning: this.lastWarning });
     }
   }
 
@@ -79,6 +80,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.tokenCount = 0;
     this.gpuUsed = false;
     this.lastStats = undefined;
+    this.lastWarning = undefined;
   }
 
   // Haal AI model op in de achtergrond
@@ -169,8 +171,9 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       this.currentText = this.cleanOutput(this.currentText);
       this.complete = true;
       this.generating = false;
-      this.lastStats = this.buildStats();
+      this.lastStats = this.buildStats(this.webLLMService.getLastCompletionTokens() ?? undefined);
       this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
+      this.webLLMService.resetEngine();
     }
   }
 
@@ -185,6 +188,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.firstTokenTime = performance.now();
     this.emit({ type: 'firstToken', text: this.currentText });
     this.emit({ type: 'token', text: this.currentText });
+    this.lastWarning = warning;
     this.complete = true;
     this.generating = false;
     this.emit({ type: 'complete', text: this.currentText, warning });
@@ -195,10 +199,12 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     answers: SurveyAnswers,
     translate: (key: string, options?: Record<string, string>) => string,
   ): Promise<void> {
-    console.warn('PromptGeneratorService: generatie mislukt, fallback wordt gebruikt', err);
-    const isMemoryError = err instanceof Error && /memory|out of memory|allocate|oom|alloc/i.test(err.message);
+    console.warn('PromptGeneratorService: GPU generatie mislukt, valt terug naar fallback', err);
+    this.webLLMService.resetEngine();
+    const warning: string | undefined = 'memory_warning';
+
     try {
-      this.runFallbackGeneration(answers, translate, isMemoryError ? 'memory_warning' : undefined);
+      this.runFallbackGeneration(answers, translate, warning);
     } catch (fallbackErr) {
       this.generating = false;
       this.emit({ type: 'error', error: fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)) });
@@ -214,6 +220,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.generating = false;
     this.complete = false;
     void this.webLLMService.interruptGenerate();
+    this.webLLMService.resetEngine();
   }
 
   getCurrentText(): string {
@@ -232,8 +239,12 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     return this.lastStats;
   }
 
+  getLastWarning(): string | undefined {
+    return this.lastWarning;
+  }
+
   // Bereken totale tijd/generatie tijd/tijd tot eerste token/tokens per seconden
-  private buildStats(): GenerationStats | undefined {
+  private buildStats(completionTokens?: number): GenerationStats | undefined {
     if (!this.gpuUsed) return undefined;
 
     const completeTime = performance.now();
@@ -243,6 +254,6 @@ export class PromptGeneratorService implements IPromptGeneratorService {
       ? (completeTime - this.firstTokenTime) / 1000
       : totalTime / 1000;
     const tps = generationDuration > 0 ? Math.round(this.tokenCount / generationDuration) : 0;
-    return { ttft: Math.round(ttft), totalTime: Math.round(totalTime), tps };
+    return { ttft: Math.round(ttft), totalTime: Math.round(totalTime), tps, completionTokens };
   }
 }

@@ -121,7 +121,7 @@ describe('usePromptResult', () => {
     expect(result.current.feedback).not.toBeNull();
   });
 
-  it('opent een provider URL', () => {
+  it('opent een provider URL voor niet-clipboardOnly providers', () => {
     const openMock = vi.fn();
     vi.stubGlobal('open', openMock);
 
@@ -137,6 +137,44 @@ describe('usePromptResult', () => {
 
     expect(openMock).toHaveBeenCalledWith(
       'https://chat.openai.com/?q=test',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(writeTextMock).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('kopieert naar klembord voor clipboardOnly providers en opent de URL zonder params', async () => {
+    const openMock = vi.fn();
+    vi.stubGlobal('open', openMock);
+
+    const providers = [
+      {
+        name: 'Gemini',
+        clipboardOnly: true,
+        buildUrl: () => 'https://gemini.google.com/app',
+      },
+    ];
+
+    const { result } = renderHook(() => usePromptResult('test prompt'), {
+      wrapper: createWrapper({
+        providerService: {
+          getProviders: vi.fn().mockReturnValue(providers),
+          buildUrl: vi.fn().mockReturnValue('https://gemini.google.com/app'),
+        } as unknown as Services['providerService'],
+      }),
+    });
+
+    const gemini = result.current.providers.find((p) => p.name === 'Gemini')!;
+
+    await act(async () => {
+      await result.current.handleProvider(gemini);
+    });
+
+    expect(writeTextMock).toHaveBeenCalledWith('test prompt');
+    expect(openMock).toHaveBeenCalledWith(
+      'https://gemini.google.com/app',
       '_blank',
       'noopener,noreferrer',
     );

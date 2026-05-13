@@ -15,7 +15,6 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
   }
 
   return {
-    isWebGPUAvailable: vi.fn().mockReturnValue(true),
     canUseWebGPU: vi.fn().mockResolvedValue(true),
     detectGPU: vi.fn().mockResolvedValue('MockGPU'),
     preloadModel: vi.fn().mockImplementation((_onProgress?: (info: ProgressInfo) => void) => {
@@ -25,6 +24,8 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     generatePromptStream: vi.fn().mockImplementation(mockGenerator),
     interruptGenerate: vi.fn().mockResolvedValue(undefined),
     clearModelCache: vi.fn().mockResolvedValue(undefined),
+    resetEngine: vi.fn(),
+    getLastCompletionTokens: vi.fn().mockReturnValue(null),
   };
 }
 
@@ -184,6 +185,15 @@ describe('PromptGeneratorService', () => {
       await service.start(answers, true, translate);
       expect(service.getIsComplete()).toBe(true);
     });
+
+    it('unloadt het model na GPU generatie', async () => {
+      webLLMService = createMockWebLLMService(['test']);
+      service = new PromptGeneratorService(webLLMService, fallbackService);
+
+      await service.start(answers, true, translate);
+
+      expect(webLLMService.resetEngine).toHaveBeenCalled();
+    });
   });
 
   describe('start zonder GPU (fallback)', () => {
@@ -273,6 +283,7 @@ describe('PromptGeneratorService', () => {
 
       expect(service.getIsGenerating()).toBe(false);
       expect(webLLMService.interruptGenerate).toHaveBeenCalled();
+      expect(webLLMService.resetEngine).toHaveBeenCalled();
     });
 
     it('doet niets als er geen generatie loopt', () => {

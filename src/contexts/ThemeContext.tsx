@@ -13,15 +13,18 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const storage = useStorage();
 
+  // Geef thema uit localStorage of licht
   const [theme, setTheme] = useState<Theme>(() =>
     storage.get<Theme>('theme', 'light')
   );
 
+  // Zet thema
   useEffect(function syncTheme() {
     document.documentElement.setAttribute('data-theme', theme);
     storage.set('theme', theme);
   }, [theme, storage]);
 
+  // Wissel thema
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };

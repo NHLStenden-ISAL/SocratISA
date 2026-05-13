@@ -56,7 +56,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      onComplete((promptGeneratorService.getCurrentText() + t('prompt_suffix')).trim(), promptGeneratorService.getStats());
+      onComplete(promptGeneratorService.getCurrentText().trim(), promptGeneratorService.getStats(), promptGeneratorService.getLastWarning());
       return;
     }
 
@@ -79,7 +79,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete((event.text + t('prompt_suffix')).trim(), event.stats, event.warning);
+          onComplete(event.text.trim(), event.stats, event.warning);
           break;
         case 'error':
           if (rafRef.current) {
@@ -153,7 +153,6 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         onChange={(e) => {
           const val = parseInt(e.target.value, 10);
           setThrottleMs(val);
-          WebLLMService.throttleMs = val;
         }}
         aria-label={t('generation_speed_aria')}
       />
@@ -166,16 +165,17 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
   // Laad UI
   if (phase === 'loading') {
-    const showProgress = progressInfo && progressInfo.percentage > 0;
     return (
-      <div className="result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}
-           title={progressInfo?.isDownloading ? t('home_preload_tooltip') : undefined}>
+      <div className="loading-screen result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
-          {showProgress && (
+          {progressInfo && (
             <div className="loading-progress-track">
               <div className="loading-progress-fill" style={{ width: `${progressInfo.percentage}%` }}></div>
             </div>
+          )}
+          {progressInfo?.isDownloading && (
+            <p className="loading-eta">{t('home_preload_eta')}</p>
           )}
           <p>
             {formatProgressText(progressInfo, t, 'result_generating')}

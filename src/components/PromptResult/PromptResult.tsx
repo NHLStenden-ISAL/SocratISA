@@ -2,19 +2,20 @@
  * PromptResult: toont de gegenereerde prompt samen met actie knoppen.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult } from '../../hooks';
+import { usePromptResult, useAutoFocus, useGPUStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
-import { safeSessionStorage } from '../../utils/storage';
+import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
 import type { GenerationStats, Provider } from '../../types';
 import './PromptResult.css';
 
-const STORAGE_KEY_PROMPT = 'socratisa_result_prompt';
-const STORAGE_KEY_STATS = 'socratisa_result_stats';
+const STORAGE_KEY_PROMPT = STORAGE_KEYS.PROMPT;
+const STORAGE_KEY_STATS = STORAGE_KEYS.STATS;
 
 // Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status 
 export const PromptResult = () => {
@@ -54,7 +55,15 @@ export const PromptResult = () => {
   return <PromptResultView prompt={prompt} stats={stats} warning={warning} />;
 };
 
-function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: GenerationStats; warning?: string }) {
+function PromptResultView({
+  prompt,
+  stats,
+  warning,
+}: {
+  prompt: string;
+  stats?: GenerationStats;
+  warning?: string;
+}) {
   const { t } = useTranslation();
   const { webLLMService } = useServices();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -62,10 +71,19 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
   const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
+  const navigate = useNavigate();
+  const gpuStatus = useGPUStatus();
+  const { isAvailable } = gpuStatus;
+  const [showRetryDialog, setShowRetryDialog] = useState(false);
 
-  useEffect(function focusHeading() {
-    headingRef.current?.focus();
-  }, []);
+  useAutoFocus(headingRef);
+
+  useEffect(function autoDismissCacheFeedback() {
+    if (clearCacheStatus === 'done' || clearCacheStatus === 'error') {
+      const timer = setTimeout(() => setClearCacheStatus('idle'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [clearCacheStatus]);
 
   const {
     prompt: displayPrompt,
@@ -78,7 +96,6 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
     handleDone,
     handleCopy,
     handleProvider,
-    handleRetry,
     handleHome,
     providers,
   } = usePromptResult(prompt);
@@ -139,19 +156,19 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
         {stats && (
           <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_ttft')}</span>
+              <span className="stat-label" data-tip={t('result_stat_ttft_tip')}>{t('result_stat_ttft')}</span>
               <span className="stat-value">{formatMs(stats.ttft)}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_tps')}</span>
+              <span className="stat-label" data-tip={t('result_stat_tps_tip')}>{t('result_stat_tps')}</span>
               <span className="stat-value">{stats.tps}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_generate')}</span>
+              <span className="stat-label" data-tip={t('result_stat_generate_tip')}>{t('result_stat_generate')}</span>
               <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">{t('result_stat_total')}</span>
+              <span className="stat-label" data-tip={t('result_stat_total_tip')}>{t('result_stat_total')}</span>
               <span className="stat-value">{formatMs(stats.totalTime)}</span>
             </div>
           </div>
@@ -183,13 +200,13 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           )}
         </div>
 
-        {/* Teken/Woorden statistieken */}
+        {/* Teken/Woorden/Token statistieken */}
         <div className="prompt-meta">
           {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
+          {!isEditing && displayPrompt === prompt && stats?.completionTokens !== undefined && (
+            <> · {t('result_meta_tokens', { tokens: stats.completionTokens })}</>
+          )}
         </div>
-
-        {/* Bewerk/Kopieer confirmatie */}
-        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
 
         {/* Bewerk/Kopieer knoppen */}
         <div className="prompt-actions">
@@ -219,6 +236,9 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
             {t('result_copy')}
           </button>
         </div>
+
+        {/* Bewerk/Kopieer confirmatie */}
+        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
 
         {/* AI-provider knoppen */}
         <div className="provider-section">
@@ -259,12 +279,23 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
             </>
           }
         >
-          <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
+          {pendingProvider?.clipboardOnly ? (
+            <p>{t('provider_dialog_body_clipboard', { provider: pendingProvider.name })}</p>
+          ) : (
+            <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
+          )}
         </Dialog>
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
         <div className="result-footer">
-          <button className="footer-btn" onClick={handleRetry} aria-label={t('result_retry_aria_v2')}>
+          <button className="footer-btn" onClick={() => {
+            if (isAvailable === false) {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              navigate('/survey', { state: { gpuAvailable: false } });
+            } else {
+              setShowRetryDialog(true);
+            }
+          }} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
@@ -278,13 +309,53 @@ function PromptResultView({ prompt, stats, warning }: { prompt: string; stats?: 
           >
             <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
           </button>
-          {clearCacheStatus !== 'idle' && (
-            <span className="cache-status-text" role="status" aria-live="polite">
-              {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : clearCacheStatus === 'done' ? t('home_cache_cleared') : t('home_cache_clear_error')}
-            </span>
-          )}
         </div>
+
+        {clearCacheStatus !== 'idle' && (
+          <span className="cache-status-text" role="status" aria-live="polite">
+            {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : (t(clearCacheStatus === 'done' ? 'home_cache_cleared' : 'home_cache_clear_error'))}
+          </span>
+        )}
       </div>
+
+      {/* Popup voor AI-model/fallback generatie keuze */}
+      <Dialog
+        isOpen={showRetryDialog}
+        onClose={() => setShowRetryDialog(false)}
+        title={t('home_cta_dialog_title')}
+        titleId="retry-dialog-title"
+        actions={
+          <button className="dialog-btn secondary" onClick={() => setShowRetryDialog(false)}>
+            {t('provider_dialog_cancel')}
+          </button>
+        }
+      >
+        <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-choice-options">
+          <button
+            className="cta-choice-btn ai"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              setShowRetryDialog(false);
+              navigate('/survey', { state: { gpuAvailable: true } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+          </button>
+          <button
+            className="cta-choice-btn fallback"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              setShowRetryDialog(false);
+              navigate('/survey', { state: { gpuAvailable: false } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+          </button>
+        </div>
+      </Dialog>
 
       {/* Popup verwijder model cache */}
       <Dialog

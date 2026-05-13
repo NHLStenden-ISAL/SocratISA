@@ -1,34 +1,40 @@
 /**
  * Home: hoofdpagina met informatie over generatieve AI en Socratisch leren, samen met een CTA naar de vragenlijst.
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
 import { formatProgressText } from '../../utils/progress';
+import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
 import type { ProgressInfo } from '../../types';
-import './Home.css'
+import './Home.css';
 
 export const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isAvailable, isChecking } = useGPUStatus();
+  const gpuStatus = useGPUStatus();
+  const { isAvailable } = gpuStatus;
   const { promptGeneratorService } = useServices();
-  const [showPreloadOffer, setShowPreloadOffer] = useState(false);
+  const [showCTADialog, setShowCTADialog] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
-  
-  const handleCTA = () => {
-    if (isChecking) return;
-    navigate('/survey');
-  };
+
+  // Bepaal of preload popup getoond moet worden
+  function shouldShowPreloadOffer(): boolean {
+    if (!isAvailable) return false;
+    if (preloadStatus !== 'idle') return false;
+    if (preloadOfferDismissed) return false;
+    return true;
+  }
+
+  const showPreloadOffer = shouldShowPreloadOffer();
   
   // Laad AI model in de achtergrond wel/niet gebaseerd op popup keuze 
   const handlePreload = async () => {
-    setShowPreloadOffer(false);
     setPreloadStatus('loading');
     setPreloadProgress(null);
     try {
@@ -42,18 +48,8 @@ export const Home = () => {
   };
 
   const dismissPreloadOffer = () => {
-    setShowPreloadOffer(false);
     setPreloadOfferDismissed(true);
   };
-
-  useEffect(function showPreloadDialog() {
-    if (!isChecking && isAvailable && preloadStatus === 'idle' && !showPreloadOffer && !preloadOfferDismissed) {
-      const timer = setTimeout(() => setShowPreloadOffer(true), 0);
-      return () => clearTimeout(timer);
-    }
-  }, [isChecking, isAvailable, preloadStatus, showPreloadOffer, preloadOfferDismissed]);
-
-
 
   return (
     <>
@@ -149,19 +145,35 @@ export const Home = () => {
 
         {/* Knop naar survey */}
         <div className="button-container">
-          <button className="socratic-button" onClick={handleCTA} aria-label={t('home_cta_aria_v2')}>
+          <button
+            className="socratic-button"
+            onClick={() => {
+              if (preloadStatus !== 'idle') {
+                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+                navigate('/survey', { state: { gpuAvailable: true } });
+              } else if (isAvailable === false) {
+                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+                navigate('/survey', { state: { gpuAvailable: false } });
+              } else {
+                setShowCTADialog(true);
+              }
+            }}
+            aria-label={t('home_cta_aria_v2')}
+          >
             {t('home_cta')}
           </button>
 
           {/* Model laad UI */}
           {preloadStatus === 'loading' && (
-            <div className="preload-status" role="status" aria-live="polite"
-                 title={preloadProgress?.isDownloading ? t('home_preload_tooltip') : undefined}>
+            <div className="preload-status" role="status" aria-live="polite">
               <div className="preload-spinner" aria-hidden="true"></div>
               <div className="preload-progress-area">
                 <div className="progress-bar-track">
                   <div className="progress-bar-fill" style={{ width: `${preloadProgress?.percentage ?? 0}%` }}></div>
                 </div>
+                {preloadProgress?.isDownloading && (
+                  <span className="loading-eta">{t('home_preload_eta')}</span>
+                )}
                 <span className="preload-text">
                   {formatProgressText(preloadProgress, t, 'home_preload_loading')}
                 </span>
@@ -180,6 +192,43 @@ export const Home = () => {
           )}
         </div>
       </div>
+
+      {/* Popup voor AI-model/fallback generatie keuze */}
+      <Dialog
+        isOpen={showCTADialog}
+        onClose={() => setShowCTADialog(false)}
+        title={t('home_cta_dialog_title')}
+        titleId="cta-dialog-title"
+        actions={
+          <button className="dialog-btn secondary" onClick={() => setShowCTADialog(false)}>
+            {t('provider_dialog_cancel')}
+          </button>
+        }
+      >
+        <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-choice-options">
+          <button
+            className="cta-choice-btn ai"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              navigate('/survey', { state: { gpuAvailable: true } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+          </button>
+          <button
+            className="cta-choice-btn fallback"
+            onClick={() => {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              navigate('/survey', { state: { gpuAvailable: false } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+          </button>
+        </div>
+      </Dialog>
 
       {/* Preload popup */}
       <Dialog

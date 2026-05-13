@@ -32,5 +32,18 @@ export default defineConfig(({ mode }) => ({
       },
     },
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        minify: {
+          compress: {
+            dropConsole: true,
+            dropDebugger: true,
+          },
+          mangle: true,
+        },
+      },
+    },
+  },
   base: mode === 'production' ? '/SocratISA/' : '/',
 }))

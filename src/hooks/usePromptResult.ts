@@ -5,37 +5,27 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../contexts/useServices';
-import { safeSessionStorage } from '../utils/storage';
+import { safeSessionStorage, STORAGE_KEYS } from '../utils/storage';
 import type { Provider } from '../types';
-
-const STORAGE_KEY_EDIT = 'socratisa_result_edited_prompt';
-
-async function copyPromptText(prompt: string): Promise<void> {
-  if (!navigator.clipboard?.writeText) {
-    throw new Error('Clipboard API niet beschikbaar');
-  }
-
-  await navigator.clipboard.writeText(prompt);
-}
 
 export function usePromptResult(initialPrompt: string) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { providerService } = useServices();
   const [edits, setEdits] = useState<string | null>(() => {
-    return safeSessionStorage.getItem(STORAGE_KEY_EDIT);
+    return safeSessionStorage.getItem(STORAGE_KEYS.EDITED_PROMPT);
   });
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
 
   // Bepaal huidige prompt en sta bewerken toe
   const prompt = edits ?? initialPrompt;
   const setPrompt = (value: string) => {
     setEdits(value);
-    safeSessionStorage.setItem(STORAGE_KEY_EDIT, value);
+    safeSessionStorage.setItem(STORAGE_KEYS.EDITED_PROMPT, value);
   };
 
   useEffect(function focusTextareaOnEdit() {
@@ -47,11 +37,20 @@ export function usePromptResult(initialPrompt: string) {
   const handleEdit = () => setIsEditing(true);
   const handleDone = () => setIsEditing(false);
 
+  // Laat kopieer confirmatie zien
+  const showFeedback = (msg: string) => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
+    setFeedback(msg);
+    feedbackTimerRef.current = window.setTimeout(() => setFeedback(null), 2000);
+  };
+
   // Kopieer resultaat prompt
   const handleCopy = async () => {
     setIsCopying(true);
     try {
-      await copyPromptText(prompt);
+      await navigator.clipboard.writeText(prompt);
       showFeedback(t('result_copied'));
     } catch {
       showFeedback(t('result_copy_failed'));
@@ -69,19 +68,21 @@ export function usePromptResult(initialPrompt: string) {
     };
   }, []);
 
-  // Laat bewerk/kopieer confirmatie zien
-  const showFeedback = (msg: string) => {
-    if (feedbackTimerRef.current) {
-      clearTimeout(feedbackTimerRef.current);
-    }
-    setFeedback(msg);
-    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 2000);
-  };
-
   // Ga naar AI-provider website
   const handleProvider = (provider: Provider) => {
-    const url = providerService.buildUrl(provider, prompt);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const openUrl = () => {
+      const url = providerService.buildUrl(provider, prompt);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    if (provider.clipboardOnly) {
+      navigator.clipboard.writeText(prompt).then(openUrl).catch(() => {
+        openUrl();
+        showFeedback(t('result_copy_failed'));
+      });
+    } else {
+      openUrl();
+    }
   };
 
   return {
