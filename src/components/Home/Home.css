@@ -184,6 +184,7 @@
 
 .preload-text {
   line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 

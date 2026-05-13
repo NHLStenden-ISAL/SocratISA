@@ -113,8 +113,6 @@ html[data-theme="dark"] {
 
 #root {
   width: 100%;
-  max-width: 1126px;
-  margin: 0 auto;
   text-align: center;
   min-height: 100svh;
   display: flex;

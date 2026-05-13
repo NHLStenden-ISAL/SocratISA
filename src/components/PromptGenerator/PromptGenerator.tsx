@@ -56,7 +56,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      onComplete((promptGeneratorService.getCurrentText() + t('prompt_suffix')).trim(), promptGeneratorService.getStats(), promptGeneratorService.getLastWarning());
+      onComplete(promptGeneratorService.getCurrentText().trim(), promptGeneratorService.getStats(), promptGeneratorService.getLastWarning());
       return;
     }
 
@@ -79,7 +79,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = 0;
           }
-          onComplete((event.text + t('prompt_suffix')).trim(), event.stats, event.warning);
+          onComplete(event.text.trim(), event.stats, event.warning);
           break;
         case 'error':
           if (rafRef.current) {
@@ -153,7 +153,6 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         onChange={(e) => {
           const val = parseInt(e.target.value, 10);
           setThrottleMs(val);
-          WebLLMService.throttleMs = val;
         }}
         aria-label={t('generation_speed_aria')}
       />

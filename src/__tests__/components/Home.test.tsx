@@ -118,9 +118,9 @@ describe('Home', () => {
 
   it('toont een keuzedialoog bij klik op CTA', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
+      isAvailable: null,
       gpuName: null,
-      isChecking: false,
+      isChecking: true,
     });
 
     render(
@@ -142,9 +142,9 @@ describe('Home', () => {
 
   it('navigeert naar survey met GPU bij kiezen voor AI-model', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
+      isAvailable: null,
       gpuName: null,
-      isChecking: false,
+      isChecking: true,
     });
 
     render(
@@ -166,9 +166,9 @@ describe('Home', () => {
 
   it('navigeert naar survey zonder GPU bij kiezen voor fallback', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
+      isAvailable: null,
       gpuName: null,
-      isChecking: false,
+      isChecking: true,
     });
 
     render(

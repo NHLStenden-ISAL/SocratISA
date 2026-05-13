@@ -151,6 +151,9 @@ export const Home = () => {
               if (preloadStatus !== 'idle') {
                 safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
                 navigate('/survey', { state: { gpuAvailable: true } });
+              } else if (isAvailable === false) {
+                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+                navigate('/survey', { state: { gpuAvailable: false } });
               } else {
                 setShowCTADialog(true);
               }

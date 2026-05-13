@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult, useAutoFocus } from '../../hooks';
+import { usePromptResult, useAutoFocus, useGPUStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
@@ -72,6 +72,8 @@ function PromptResultView({
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
   const navigate = useNavigate();
+  const gpuStatus = useGPUStatus();
+  const { isAvailable } = gpuStatus;
   const [showRetryDialog, setShowRetryDialog] = useState(false);
 
   useAutoFocus(headingRef);
@@ -286,7 +288,14 @@ function PromptResultView({
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
         <div className="result-footer">
-          <button className="footer-btn" onClick={() => setShowRetryDialog(true)} aria-label={t('result_retry_aria_v2')}>
+          <button className="footer-btn" onClick={() => {
+            if (isAvailable === false) {
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              navigate('/survey', { state: { gpuAvailable: false } });
+            } else {
+              setShowRetryDialog(true);
+            }
+          }} aria-label={t('result_retry_aria_v2')}>
             <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
           </button>
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>

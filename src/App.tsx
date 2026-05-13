@@ -25,6 +25,7 @@ function App() {
   const { promptGeneratorService } = useServices();
   const { isAvailable, gpuName, isChecking } = useGPUStatus();
   const [showLangDialog, setShowLangDialog] = useState(false);
+  const [showCTADialog, setShowCTADialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const previousPathRef = useRef(location.pathname);
 
@@ -63,7 +64,11 @@ function App() {
   const confirmLangToggle = () => {
     toggleLang();
     setShowLangDialog(false);
-    navigate('/survey');
+    if (isAvailable === true) {
+      setShowCTADialog(true);
+    } else {
+      navigate('/survey');
+    }
   };
 
   const closeLangDialog = () => setShowLangDialog(false);
@@ -96,7 +101,7 @@ function App() {
   }, [promptGeneratorService]);
 
   return (
-    // Header
+    <>
     <div className="panel">
       <div className="status-indicator" role="status">
         <span className={`status-dot ${isChecking ? '' : isAvailable ? 'webgpu' : 'fallback'}`} aria-hidden="true"></span>
@@ -148,14 +153,54 @@ function App() {
         <p>{t('lang_dialog_body')}</p>
       </Dialog>
 
+      {/* Popup voor AI-model/fallback generatie keuze na taalswitch */}
+      <Dialog
+        isOpen={showCTADialog}
+        onClose={() => setShowCTADialog(false)}
+        title={t('home_cta_dialog_title')}
+        titleId="cta-dialog-title"
+        actions={
+          <button className="dialog-btn secondary" onClick={() => setShowCTADialog(false)}>
+            {t('provider_dialog_cancel')}
+          </button>
+        }
+      >
+        <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-choice-options">
+          <button
+            className="cta-choice-btn ai"
+            onClick={() => {
+              setShowCTADialog(false);
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              navigate('/survey', { state: { gpuAvailable: true } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+          </button>
+          <button
+            className="cta-choice-btn fallback"
+            onClick={() => {
+              setShowCTADialog(false);
+              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              navigate('/survey', { state: { gpuAvailable: false } });
+            }}
+          >
+            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
+            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+          </button>
+        </div>
+      </Dialog>
+
       {/* Actuele pagina */}
       <main id="main-content">
         <Outlet />
       </main>
+    </div>
 
       {/* Footer */}
       <Footer />
-    </div>
+    </>
   );
 }
 

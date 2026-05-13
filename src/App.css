@@ -7,7 +7,7 @@
   gap: 16px;
   text-align: left;
   position: relative;
-  min-height: 100svh;
+  flex: 1;
   box-sizing: border-box;
 }
 
