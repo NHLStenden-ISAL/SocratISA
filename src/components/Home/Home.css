@@ -234,6 +234,17 @@
   line-height: 1.4;
 }
 
+.info-link {
+  color: var(--accent);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.info-link:hover {
+  opacity: 0.8;
+}
+
 @media (max-width: 768px) {
   .article {
     margin: 20px auto;

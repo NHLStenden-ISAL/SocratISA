@@ -14,7 +14,7 @@ import { Home } from './components/Home/Home';
 import { StorageProvider, ServiceProvider } from './contexts';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingScreen } from './components/LoadingScreen/LoadingScreen';
-import { SocraticSurvey, PromptResult } from './routes';
+import { SocraticSurvey, PromptResult, Info } from './routes';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -40,6 +40,14 @@ createRoot(document.getElementById('root')!).render(
                     element={
                       <Suspense fallback={<LoadingScreen />}>
                         <PromptResult />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path='info'
+                    element={
+                      <Suspense fallback={<LoadingScreen />}>
+                        <Info />
                       </Suspense>
                     }
                   />
