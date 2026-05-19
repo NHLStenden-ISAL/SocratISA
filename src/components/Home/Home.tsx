@@ -67,8 +67,11 @@ export const Home = () => {
         <h2>{t('home_dangers_title')}</h2>
         <section className="article-text">
           <p>{t('home_dangers_1')}</p>
+          <p>{t('home_dangers_1_ex')}</p>
           <p>{t('home_dangers_2')}</p>
           <p>{t('home_dangers_3')}</p>
+          <p>{t('home_dangers_learning')}</p>
+          <p>{t('home_dangers_privacy')}</p>
           <p>
             <Link to="/info" className="info-link">
               {t('home_dangers_info_link')}
@@ -79,12 +82,22 @@ export const Home = () => {
         {/* Goed/Slecht AI gebruik */}
         <h2>{t('home_pitfalls_title')}</h2>
         <section className="article-text">
+          <p>{t('home_pitfalls_intro')}</p>
           <p>{t('home_pitfalls_1')}</p>
+          <p>{t('home_pitfalls_3')}</p>
           <p>{t('home_pitfalls_2')}</p>
         </section>
 
         {/* Goed/Slecht AI gebruik voorbeelden */}
         <section className="pitfalls-grid" aria-label={t('home_pitfalls_title')}>
+          <div className="pitfall-box bad">
+            <h3>{t('pitfall_trust_title')}</h3>
+            <p>{t('pitfall_trust_desc')}</p>
+          </div>
+          <div className="pitfall-box good">
+            <h3>{t('pitfall_tool_title')}</h3>
+            <p>{t('pitfall_tool_desc')}</p>
+          </div>
           <div className="pitfall-box bad">
             <h3>{t('pitfall_no_check_title')}</h3>
             <p>{t('pitfall_no_check_desc')}</p>
@@ -100,14 +113,6 @@ export const Home = () => {
           <div className="pitfall-box good">
             <h3>{t('pitfall_privacy_good_title')}</h3>
             <p>{t('pitfall_privacy_good_desc')}</p>
-          </div>
-          <div className="pitfall-box bad">
-            <h3>{t('pitfall_trust_title')}</h3>
-            <p>{t('pitfall_trust_desc')}</p>
-          </div>
-          <div className="pitfall-box good">
-            <h3>{t('pitfall_tool_title')}</h3>
-            <p>{t('pitfall_tool_desc')}</p>
           </div>
         </section>
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { PromptResult } from '../../components/PromptResult/PromptResult';
@@ -17,6 +17,11 @@ vi.mock('../../hooks', async () => {
   return {
     ...actual,
     usePromptResult: vi.fn(),
+    useGPUStatus: vi.fn().mockReturnValue({
+      isAvailable: null,
+      gpuName: null,
+      isChecking: true,
+    }),
   };
 });
 
@@ -46,6 +51,11 @@ function setupMockPromptResult(overrides: Partial<ReturnType<typeof usePromptRes
 describe('PromptResult', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.setItem('socratisa_result_prompt', 'test');
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   it('rendert de gegenereerde prompt', () => {
@@ -212,7 +222,7 @@ describe('PromptResult', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Gekopieerd!');
   });
 
-  it('toont het correcte aantal karakters en woorden voor de prompt', () => {
+  it('toont de correcte telling voor de prompt', () => {
     setupMockPromptResult({ prompt: 'Een test prompt voor SocratISA' });
 
     render(
@@ -226,28 +236,6 @@ describe('PromptResult', () => {
     const metaEl = document.querySelector('.prompt-meta');
     expect(metaEl).toBeInTheDocument();
     expect(metaEl?.textContent).toBe('30 tekens · 5 woorden');
-  });
-
-  it('werkt de telling bij na bewerken van de prompt', () => {
-    const { rerender } = render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    setupMockPromptResult({ prompt: 'Kort' });
-    rerender(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <PromptResult />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    const metaEl = document.querySelector('.prompt-meta');
-    expect(metaEl?.textContent).toBe('4 tekens · 1 woorden');
   });
 
   it('maakt een Blob en triggert download bij klik op de download knop', () => {

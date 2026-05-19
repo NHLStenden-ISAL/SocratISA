@@ -241,6 +241,11 @@
   transition: opacity 0.2s ease;
 }
 
+.info-link:visited {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .info-link:hover {
   opacity: 0.8;
 }

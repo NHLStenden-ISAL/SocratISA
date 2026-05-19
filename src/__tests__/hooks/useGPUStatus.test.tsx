@@ -94,13 +94,29 @@ describe('useGPUStatus', () => {
   });
 
   it('handelt unmount af zonder memory leaks', async () => {
-    const { result, unmount } = renderHook(() => useGPUStatus(), {
-      wrapper: createWrapper(),
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const resolveGPU: { resolve: (value: string) => void; reject: (reason: unknown) => void } = { resolve: () => {}, reject: () => {} };
+    const delayedDetectGPU = new Promise<string>((resolve, reject) => {
+      resolveGPU.resolve = resolve;
+      resolveGPU.reject = reject;
     });
+
+    const wrapper = createWrapper({
+      webLLMService: {
+        canUseWebGPU: vi.fn().mockResolvedValue(true),
+        detectGPU: vi.fn().mockReturnValue(delayedDetectGPU),
+      } as unknown as Services['webLLMService'],
+    });
+
+    const { unmount } = renderHook(() => useGPUStatus(), { wrapper });
 
     unmount();
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(result.current.isChecking).toBe(true);
+    resolveGPU.resolve('MockGPU');
+    await delayedDetectGPU;
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

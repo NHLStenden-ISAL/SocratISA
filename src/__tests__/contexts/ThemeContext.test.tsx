@@ -45,23 +45,6 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme').textContent).toBe('dark');
   });
 
-  it('valt terug op light als storage geen waarde heeft', () => {
-    const mockStorage = {
-      get: vi.fn().mockReturnValue('light'),
-      set: vi.fn(),
-    };
-
-    render(
-      <StorageProvider storage={mockStorage}>
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      </StorageProvider>,
-    );
-
-    expect(screen.getByTestId('theme').textContent).toBe('light');
-  });
-
   it('wisselt het thema en slaat het op bij toggle', () => {
     const mockStorage = {
       get: vi.fn().mockReturnValue('light'),

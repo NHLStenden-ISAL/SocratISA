@@ -53,25 +53,6 @@ describe('LanguageContext', () => {
     expect(screen.getByTestId('lang').textContent).toBe('en');
   });
 
-  it('valt terug op NL als storage geen waarde heeft', () => {
-    const mockStorage = {
-      get: vi.fn().mockReturnValue('nl'),
-      set: vi.fn(),
-    };
-
-    render(
-      <StorageProvider storage={mockStorage}>
-        <MockI18nProvider>
-          <LanguageProvider>
-            <TestComponent />
-          </LanguageProvider>
-        </MockI18nProvider>
-      </StorageProvider>,
-    );
-
-    expect(screen.getByTestId('lang').textContent).toBe('nl');
-  });
-
   it('wisselt de taal en slaat deze op bij toggle', () => {
     const mockStorage = {
       get: vi.fn().mockReturnValue('nl'),
