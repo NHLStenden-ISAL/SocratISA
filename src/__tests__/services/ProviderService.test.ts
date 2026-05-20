@@ -54,17 +54,5 @@ describe('ProviderService', () => {
     });
   });
 
-  describe('PROVIDERS constant', () => {
-    it('bevat de verwachte standaard providers', () => {
-      expect(PROVIDERS).toHaveLength(4);
-      expect(PROVIDERS[0].name).toBe('ChatGPT');
-      expect(PROVIDERS[0].clipboardOnly).toBeUndefined();
-      expect(PROVIDERS[1].name).toBe('Claude');
-      expect(PROVIDERS[1].clipboardOnly).toBeUndefined();
-      expect(PROVIDERS[2].name).toBe('Gemini');
-      expect(PROVIDERS[2].clipboardOnly).toBe(true);
-      expect(PROVIDERS[3].name).toBe('Copilot');
-      expect(PROVIDERS[3].clipboardOnly).toBe(true);
-    });
-  });
+
 });

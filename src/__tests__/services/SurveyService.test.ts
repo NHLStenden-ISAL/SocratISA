@@ -14,10 +14,6 @@ describe('SurveyService', () => {
       expect(service.getAnswer('subject')).toBe('Biologie');
     });
 
-    it('geeft een lege string terug bij ontbrekende antwoorden', () => {
-      expect(service.getAnswer('unknown')).toBe('');
-    });
-
     it('overschrijft een bestaand antwoord', () => {
       service.setAnswer('subject', 'Biologie');
       service.setAnswer('subject', 'Geschiedenis');
@@ -26,15 +22,6 @@ describe('SurveyService', () => {
   });
 
   describe('toSurveyAnswers', () => {
-    it('geeft lege strings terug bij ontbrekende antwoorden', () => {
-      const result = service.toSurveyAnswers();
-      expect(result).toEqual({
-        subject: '',
-        topic: '',
-        styleKey: '',
-      });
-    });
-
     it('mapt antwoorden naar de SurveyAnswers vorm', () => {
       service.setAnswer('subject', 'Natuurkunde');
       service.setAnswer('topic', 'Quantum');

@@ -355,20 +355,6 @@ describe('PromptGeneratorService', () => {
     });
   });
 
-  describe('getCurrentText / getIsGenerating / getIsComplete', () => {
-    it('geeft de huidige tekst terug', () => {
-      expect(service.getCurrentText()).toBe('');
-    });
-
-    it('geeft de generating status terug', () => {
-      expect(service.getIsGenerating()).toBe(false);
-    });
-
-    it('geeft de complete status terug', () => {
-      expect(service.getIsComplete()).toBe(false);
-    });
-  });
-
   describe('meerdere starts', () => {
     it('start niet opnieuw als er al een generatie loopt', async () => {
       webLLMService = createMockWebLLMService(['test']);

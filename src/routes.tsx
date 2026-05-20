@@ -10,3 +10,7 @@ export const SocraticSurvey = lazy(() =>
 export const PromptResult = lazy(() =>
   import('./components/PromptResult/PromptResult').then((m) => ({ default: m.PromptResult })),
 )
+
+export const Info = lazy(() =>
+  import('./components/Info/Info').then((m) => ({ default: m.Info })),
+)

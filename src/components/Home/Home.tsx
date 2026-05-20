@@ -1,9 +1,9 @@
 /**
- * Home: hoofdpagina met informatie over generatieve AI en Socratisch leren, samen met een CTA naar de vragenlijst.
+ * Home: hoofdpagina met waarschuwing over AI-gebruik in het onderwijs en CTA naar de vragenlijst.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
@@ -63,45 +63,41 @@ export const Home = () => {
           <p>{t('home_intro_2')}</p>
         </section>
 
-        {/* Uitleg AI */}
-        <h2>{t('home_practice_title')}</h2>
+        {/* AI Dangers */}
+        <h2>{t('home_dangers_title')}</h2>
         <section className="article-text">
-          <p>{t('home_practice_1')}</p>
-          <p>{t('home_practice_2')}</p>
-        </section>
-
-        {/* Voorbeelden van AI applicaties */}
-        <h2>{t('home_apps_title')}</h2>
-        <section className="article-text">
-          <p>{t('home_apps_intro')}</p>
-        </section>
-        <section className="example-grid" aria-label={t('home_apps_title')}>
-          <div className="example-box">
-            <h3>{t('app_rag_title')}</h3>
-            <p>{t('app_rag_desc')}</p>
-          </div>
-          <div className="example-box">
-            <h3>{t('app_cv_title')}</h3>
-            <p>{t('app_cv_desc')}</p>
-          </div>
-          <div className="example-box">
-            <h3>{t('app_tool_title')}</h3>
-            <p>{t('app_tool_desc')}</p>
-          </div>
-        </section>
-        <section className="article-text">
-          <p>{t('home_apps_outro')}</p>
+          <p>{t('home_dangers_1')}</p>
+          <p>{t('home_dangers_1_ex')}</p>
+          <p>{t('home_dangers_2')}</p>
+          <p>{t('home_dangers_3')}</p>
+          <p>{t('home_dangers_learning')}</p>
+          <p>{t('home_dangers_privacy')}</p>
+          <p>
+            <Link to="/info" className="info-link">
+              {t('home_dangers_info_link')}
+            </Link>
+          </p>
         </section>
 
         {/* Goed/Slecht AI gebruik */}
         <h2>{t('home_pitfalls_title')}</h2>
         <section className="article-text">
+          <p>{t('home_pitfalls_intro')}</p>
           <p>{t('home_pitfalls_1')}</p>
+          <p>{t('home_pitfalls_3')}</p>
           <p>{t('home_pitfalls_2')}</p>
         </section>
 
         {/* Goed/Slecht AI gebruik voorbeelden */}
         <section className="pitfalls-grid" aria-label={t('home_pitfalls_title')}>
+          <div className="pitfall-box bad">
+            <h3>{t('pitfall_trust_title')}</h3>
+            <p>{t('pitfall_trust_desc')}</p>
+          </div>
+          <div className="pitfall-box good">
+            <h3>{t('pitfall_tool_title')}</h3>
+            <p>{t('pitfall_tool_desc')}</p>
+          </div>
           <div className="pitfall-box bad">
             <h3>{t('pitfall_no_check_title')}</h3>
             <p>{t('pitfall_no_check_desc')}</p>
@@ -117,14 +113,6 @@ export const Home = () => {
           <div className="pitfall-box good">
             <h3>{t('pitfall_privacy_good_title')}</h3>
             <p>{t('pitfall_privacy_good_desc')}</p>
-          </div>
-          <div className="pitfall-box bad">
-            <h3>{t('pitfall_trust_title')}</h3>
-            <p>{t('pitfall_trust_desc')}</p>
-          </div>
-          <div className="pitfall-box good">
-            <h3>{t('pitfall_tool_title')}</h3>
-            <p>{t('pitfall_tool_desc')}</p>
           </div>
         </section>
 
