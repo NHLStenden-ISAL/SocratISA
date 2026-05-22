@@ -1,7 +1,7 @@
 /**
  * Home: hoofdpagina met waarschuwing over AI-gebruik in het onderwijs en CTA naar de vragenlijst.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
@@ -22,6 +22,7 @@ export const Home = () => {
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
+  const preloadCancelledRef = useRef(false);
 
   // Bepaal of preload popup getoond moet worden
   function shouldShowPreloadOffer(): boolean {
@@ -35,16 +36,33 @@ export const Home = () => {
   
   // Laad AI model in de achtergrond wel/niet gebaseerd op popup keuze 
   const handlePreload = async () => {
+    preloadCancelledRef.current = false;
     setPreloadStatus('loading');
     setPreloadProgress(null);
     try {
-      await promptGeneratorService.preload(t, setPreloadProgress);
-      setPreloadStatus('ready');
-      setPreloadProgress(null);
+      await promptGeneratorService.preload(t, (info) => {
+        if (!preloadCancelledRef.current) {
+          setPreloadProgress(info);
+        }
+      });
+      if (!preloadCancelledRef.current) {
+        setPreloadStatus('ready');
+        setPreloadProgress(null);
+      }
     } catch {
-      setPreloadStatus('error');
-      setPreloadProgress(null);
+      if (!preloadCancelledRef.current) {
+        setPreloadStatus('error');
+        setPreloadProgress(null);
+      }
     }
+  };
+
+  const cancelPreload = () => {
+    preloadCancelledRef.current = true;
+    setPreloadStatus('idle');
+    setPreloadProgress(null);
+    setPreloadOfferDismissed(true);
+    promptGeneratorService.reset();
   };
 
   const dismissPreloadOffer = () => {
@@ -165,6 +183,13 @@ export const Home = () => {
                 <span className="preload-text">
                   {formatProgressText(preloadProgress, t, 'home_preload_loading')}
                 </span>
+                <button
+                  className="preload-cancel-btn"
+                  onClick={cancelPreload}
+                  type="button"
+                >
+                  {t('provider_dialog_cancel')}
+                </button>
               </div>
             </div>
           )}

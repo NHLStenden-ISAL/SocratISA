@@ -10,9 +10,10 @@ import './LoadingScreen.css';
 
 interface LoadingScreenProps {
   progressInfo?: ProgressInfo | null;
+  onCancel?: () => void;
 }
 
-export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
+export const LoadingScreen = ({ progressInfo, onCancel }: LoadingScreenProps) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   useAutoFocus(containerRef);
@@ -39,9 +40,20 @@ export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
         )}
 
         {/* Laad progressie tekst */}
-        <p>
+        <p className="loading-progress-text">
           {formatProgressText(progressInfo, t)}
         </p>
+
+        {/* Annuleer knop */}
+        {onCancel && (
+          <button
+            className="loading-cancel-btn"
+            onClick={onCancel}
+            type="button"
+          >
+            {t('provider_dialog_cancel')}
+          </button>
+        )}
       </div>
     </div>
   );

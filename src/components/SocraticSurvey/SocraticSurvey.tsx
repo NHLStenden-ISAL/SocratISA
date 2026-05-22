@@ -26,7 +26,7 @@ export const SocraticSurvey = () => {
   } = useSurvey();
 
   if (isGenerating) {
-    return <LoadingScreen progressInfo={progressInfo} />;
+    return <LoadingScreen progressInfo={progressInfo} onCancel={handleCancel} />;
   }
 
   return (

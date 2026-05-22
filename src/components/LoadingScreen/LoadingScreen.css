@@ -71,3 +71,25 @@
   transition: width 0.3s ease;
   min-width: 0;
 }
+
+.loading-cancel-btn {
+  margin-top: 20px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.loading-cancel-btn:hover {
+  opacity: 0.85;
+}
+
+.loading-cancel-btn:active {
+  opacity: 0.7;
+}
