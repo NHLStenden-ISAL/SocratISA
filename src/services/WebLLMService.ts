@@ -26,8 +26,10 @@ const APP_CONFIG: webllm.AppConfig = {
 export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
+  private static engineReloading: Promise<void> | null = null;
   private static clearingCache = false;
   private static gpuAvailable: boolean | null = null;
+  private static engineGeneration = 0;
   static throttleMs = 0;
   private lastCompletionTokens: number | null = null;
 
@@ -108,8 +110,10 @@ export class WebLLMService implements IWebLLMService {
   private static async createEngine(
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
+    const myGeneration = ++WebLLMService.engineGeneration;
     const webllmModule = await import('@mlc-ai/web-llm');
-    WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
+
+    const engine = new webllmModule.MLCEngine({
       appConfig: APP_CONFIG,
       logLevel: 'ERROR',
       initProgressCallback: (report) => {
@@ -117,14 +121,32 @@ export class WebLLMService implements IWebLLMService {
       },
     });
 
+    WebLLMService.engine = engine;
+    WebLLMService.enginePromise = Promise.resolve(engine);
+
+    const reloadPromise = engine.reload(MODEL_ID);
+    WebLLMService.engineReloading = reloadPromise.then(() => {}, () => {});
+
     try {
-      WebLLMService.engine = await WebLLMService.enginePromise;
+      await reloadPromise;
     } catch (err) {
-      WebLLMService.enginePromise = null;
       WebLLMService.engine = null;
+      WebLLMService.enginePromise = null;
+      WebLLMService.engineReloading = null;
       throw err;
     }
+
+    if (myGeneration !== WebLLMService.engineGeneration) {
+      try { await engine.unload(); } catch { /* Negeer */ }
+
+      WebLLMService.engine = null;
+      WebLLMService.enginePromise = null;
+      WebLLMService.engineReloading = null;
+      throw new Error('Generatie geannuleerd');
+    }
+
     WebLLMService.enginePromise = null;
+    WebLLMService.engineReloading = null;
   }
 
   // Bereken progressie van AI model ophalen
@@ -157,7 +179,9 @@ export class WebLLMService implements IWebLLMService {
         }
         WebLLMService.engine = null;
       }
+      WebLLMService.engineGeneration++;
       WebLLMService.enginePromise = null;
+      WebLLMService.engineReloading = null;
       WebLLMService.gpuAvailable = null;
 
       const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
@@ -179,9 +203,11 @@ export class WebLLMService implements IWebLLMService {
   }
 
   resetEngine(): void {
+    WebLLMService.engineGeneration++;
     const engine = WebLLMService.engine;
     WebLLMService.engine = null;
     WebLLMService.enginePromise = null;
+    WebLLMService.engineReloading = null;
     if (engine) {
       void engine.unload();
     }
@@ -234,6 +260,11 @@ export class WebLLMService implements IWebLLMService {
         onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
         await WebLLMService.createEngine(onProgress);
       }
+    }
+
+    if (WebLLMService.engine && WebLLMService.engineReloading) {
+      onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
+      await WebLLMService.engineReloading;
     }
 
     if (!WebLLMService.engine) {

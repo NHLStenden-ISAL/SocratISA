@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { usePromptResult, useAutoFocus, useGPUStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
@@ -17,7 +17,7 @@ import './PromptResult.css';
 const STORAGE_KEY_PROMPT = STORAGE_KEYS.PROMPT;
 const STORAGE_KEY_STATS = STORAGE_KEYS.STATS;
 
-// Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status 
+// Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status
 export const PromptResult = () => {
   const [prompt, setPrompt] = useState<string | null>(() => {
     return safeSessionStorage.getItem(STORAGE_KEY_PROMPT);
@@ -75,8 +75,19 @@ function PromptResultView({
   const gpuStatus = useGPUStatus();
   const { isAvailable } = gpuStatus;
   const [showRetryDialog, setShowRetryDialog] = useState(false);
+  const [isCopyingStats, setIsCopyingStats] = useState(false);
+  const [statsCopyFeedback, setStatsCopyFeedback] = useState<string | null>(null);
+  const statsCopyTimerRef = useRef<number | null>(null);
 
   useAutoFocus(headingRef);
+
+  useEffect(function cleanupStatsCopyTimer() {
+    return () => {
+      if (statsCopyTimerRef.current) {
+        clearTimeout(statsCopyTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(function autoDismissCacheFeedback() {
     if (clearCacheStatus === 'done' || clearCacheStatus === 'error') {
@@ -144,6 +155,35 @@ function PromptResultView({
 
   const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 
+  // Kopieer prompt generatie statistieken
+  const showStatsCopyFeedback = (msg: string) => {
+    if (statsCopyTimerRef.current) {
+      clearTimeout(statsCopyTimerRef.current);
+    }
+    setStatsCopyFeedback(msg);
+    statsCopyTimerRef.current = window.setTimeout(() => setStatsCopyFeedback(null), 2000);
+  };
+
+  const handleCopyStats = async () => {
+    if (!stats) return;
+    setIsCopyingStats(true);
+    try {
+      const text = [
+        `${t('result_stat_ttft')} ${formatMs(stats.ttft)}`,
+        `${t('result_stat_tps')} ${stats.tps}`,
+        `${t('result_stat_generate')} ${formatMs(stats.totalTime - stats.ttft)}`,
+        `${t('result_stat_total')} ${formatMs(stats.totalTime)}`,
+        `GPU: ${gpuStatus.gpuName ?? 'Unknown'}`,
+      ].join('\n');
+      await navigator.clipboard.writeText(text);
+      showStatsCopyFeedback(t('result_stats_copied'));
+    } catch {
+      showStatsCopyFeedback(t('result_stats_copy_failed'));
+    } finally {
+      setIsCopyingStats(false);
+    }
+  };
+
   return (
     // Titel
     <div className="result-container">
@@ -154,24 +194,39 @@ function PromptResultView({
 
         {/* Generatie statistieken */}
         {stats && (
-          <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
-            <div className="stat-item">
-              <span className="stat-label" data-tip={t('result_stat_ttft_tip')}>{t('result_stat_ttft')}</span>
-              <span className="stat-value">{formatMs(stats.ttft)}</span>
+          <>
+            <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
+              <div className="stat-item">
+                <span className="stat-label" data-tip={t('result_stat_ttft_tip')}>{t('result_stat_ttft')}</span>
+                <span className="stat-value">{formatMs(stats.ttft)}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label" data-tip={t('result_stat_tps_tip')}>{t('result_stat_tps')}</span>
+                <span className="stat-value">{stats.tps}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label" data-tip={t('result_stat_generate_tip')}>{t('result_stat_generate')}</span>
+                <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label" data-tip={t('result_stat_total_tip')}>{t('result_stat_total')}</span>
+                <span className="stat-value">{formatMs(stats.totalTime)}</span>
+              </div>
+              <button
+                className="stats-copy-btn"
+                onClick={handleCopyStats}
+                disabled={isCopyingStats}
+                aria-label={t('result_stats_copy_aria')}
+                title={t('result_stats_copy_aria')}
+                type="button"
+              >
+                <FontAwesomeIcon icon={statsCopyFeedback === t('result_stats_copied') ? faCheck : faCopy} aria-hidden="true" />
+              </button>
             </div>
-            <div className="stat-item">
-              <span className="stat-label" data-tip={t('result_stat_tps_tip')}>{t('result_stat_tps')}</span>
-              <span className="stat-value">{stats.tps}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label" data-tip={t('result_stat_generate_tip')}>{t('result_stat_generate')}</span>
-              <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label" data-tip={t('result_stat_total_tip')}>{t('result_stat_total')}</span>
-              <span className="stat-value">{formatMs(stats.totalTime)}</span>
-            </div>
-          </div>
+            {statsCopyFeedback && (
+              <div className="copy-feedback" role="status" aria-live="polite">{statsCopyFeedback}</div>
+            )}
+          </>
         )}
 
         {/* Waarschuwing */}
@@ -255,6 +310,7 @@ function PromptResultView({
               </button>
             ))}
           </div>
+          <p className="provider-cta">{t('result_download_or')}</p>
           <div className="download-row">
             <button className="download-txt-btn" onClick={handleDownload} aria-label={t('result_download_aria')}>
               <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> {t('result_download')}

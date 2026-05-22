@@ -17,7 +17,7 @@ export const Home = () => {
   const navigate = useNavigate();
   const gpuStatus = useGPUStatus();
   const { isAvailable } = gpuStatus;
-  const { promptGeneratorService } = useServices();
+  const { promptGeneratorService, webLLMService } = useServices();
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -62,6 +62,7 @@ export const Home = () => {
     setPreloadStatus('idle');
     setPreloadProgress(null);
     setPreloadOfferDismissed(true);
+    webLLMService.resetEngine();
     promptGeneratorService.reset();
   };
 

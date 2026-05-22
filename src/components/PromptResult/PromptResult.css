@@ -28,6 +28,7 @@
 .generation-stats {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px 16px;
   margin-bottom: 16px;
   padding: 10px 14px;
@@ -92,6 +93,27 @@ html[data-theme="dark"] .stat-label::after {
   color: var(--accent);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.stats-copy-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  margin-left: auto;
+  padding: 2px 4px;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s;
+}
+
+.stats-copy-btn:hover {
+  opacity: 0.8;
+}
+
+.stats-copy-btn:active {
+  opacity: 0.6;
 }
 
 .prompt-display {
@@ -231,7 +253,7 @@ html[data-theme="dark"] .memory-warning {
   font-family: var(--sans);
   font-size: 0.95rem;
   color: var(--text);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   opacity: 0.9;
 }
 
@@ -239,6 +261,7 @@ html[data-theme="dark"] .memory-warning {
   display: flex;
   justify-content: center;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
 .provider-btn {
@@ -274,7 +297,6 @@ html[data-theme="dark"] .memory-warning {
 .download-row {
   display: flex;
   justify-content: center;
-  margin-top: 16px;
 }
 
 .download-txt-btn {

@@ -12,12 +12,18 @@
 }
 
 .error-boundary {
-  text-align: center;
+  text-align: center !important;
   padding-top: 4rem;
+  align-items: center;
+}
+
+.error-boundary h2 {
+  margin: 0 0 1rem 0;
 }
 
 .error-boundary .socratic-button {
-  margin-top: 1rem;
+  margin: 0 auto;
+  display: block;
 }
 
 .sr-only {

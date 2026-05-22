@@ -1,9 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WebLLMService } from '../../services/WebLLMService';
 
-vi.mock('@mlc-ai/web-llm', () => ({
-  CreateMLCEngine: vi.fn().mockResolvedValue({ interruptGenerate: vi.fn() }),
-}));
+vi.mock('@mlc-ai/web-llm', () => {
+  const mockReload = vi.fn().mockResolvedValue(undefined);
+  const mockUnload = vi.fn().mockResolvedValue(undefined);
+  const mockInterruptGenerate = vi.fn();
+  const mockResetChat = vi.fn().mockResolvedValue(undefined);
+  const mockChatCreate = vi.fn().mockResolvedValue({});
+
+  class MockMLCEngine {
+    reload = mockReload;
+    unload = mockUnload;
+    interruptGenerate = mockInterruptGenerate;
+    resetChat = mockResetChat;
+    chat = { completions: { create: mockChatCreate } };
+  }
+
+  return {
+    CreateMLCEngine: vi.fn().mockResolvedValue({ interruptGenerate: vi.fn() }),
+    MLCEngine: MockMLCEngine,
+    deleteModelAllInfoInCache: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe('WebLLMService', () => {
   let service: WebLLMService;
