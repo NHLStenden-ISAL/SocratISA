@@ -342,10 +342,12 @@ function PromptResultView({
         </Dialog>
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
-        <div className="footer-warning" role="note">
-          <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
-          <span>{t('result_leave_warning')}</span>
-        </div>
+        {isAvailable && (
+          <div className="footer-warning" role="note">
+            <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
+            <span>{t('result_leave_warning')}</span>
+          </div>
+        )}
         <div className="result-footer">
           <button className="footer-btn" onClick={() => {
             if (isAvailable === false) {
@@ -360,25 +362,16 @@ function PromptResultView({
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
-          <button
-            className="footer-btn"
-            onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
-            disabled={clearCacheStatus === 'clearing'}
-            aria-label={t('home_clear_cache')}
-          >
-            <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
-          </button>
-        </div>
-
-        <div className="feedback-form-row">
-          <a
-            href="https://forms.office.com/Pages/ResponsePage.aspx?id=SJ5qAQu69EmX-KiDUhZOWND1RbiG36RGmcS7Cdh4eFpUOTMwQk9MMTlZT1A2UUtYNDQxR1pWWEtTMC4u"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="feedback-form-link"
-          >
-            {t('result_feedback_form')}
-          </a>
+          {isAvailable && (
+            <button
+              className="footer-btn"
+              onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
+              disabled={clearCacheStatus === 'clearing'}
+              aria-label={t('home_clear_cache')}
+            >
+              <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
+            </button>
+          )}
         </div>
 
         {clearCacheStatus !== 'idle' && (
@@ -427,25 +420,27 @@ function PromptResultView({
         </div>
       </Dialog>
 
-      {/* Popup verwijder model cache */}
-      <Dialog
-        isOpen={showClearCacheDialog}
-        onClose={() => setShowClearCacheDialog(false)}
-        title={t('home_clear_cache_dialog_title')}
-        titleId="clear-cache-dialog-title"
-        actions={
-          <>
-            <button className="dialog-btn secondary" onClick={() => setShowClearCacheDialog(false)}>
-              {t('home_preload_dialog_dismiss')}
-            </button>
-            <button className="dialog-btn primary" onClick={handleClearCache}>
-              {t('home_clear_cache_dialog_confirm')}
-            </button>
-          </>
-        }
-      >
-        <p>{t('home_clear_cache_dialog_body')}</p>
-      </Dialog>
+      {isAvailable && (
+        /* Popup verwijder model cache */
+        <Dialog
+          isOpen={showClearCacheDialog}
+          onClose={() => setShowClearCacheDialog(false)}
+          title={t('home_clear_cache_dialog_title')}
+          titleId="clear-cache-dialog-title"
+          actions={
+            <>
+              <button className="dialog-btn secondary" onClick={() => setShowClearCacheDialog(false)}>
+                {t('home_preload_dialog_dismiss')}
+              </button>
+              <button className="dialog-btn primary" onClick={handleClearCache}>
+                {t('home_clear_cache_dialog_confirm')}
+              </button>
+            </>
+          }
+        >
+          <p>{t('home_clear_cache_dialog_body')}</p>
+        </Dialog>
+      )}
     </div>
   );
 }

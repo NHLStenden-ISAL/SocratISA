@@ -36,8 +36,8 @@ export class WebLLMService implements IWebLLMService {
     if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
 
     try {
-      type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
-      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
+      type NavGPU = { gpu: { requestAdapter(options?: { powerPreference: string }): Promise<unknown | null> } };
+      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter({ powerPreference: 'high-performance' });
       if (!adapter) {
         WebLLMService.gpuAvailable = false;
         return false;
@@ -60,8 +60,8 @@ export class WebLLMService implements IWebLLMService {
   // Haal GPU naam op
   async detectGPU(): Promise<string | null> {
     try {
-      type NavGPU = { gpu: { requestAdapter(): Promise<{ info: { description?: string; device?: string } } | null> } };
-      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
+      type NavGPU = { gpu: { requestAdapter(options?: { powerPreference: string }): Promise<{ info: { description?: string; device?: string } } | null> } };
+      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter({ powerPreference: 'high-performance' });
 
       if (!adapter) return null;
 
