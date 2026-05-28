@@ -6,7 +6,7 @@ import { WebLLMAdapter } from '../adapters/WebLLMAdapter';
 import { benchmarkConfig } from '../config/config';
 import { buildInput, getStyleDisplayName } from '../utils/prompts';
 import { testCases } from '../config/testCases';
-import { downloadBenchmarkZip } from '../utils/zip';
+import { downloadResults } from '../utils/download';
 import type { BenchmarkResult } from '../types';
 import './BenchmarkPage.css';
 
@@ -89,7 +89,48 @@ export const BenchmarkPage = () => {
     }
   };
 
-  /** Voer alle benchmark testcases uit. */
+  /** Voer een set van alle benchmark testcases uit. */
+  const runSingleSet = async (): Promise<BenchmarkResult[]> => {
+    const nextResults: BenchmarkResult[] = [];
+
+    for (let index = 0; index < testCases.length; index += 1) {
+      if (!running.current) break;
+
+      const testCase = testCases[index];
+      setStatus(`Test uitvoeren: ${testCase.id}`);
+      const input = buildInput(testCase, benchmarkConfig.language);
+
+      try {
+        const result = await adapter.generate(testCase, benchmarkConfig.language);
+        nextResults.push({
+          id: testCase.id,
+          input,
+          output: result.output,
+          error: null,
+          durationMs: result.durationMs,
+        });
+      } catch (err) {
+        nextResults.push({
+          id: testCase.id,
+          input,
+          output: null,
+          error: err instanceof Error ? err.message : String(err),
+          durationMs: 0,
+        });
+      }
+
+      setResults([...nextResults]);
+      persistResults([...nextResults]);
+
+      if (running.current && index < testCases.length - 1 && benchmarkConfig.bufferSeconds > 0) {
+        await waitBetweenTests(benchmarkConfig.bufferSeconds);
+      }
+    }
+
+    return nextResults;
+  };
+
+  /** Voer de benchmark uit, herhaal volgens config.repeatCount. */
   const runTests = async () => {
     if (!loaded || busy) return;
 
@@ -99,39 +140,23 @@ export const BenchmarkPage = () => {
     setBusy(true);
     setResults([]);
 
-    const nextResults: BenchmarkResult[] = [];
-
     try {
-      for (let index = 0; index < testCases.length; index += 1) {
+      for (let run = 1; run <= benchmarkConfig.repeatCount; run += 1) {
         if (!running.current) break;
 
-        const testCase = testCases[index];
-        setStatus(`Test uitvoeren: ${testCase.id}`);
-        const input = buildInput(testCase, benchmarkConfig.language);
-
-        try {
-          const result = await adapter.generate(testCase, benchmarkConfig.language);
-          nextResults.push({
-            id: testCase.id,
-            input,
-            output: result.output,
-            error: null,
-            durationMs: result.durationMs,
-          });
-        } catch (err) {
-          nextResults.push({
-            id: testCase.id,
-            input,
-            output: null,
-            error: err instanceof Error ? err.message : String(err),
-            durationMs: 0,
-          });
+        if (benchmarkConfig.repeatCount > 1) {
+          setStatus(`Run ${run}/${benchmarkConfig.repeatCount}`);
         }
 
-        setResults([...nextResults]);
+        const nextResults = await runSingleSet();
 
-        if (running.current && index < testCases.length - 1 && benchmarkConfig.bufferSeconds > 0) {
-          await waitBetweenTests(benchmarkConfig.bufferSeconds);
+        if (running.current && nextResults.length > 0) {
+          await downloadResults(nextResults);
+        }
+
+        if (running.current && run < benchmarkConfig.repeatCount) {
+          setStatus('Wachten voor volgende run');
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
     } finally {
@@ -145,7 +170,6 @@ export const BenchmarkPage = () => {
       }
       setStatus(finished ? 'Klaar' : 'Gestopt');
       setBusy(false);
-      persistResults(nextResults);
     }
   };
 
@@ -155,9 +179,9 @@ export const BenchmarkPage = () => {
     setStatus('Stoppen na huidige test');
   };
 
-  /** Download alle resultaten als zip bestand. */
-  const handleDownloadZip = useCallback(async () => {
-    await downloadBenchmarkZip(results);
+  /** Download alle resultaten als JSON bestand. */
+  const handleDownloadResults = useCallback(async () => {
+    await downloadResults(results);
   }, [results]);
 
   const averageDuration = results.length
@@ -192,12 +216,16 @@ export const BenchmarkPage = () => {
           <span className="label">Taal</span>
           <strong>{benchmarkConfig.language.toUpperCase()}</strong>
         </div>
+        <div>
+          <span className="label">Herhalingen</span>
+          <strong>{benchmarkConfig.repeatCount}</strong>
+        </div>
         <div className="actions">
           <button onClick={loadModel} disabled={busy || loaded}>Model laden</button>
           <button onClick={runTests} disabled={busy || !loaded}>Tests uitvoeren</button>
           <button onClick={stopTests} disabled={!busy || !loaded}>Stop</button>
           <button onClick={deleteModel} disabled={busy}>AI model verwijderen</button>
-          <button onClick={handleDownloadZip} disabled={results.length === 0 || busy}>
+          <button onClick={handleDownloadResults} disabled={results.length === 0 || busy}>
             Resultaten downloaden
           </button>
         </div>
