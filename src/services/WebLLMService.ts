@@ -15,6 +15,7 @@ const APP_CONFIG: webllm.AppConfig = {
       model_id: MODEL_ID,
       model_lib:
         'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
+      // Zo laag mogelijk voor verminderen van VRAM gebruik
       overrides: {
         context_window_size: 2048,
         max_history_size: 1,

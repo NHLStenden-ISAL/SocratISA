@@ -26,6 +26,7 @@ export class WebLLMAdapter {
         return false;
       }
 
+      // Minimum nodig om mogelijk het model te laden
       const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
       if (limits.maxStorageBuffersPerShaderStage < 10) {
         WebLLMAdapter.gpuAvailable = false;

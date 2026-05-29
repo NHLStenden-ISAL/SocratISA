@@ -6,7 +6,20 @@ Gebruikers lezen over wat AI is, hoe het werkt, wat de valkuilen zijn en hoe je 
 
 De prompt wordt lokaal gegenereerd via WebGPU met een gekwantiseerd LLM (Qwen3.5-4B-q4f32_1-MLC) of via een sjabloon als WebGPU niet beschikbaar is. Het resultaat kan worden bewerkt, gekopieerd, gedownload of naar externe AI-providers gestuurd voor onmiddellijk gebruik.
 
+Verder bevat de website een ingebouwd benchmarksysteem die 20 verschillende scenario's langs gaat met als doel om te waarborgen dat de socratische prompts correct en veilig wordt gegenereerd.
+
 Dit project richt zich op privacy, educeren over bewust AI gebruik en de vaardigheid van lokale AI modellen op consumenten hardware.
+
+## Vereisten
+
+Dit project maakt gebruik van [Bun](https://bun.sh/) als runtime en package manager. Zorg dat Bun is geïnstalleerd voordat je begint.
+
+Installatie instructie:
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Commando's kunnen ook worden uitgevoerd met `npm` inplaats van `bun`, maar dit is niet aanbevolen.
 
 ## Codebase Overzicht
 
@@ -21,9 +34,9 @@ Dit project richt zich op privacy, educeren over bewust AI gebruik en de vaardig
 - Iconen: FontAwesome
 - Lokale AI: WebLLM + WebGPU
 
-## Architectuur
+### Architectuur
 
-De applicatie volgt een **drie-lagen architectuur**:
+De applicatie volgt een drie-lagen architectuur:
 
 **Presentatielaag (Frontend)**
 - UI-componenten in React + TypeScript
@@ -44,7 +57,7 @@ De applicatie volgt een **drie-lagen architectuur**:
 
 Alle lagen communiceren via dependency injection met React Context.
 
-## Mapstructuur
+### Mapstructuur
 
 - `public/` - Statische bestanden
 - `src/components/` - UI-componenten
@@ -55,6 +68,7 @@ Alle lagen communiceren via dependency injection met React Context.
 - `src/utils/` - Kleine hulpfuncties
 - `src/locales/` - Vertaal JSON-bestanden
 - `src/__tests__/` - Unit- en componenttesten
+- `benchmark/` - Benchmark-applicatie voor het testen van prompt kwaliteit
 
 ## Commands
 
@@ -62,5 +76,6 @@ Alle lagen communiceren via dependency injection met React Context.
 - `bun run build` - Type-check (`tsc -b`) gevolgd door productiebuild (`vite build`)
 - `bun run preview` - Start server vanuit de productiebuild
 - `bun run lint` - Draai ESLint over het hele project
-- `bun run test` - Draai alle tests via vitest
+- `bun run test` - Draai alle tests via Vitest
 - `bun run test:coverage` - Draai Vitest met V8 coverage reporter
+- `bun run test:benchmark` - Start de dev-server voor de benchmark-applicatie

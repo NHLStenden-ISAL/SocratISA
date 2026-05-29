@@ -34,7 +34,7 @@ export const BenchmarkPage = () => {
   const [status, setStatus] = useState(initialState.status);
   const [results, setResults] = useState<BenchmarkResult[]>(initialState.results);
 
-  /** Bewaar resultaten in sessionStorage voor herladen. */
+  /** Bewaar resultaten in sessionStorage voor pagina verversen */
   const persistResults = useCallback((next: BenchmarkResult[]) => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -43,7 +43,7 @@ export const BenchmarkPage = () => {
     }
   }, []);
 
-  /** Laad het WebLLM model in de browser. */
+  /** Laad het WebLLM model in */
   const loadModel = async () => {
     setBusy(true);
     setStatus('Model laden');
