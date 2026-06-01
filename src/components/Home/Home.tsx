@@ -194,6 +194,10 @@ export const Home = () => {
         }
       >
         <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-performance-tip">
+          <strong>{t('home_cta_performance_tip_title')}</strong>
+          <p>{t('home_cta_performance_tip_body')}</p>
+        </div>
         <div className="cta-choice-options">
           <button
             className="cta-choice-btn ai"

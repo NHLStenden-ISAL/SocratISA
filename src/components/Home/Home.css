@@ -188,6 +188,28 @@
 }
 
 
+.cta-performance-tip {
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+  text-align: left;
+}
+
+.cta-performance-tip strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.cta-performance-tip p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .cta-choice-options {
   display: flex;
   flex-direction: column;

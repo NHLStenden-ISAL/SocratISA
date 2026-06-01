@@ -140,6 +140,8 @@
   "home_cta_dialog_body": "Choose how you want to generate your Socratic prompt:",
   "home_cta_dialog_ai": "Use AI model",
   "home_cta_dialog_ai_desc": "Generates a personalized prompt on your device using WebGPU. Loads the ~2 GB model first.",
+  "home_cta_performance_tip_title": "Tip for the best experience",
+  "home_cta_performance_tip_body": "Choosing local AI? Have your device plugged in when possible and turn off battery saver. This makes local AI faster and more stable.",
   "home_cta_dialog_fallback": "Use template",
   "home_cta_dialog_fallback_desc": "Uses a standard template. Faster, no download needed, but less personalized.",
   "home_preload_dialog_title": "Preload AI model",

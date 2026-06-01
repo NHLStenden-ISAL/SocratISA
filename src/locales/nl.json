@@ -140,6 +140,8 @@
   "home_cta_dialog_body": "Kies hoe je jouw socratische prompt wilt genereren:",
   "home_cta_dialog_ai": "Gebruik AI-model",
   "home_cta_dialog_ai_desc": "Genereert een gepersonaliseerde prompt op je apparaat via WebGPU. Laadt eerst het ~2 GB model.",
+  "home_cta_performance_tip_title": "Tip voor de beste ervaring",
+  "home_cta_performance_tip_body": "Kies je voor lokale AI? Zet je apparaat dan bij voorkeur aan de oplader en zet batterijbesparing uit. Zo werkt lokale AI sneller en stabieler.",
   "home_cta_dialog_fallback": "Gebruik sjabloon",
   "home_cta_dialog_fallback_desc": "Gebruikt een standaardsjabloon. Sneller, geen download nodig, maar minder gepersonaliseerd.",
   "home_preload_dialog_title": "AI-model vooraf laden",

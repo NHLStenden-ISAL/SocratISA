@@ -140,6 +140,28 @@ describe('Home', () => {
     expect(screen.getByText('home_cta_dialog_fallback')).toBeInTheDocument();
   });
 
+  it('toont een gebruiksvriendelijke prestatietip in de keuzedialoog', () => {
+    vi.mocked(useGPUStatus).mockReturnValue({
+      isAvailable: null,
+      gpuName: null,
+      isChecking: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <Home />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    fireEvent.click(ctaButton);
+
+    expect(screen.getByText('home_cta_performance_tip_title')).toBeInTheDocument();
+    expect(screen.getByText('home_cta_performance_tip_body')).toBeInTheDocument();
+  });
+
   it('navigeert naar survey met GPU bij kiezen voor AI-model', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: null,
