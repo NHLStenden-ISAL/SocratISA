@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { PromptResult } from '../../components/PromptResult/PromptResult';
+import { ServiceProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
+import type { GenerationEvent } from '../../types';
+import type { Services } from '../../contexts';
 
 const mockSetPrompt = vi.fn();
 const mockHandleEdit = vi.fn();
@@ -25,7 +28,7 @@ vi.mock('../../hooks', async () => {
   };
 });
 
-import { usePromptResult } from '../../hooks';
+import { useGPUStatus, usePromptResult } from '../../hooks';
 
 function setupMockPromptResult(overrides: Partial<ReturnType<typeof usePromptResult>> = {}) {
   vi.mocked(usePromptResult).mockReturnValue({
@@ -48,14 +51,56 @@ function setupMockPromptResult(overrides: Partial<ReturnType<typeof usePromptRes
   });
 }
 
+function createServices(services: Partial<Services> = {}) {
+  return {
+    surveyService: {} as Services['surveyService'],
+    webLLMService: {
+      clearModelCache: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Services['webLLMService'],
+    fallbackService: {} as Services['fallbackService'],
+    providerService: {
+      getProviders: vi.fn().mockReturnValue([]),
+      buildUrl: vi.fn(),
+    } as unknown as Services['providerService'],
+    promptGeneratorService: {
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      reset: vi.fn(),
+      start: vi.fn(),
+      getIsComplete: vi.fn().mockReturnValue(false),
+      getIsGenerating: vi.fn().mockReturnValue(false),
+      getCurrentText: vi.fn().mockReturnValue(''),
+      getStats: vi.fn().mockReturnValue(undefined),
+      getLastWarning: vi.fn().mockReturnValue(undefined),
+    } as unknown as Services['promptGeneratorService'],
+    ...services,
+  };
+}
+
+function LocationDisplay() {
+  const location = useLocation();
+  return <span data-testid="location">{location.pathname}</span>;
+}
+
 describe('PromptResult', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.setItem('socratisa_result_prompt', 'test');
+    vi.mocked(useGPUStatus).mockReturnValue({
+      isAvailable: null,
+      gpuName: null,
+      isChecking: true,
+    });
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+    vi.stubGlobal('cancelAnimationFrame', () => {});
   });
 
   afterEach(() => {
     sessionStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   it('rendert de gegenereerde prompt', () => {
@@ -258,6 +303,68 @@ describe('PromptResult', () => {
       return el;
     });
 
+    try {
+      render(
+        <MemoryRouter>
+          <MockI18nProvider>
+            <PromptResult />
+          </MockI18nProvider>
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByLabelText('result_download_aria'));
+
+      expect(createObjectURL).toHaveBeenCalledOnce();
+      expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+      expect(clickMock).toHaveBeenCalledOnce();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    } finally {
+      createElementSpy.mockRestore();
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+    }
+  });
+
+  it('laat een download fout door de download actie terugkomen', () => {
+    setupMockPromptResult({ prompt: 'Prompt die niet downloadt' });
+
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => {
+      throw new Error('Download mislukt');
+    });
+    URL.revokeObjectURL = vi.fn();
+
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      event.preventDefault();
+      errors.push(event.error);
+    };
+    window.addEventListener('error', onError);
+
+    try {
+      render(
+        <MemoryRouter>
+          <MockI18nProvider>
+            <PromptResult />
+          </MockI18nProvider>
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByLabelText('result_download_aria'));
+
+      expect(errors[0]).toEqual(new Error('Download mislukt'));
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('error', onError);
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+    }
+  });
+
+  it('toont feedback voor een mislukte clipboard aanroep', () => {
+    setupMockPromptResult({ feedback: 'result_copy_failed' });
+
     render(
       <MemoryRouter>
         <MockI18nProvider>
@@ -266,15 +373,193 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_download_aria'));
+    expect(screen.getByRole('status')).toHaveTextContent('result_copy_failed');
+  });
 
-    expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    expect(clickMock).toHaveBeenCalledOnce();
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  it('annuleert de provider waarschuwing zonder provider te openen', () => {
+    setupMockPromptResult();
 
-    createElementSpy.mockRestore();
-    URL.createObjectURL = originalCreateObjectURL;
-    URL.revokeObjectURL = originalRevokeObjectURL;
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mockHandleProvider).not.toHaveBeenCalled();
+  });
+
+  it('negeert ongeldige opgeslagen statistieken', () => {
+    setupMockPromptResult();
+    sessionStorage.setItem('socratisa_result_stats', '{geen json');
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('region', { name: 'result_stats_aria' })).not.toBeInTheDocument();
+  });
+
+  it('kopieert statistieken en toont succesfeedback', async () => {
+    setupMockPromptResult();
+    sessionStorage.setItem('socratisa_result_stats', JSON.stringify({ ttft: 1000, totalTime: 3000, tps: 2, completionTokens: 6 }));
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_stats_copy_aria'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('result_stats_copied');
+    });
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('GPU: RTX'));
+  });
+
+  it('toont foutfeedback als statistieken kopiëren mislukt', async () => {
+    setupMockPromptResult();
+    sessionStorage.setItem('socratisa_result_stats', JSON.stringify({ ttft: 1000, totalTime: 3000, tps: 2 }));
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: null, isChecking: false });
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('clipboard')) } });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_stats_copy_aria'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('result_stats_copy_failed');
+    });
+  });
+
+  it('gaat direct naar fallback retry als GPU niet beschikbaar is', () => {
+    setupMockPromptResult();
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: false, gpuName: null, isChecking: false });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+          <LocationDisplay />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_retry_aria_v2'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/survey');
+    expect(sessionStorage.getItem('socratisa_gpu_choice')).toBe('false');
+  });
+
+  it('opent retry keuze en navigeert naar AI generatie', () => {
+    setupMockPromptResult();
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <PromptResult />
+          <LocationDisplay />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('result_retry_aria_v2'));
+    fireEvent.click(screen.getByText('home_cta_dialog_ai'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/survey');
+    expect(sessionStorage.getItem('socratisa_gpu_choice')).toBe('true');
+  });
+
+  it('toont een cache fout als modelcache wissen mislukt', async () => {
+    setupMockPromptResult();
+    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+    const services = createServices({
+      webLLMService: {
+        clearModelCache: vi.fn().mockRejectedValue(new Error('cache fout')),
+      } as unknown as Services['webLLMService'],
+    });
+
+    render(
+      <MemoryRouter>
+        <ServiceProvider services={services}>
+          <MockI18nProvider>
+            <PromptResult />
+          </MockI18nProvider>
+        </ServiceProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('home_clear_cache'));
+    fireEvent.click(screen.getByText('home_clear_cache_dialog_confirm'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('home_cache_clear_error');
+    });
+  });
+
+  it('kan opnieuw proberen na een generatiefout', async () => {
+    sessionStorage.removeItem('socratisa_result_prompt');
+    setupMockPromptResult();
+    let handler: ((event: GenerationEvent) => void) | null = null;
+    const services = createServices({
+      promptGeneratorService: {
+        subscribe: vi.fn((h: (event: GenerationEvent) => void) => {
+          handler = h;
+        }),
+        unsubscribe: vi.fn(),
+        reset: vi.fn(),
+        start: vi.fn(),
+        getIsComplete: vi.fn().mockReturnValue(false),
+        getIsGenerating: vi.fn().mockReturnValue(false),
+        getCurrentText: vi.fn().mockReturnValue(''),
+        getStats: vi.fn().mockReturnValue(undefined),
+        getLastWarning: vi.fn().mockReturnValue(undefined),
+      } as unknown as Services['promptGeneratorService'],
+    });
+
+    render(
+      <MemoryRouter>
+        <ServiceProvider services={services}>
+          <MockI18nProvider>
+            <PromptResult />
+            <LocationDisplay />
+          </MockI18nProvider>
+        </ServiceProvider>
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      handler?.({ type: 'error', error: new Error('Generatie mislukt') });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('result_error_title')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('result_error_retry'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/survey');
   });
 });

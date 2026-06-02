@@ -114,4 +114,58 @@ describe('Dialog', () => {
       expect(document.activeElement).toBe(trigger);
     });
   });
+
+  it('sluit niet bij klik binnen de dialog box', () => {
+    const onClose = vi.fn();
+    render(
+      <MockI18nProvider>
+        <Dialog isOpen={true} onClose={onClose} title="Test" actions={<button>Actie</button>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </MockI18nProvider>,
+    );
+
+    fireEvent.click(screen.getByText('Inhoud'));
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('houdt focus binnen de dialog bij Tab en Shift Tab', async () => {
+    render(
+      <MockI18nProvider>
+        <Dialog isOpen={true} onClose={vi.fn()} title="Test" actions={<><button>Eerste</button><button>Tweede</button></>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </MockI18nProvider>,
+    );
+
+    const first = screen.getByText('Eerste');
+    const last = screen.getByText('Tweede');
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(first);
+    });
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('negeert andere toetsen en Tab zonder focusbare elementen', () => {
+    const onClose = vi.fn();
+    render(
+      <MockI18nProvider>
+        <Dialog isOpen={true} onClose={onClose} title="Test" actions={<span>Geen actie</span>}>
+          <p>Inhoud</p>
+        </Dialog>
+      </MockI18nProvider>,
+    );
+
+    fireEvent.keyDown(document, { key: 'Enter' });
+    fireEvent.keyDown(document, { key: 'Tab' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
