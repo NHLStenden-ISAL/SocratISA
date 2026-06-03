@@ -61,7 +61,7 @@ describe('Home', () => {
     expect(screen.getByText('home_cta')).toBeInTheDocument();
   });
 
-  it('toont automatisch een preload dialoog als GPU beschikbaar is', () => {
+  it('toont een preload banner als GPU beschikbaar is', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -76,8 +76,9 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('home_preload_dialog_title')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'home_preload_dialog_title' })).toBeInTheDocument();
+    expect(screen.getByText('home_preload_dialog_body')).toBeInTheDocument();
   });
 
   it('toont geen preload dialoog als GPU niet beschikbaar is', () => {
@@ -210,7 +211,7 @@ describe('Home', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { gpuAvailable: false } });
   });
 
-  it('sluit de preload dialoog bij klik op de overlay', () => {
+  it('minimaliseert de preload banner bij klik op dismiss', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -224,39 +225,15 @@ describe('Home', () => {
         </MockI18nProvider>
       </MemoryRouter>,
     );
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-    const overlay = document.querySelector('.dialog-overlay');
-    fireEvent.click(overlay!);
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('sluit de preload dialoog bij klik op dismiss', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
-      gpuName: null,
-      isChecking: false,
-    });
-
-    render(
-      <MemoryRouter>
-        <MockI18nProvider>
-          <Home />
-        </MockI18nProvider>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const dismissButton = screen.getByText('home_preload_dialog_dismiss');
     fireEvent.click(dismissButton);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('home_preload_dialog_title')).toBeInTheDocument();
+    expect(screen.queryByText('home_preload_dialog_body')).not.toBeInTheDocument();
   });
 
-  it('start preload en toont status bij klik op confirm', async () => {
+  it('klapt de preload banner weer open', () => {
     vi.mocked(useGPUStatus).mockReturnValue({
       isAvailable: true,
       gpuName: null,
@@ -271,17 +248,39 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const dismissButton = screen.getByText('home_preload_dialog_dismiss');
+    fireEvent.click(dismissButton);
+    fireEvent.click(screen.getByText('home_preload_banner_expand'));
+
+    expect(screen.getByText('home_preload_dialog_body')).toBeInTheDocument();
+  });
+
+  it('start preload en toont status bij klik op confirm', async () => {
+    mockPreload.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+    vi.mocked(useGPUStatus).mockReturnValue({
+      isAvailable: true,
+      gpuName: null,
+      isChecking: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <MockI18nProvider>
+          <Home />
+        </MockI18nProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-
     await waitFor(() => {
-      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText('home_preload_banner_progress')).toBeInTheDocument();
     });
 
+    expect(screen.queryByText('home_preload_dialog_body')).not.toBeInTheDocument();
     expect(mockPreload).toHaveBeenCalled();
   });
 
@@ -302,13 +301,14 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText('home_preload_error')).toBeInTheDocument();
+      const status = screen.getAllByText('home_preload_error');
+      expect(status).toHaveLength(2);
     });
   });
 
@@ -327,13 +327,14 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     const confirmButton = screen.getByText('home_preload_dialog_confirm');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText('home_preload_ready')).toBeInTheDocument();
+      const status = screen.getAllByText('home_preload_ready');
+      expect(status).toHaveLength(2);
     });
   });
 });
