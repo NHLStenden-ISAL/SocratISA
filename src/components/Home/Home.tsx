@@ -1,7 +1,7 @@
 /**
  * Home: hoofdpagina met waarschuwing over AI-gebruik in het onderwijs en CTA naar de vragenlijst.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
@@ -22,18 +22,12 @@ export const Home = () => {
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
+  const ctaRef = useRef<HTMLButtonElement>(null);
 
-  // Bepaal of preload popup getoond moet worden
-  function shouldShowPreloadOffer(): boolean {
-    if (!isAvailable) return false;
-    if (preloadStatus !== 'idle') return false;
-    if (preloadOfferDismissed) return false;
-    return true;
-  }
+  const isPreloadBannerVisible = isAvailable === true;
+  const isPreloadBannerMinimized = preloadOfferDismissed && preloadStatus === 'idle';
 
-  const showPreloadOffer = shouldShowPreloadOffer();
-  
-  // Laad AI model in de achtergrond wel/niet gebaseerd op popup keuze 
+  // Laad AI model in de achtergrond met banner keuze
   const handlePreload = async () => {
     setPreloadStatus('loading');
     setPreloadProgress(null);
@@ -51,16 +45,58 @@ export const Home = () => {
     setPreloadOfferDismissed(true);
   };
 
+  const scrollToCTA = () => {
+    ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <>
       {/* Titel */}
       <div className="article">
         <h1>{t('home_title')}</h1>
-        
+        {isPreloadBannerVisible && (
+          <section className={`preload-banner ${isPreloadBannerMinimized ? 'minimized' : ''}`} aria-label={t('home_preload_dialog_title')}>
+            {isPreloadBannerMinimized ? (
+              <button className="preload-banner-compact" type="button" onClick={() => setPreloadOfferDismissed(false)}>
+                <span>{t('home_preload_dialog_title')}</span>
+                <span>{t('home_preload_banner_expand')}</span>
+              </button>
+            ) : (
+              <>
+                <div className="preload-banner-content">
+                  <div>
+                    <h2 className="preload-banner-title">{t('home_preload_dialog_title')}</h2>
+                    {preloadStatus === 'idle' && <p>{t('home_preload_dialog_body')}</p>}
+                    {preloadStatus === 'loading' && <p>{t('home_preload_banner_progress')}</p>}
+                    {preloadStatus === 'ready' && <p>{t('home_preload_ready')}</p>}
+                    {preloadStatus === 'error' && <p>{t('home_preload_error')}</p>}
+                  </div>
+                  {preloadStatus === 'idle' && (
+                    <div className="preload-banner-actions">
+                      <button className="dialog-btn secondary" type="button" onClick={dismissPreloadOffer}>
+                        {t('home_preload_dialog_dismiss')}
+                      </button>
+                      <button className="dialog-btn primary" type="button" onClick={handlePreload}>
+                        {t('home_preload_dialog_confirm')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+              </>
+            )}
+          </section>
+        )}
+
         {/* Introductie */}
         <section className="article-text">
           <p>{t('home_intro_1')}</p>
           <p>{t('home_intro_2')}</p>
+          <p>
+            <button className="info-link cta-scroll-link" type="button" onClick={scrollToCTA}>
+              {t('home_skip_to_cta')}
+            </button>
+          </p>
         </section>
 
         {/* AI Dangers */}
@@ -134,6 +170,7 @@ export const Home = () => {
         {/* Knop naar survey */}
         <div className="button-container">
           <button
+            ref={ctaRef}
             className="socratic-button"
             onClick={() => {
               if (preloadStatus !== 'idle') {
@@ -150,8 +187,6 @@ export const Home = () => {
           >
             {t('home_cta')}
           </button>
-
-          {/* Model laad UI */}
           {preloadStatus === 'loading' && (
             <div className="preload-status" role="status" aria-live="polite">
               <div className="preload-spinner" aria-hidden="true"></div>
@@ -194,6 +229,10 @@ export const Home = () => {
         }
       >
         <p>{t('home_cta_dialog_body')}</p>
+        <div className="cta-performance-tip">
+          <strong>{t('home_cta_performance_tip_title')}</strong>
+          <p>{t('home_cta_performance_tip_body')}</p>
+        </div>
         <div className="cta-choice-options">
           <button
             className="cta-choice-btn ai"
@@ -218,25 +257,6 @@ export const Home = () => {
         </div>
       </Dialog>
 
-      {/* Preload popup */}
-      <Dialog
-        isOpen={showPreloadOffer}
-        onClose={dismissPreloadOffer}
-        title={t('home_preload_dialog_title')}
-        titleId="preload-dialog-title"
-        actions={
-          <>
-            <button className="dialog-btn secondary" onClick={dismissPreloadOffer}>
-              {t('home_preload_dialog_dismiss')}
-            </button>
-            <button className="dialog-btn primary" onClick={handlePreload}>
-              {t('home_preload_dialog_confirm')}
-            </button>
-          </>
-        }
-      >
-        <p>{t('home_preload_dialog_body')}</p>
-      </Dialog>
     </>
   );
 };

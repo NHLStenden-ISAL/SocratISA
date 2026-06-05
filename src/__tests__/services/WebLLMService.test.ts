@@ -1,23 +1,66 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { WebLLMService } from '../../services/WebLLMService';
+import { CreateMLCEngine, deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
 
 vi.mock('@mlc-ai/web-llm', () => ({
-  CreateMLCEngine: vi.fn().mockResolvedValue({ interruptGenerate: vi.fn() }),
+  CreateMLCEngine: vi.fn(),
+  deleteModelAllInfoInCache: vi.fn().mockResolvedValue(undefined),
 }));
+
+const mockCreateMLCEngine = CreateMLCEngine as unknown as Mock;
+
+const mockDeleteCache = deleteModelAllInfoInCache as unknown as Mock;
+
+type WebLLMServiceState = {
+  engine: unknown | null;
+  enginePromise: Promise<unknown> | null;
+  clearingCache: boolean;
+  gpuAvailable: boolean | null;
+  throttleMs: number;
+};
+
+function state() {
+  return WebLLMService as unknown as WebLLMServiceState;
+}
+
+function createEngine(overrides: Record<string, unknown> = {}) {
+  return {
+    interruptGenerate: vi.fn().mockResolvedValue(undefined),
+    unload: vi.fn().mockResolvedValue(undefined),
+    resetChat: vi.fn().mockResolvedValue(undefined),
+    chat: {
+      completions: {
+        create: vi.fn(),
+      },
+    },
+    ...overrides,
+  };
+}
 
 describe('WebLLMService', () => {
   let service: WebLLMService;
 
   beforeEach(() => {
     service = new WebLLMService();
-    (WebLLMService as unknown as { gpuAvailable: boolean | null }).gpuAvailable = null;
+    state().engine = null;
+    state().enginePromise = null;
+    state().clearingCache = false;
+    state().gpuAvailable = null;
+    WebLLMService.throttleMs = 0;
+    mockCreateMLCEngine.mockReset();
+    mockCreateMLCEngine.mockResolvedValue(createEngine());
+    mockDeleteCache.mockClear();
+    mockDeleteCache.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe('canUseWebGPU', () => {
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
     it('geeft false terug als WebGPU niet beschikbaar is', async () => {
       vi.stubGlobal('navigator', {});
       const result = await service.canUseWebGPU();
@@ -34,6 +77,19 @@ describe('WebLLMService', () => {
       });
       const result = await service.canUseWebGPU();
       expect(result).toBe(true);
+    });
+
+    it('gebruikt de gecachete WebGPU status zonder opnieuw te meten', async () => {
+      const requestAdapter = vi.fn().mockResolvedValue({
+        limits: { maxStorageBuffersPerShaderStage: 10 },
+      });
+      vi.stubGlobal('navigator', { gpu: { requestAdapter } });
+
+      await expect(service.canUseWebGPU()).resolves.toBe(true);
+      requestAdapter.mockResolvedValue(null);
+
+      await expect(service.canUseWebGPU()).resolves.toBe(true);
+      expect(requestAdapter).toHaveBeenCalledOnce();
     });
 
     it('geeft false terug als requestAdapter null retourneert', async () => {
@@ -67,15 +123,10 @@ describe('WebLLMService', () => {
       const result = await service.canUseWebGPU();
       expect(result).toBe(false);
     });
-
   });
 
   describe('detectGPU', () => {
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    it('geeft de GPU-naam terug uit description', async () => {
+    it('geeft de GPU naam terug uit description', async () => {
       vi.stubGlobal('navigator', {
         gpu: {
           requestAdapter: vi.fn().mockResolvedValue({
@@ -87,7 +138,7 @@ describe('WebLLMService', () => {
       expect(result).toBe('NVIDIA GeForce RTX 4090');
     });
 
-    it('geeft de GPU-naam terug uit device als description ontbreekt', async () => {
+    it('geeft de GPU naam terug uit device als description ontbreekt', async () => {
       vi.stubGlobal('navigator', {
         gpu: {
           requestAdapter: vi.fn().mockResolvedValue({
@@ -99,12 +150,22 @@ describe('WebLLMService', () => {
       expect(result).toBe('Apple M1');
     });
 
-    it('geeft null terug als er geen GPU-info beschikbaar is', async () => {
+    it('geeft null terug als er geen GPU info beschikbaar is', async () => {
       vi.stubGlobal('navigator', {
         gpu: {
           requestAdapter: vi.fn().mockResolvedValue({
             info: {},
           }),
+        },
+      });
+      const result = await service.detectGPU();
+      expect(result).toBeNull();
+    });
+
+    it('geeft null terug als requestAdapter geen adapter oplevert', async () => {
+      vi.stubGlobal('navigator', {
+        gpu: {
+          requestAdapter: vi.fn().mockResolvedValue(null),
         },
       });
       const result = await service.detectGPU();
@@ -129,17 +190,55 @@ describe('WebLLMService', () => {
   });
 
   describe('generatePromptStream', () => {
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
+    const answers = { subject: 'A', topic: 'B', styleKey: 'survey_option_visual' };
+    const translate = vi.fn((key: string) => key);
 
     it('gooit een fout als WebGPU niet beschikbaar is', async () => {
       vi.stubGlobal('navigator', {});
-      const translate = vi.fn((key: string) => key);
-      const answers = { subject: 'A', topic: 'B', styleKey: 'survey_option_visual' };
 
       const generator = service.generatePromptStream(answers, translate);
       await expect(generator.next()).rejects.toThrow('WebGPU niet beschikbaar');
+    });
+
+    it('gooit een fout als cache wissen bezig is', async () => {
+      state().clearingCache = true;
+
+      const generator = service.generatePromptStream(answers, translate);
+      await expect(generator.next()).rejects.toThrow('WebLLM is bezig met cache wissen');
+    });
+
+    it('gooit een fout als een bestaande engine promise geen engine beschikbaar maakt', async () => {
+      state().gpuAvailable = true;
+      state().enginePromise = Promise.resolve(createEngine());
+      const onProgress = vi.fn();
+
+      const generator = service.generatePromptStream(answers, translate, onProgress);
+      await expect(generator.next()).rejects.toThrow('WebLLM engine niet geladen');
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'webllm_progress_loading' }));
+    });
+
+    it('wacht tussen chunks als throttling aan staat', async () => {
+      vi.useFakeTimers();
+      async function* stream() {
+        yield { choices: [{ delta: { content: 'A' } }] };
+        yield { choices: [{ delta: { content: 'B' } }] };
+      }
+      const engine = createEngine({
+        chat: {
+          completions: {
+            create: vi.fn().mockResolvedValue(stream()),
+          },
+        },
+      });
+      state().gpuAvailable = true;
+      state().engine = engine;
+      WebLLMService.throttleMs = 25;
+
+      const generator = service.generatePromptStream(answers, translate);
+      await expect(generator.next()).resolves.toEqual({ value: 'A', done: false });
+      const next = generator.next();
+      await vi.advanceTimersByTimeAsync(25);
+      await expect(next).resolves.toEqual({ value: 'B', done: false });
     });
   });
 
@@ -147,11 +246,75 @@ describe('WebLLMService', () => {
     it('doet niets als er geen engine is', async () => {
       await expect(service.interruptGenerate()).resolves.toBeUndefined();
     });
+
+    it('onderbreekt generatie als er een engine is', async () => {
+      const engine = createEngine();
+      state().engine = engine;
+
+      await service.interruptGenerate();
+
+      expect(engine.interruptGenerate).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('resetEngine', () => {
+    it('ontlaadt de bestaande engine', () => {
+      const engine = createEngine();
+      state().engine = engine;
+      state().enginePromise = Promise.resolve(engine);
+
+      service.resetEngine();
+
+      expect(state().engine).toBeNull();
+      expect(state().enginePromise).toBeNull();
+      expect(engine.unload).toHaveBeenCalledOnce();
+    });
+
+    it('werkt ook zonder bestaande engine', () => {
+      service.resetEngine();
+
+      expect(state().engine).toBeNull();
+      expect(state().enginePromise).toBeNull();
+    });
+  });
+
+  describe('clearModelCache', () => {
+    it('doet niets als cache wissen al bezig is', async () => {
+      state().clearingCache = true;
+
+      await service.clearModelCache();
+
+      expect(deleteModelAllInfoInCache).not.toHaveBeenCalled();
+    });
+
+    it('wist de modelcache en reset de status', async () => {
+      state().gpuAvailable = true;
+
+      await service.clearModelCache();
+
+      expect(deleteModelAllInfoInCache).toHaveBeenCalledOnce();
+      expect(state().gpuAvailable).toBeNull();
+      expect(state().clearingCache).toBe(false);
+    });
+
+    it('gaat door als engine unload mislukt', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const engine = createEngine({ unload: vi.fn().mockRejectedValue(new Error('unload mislukt')) });
+      state().engine = engine;
+
+      await service.clearModelCache();
+
+      expect(warnSpy).toHaveBeenCalled();
+      expect(deleteModelAllInfoInCache).toHaveBeenCalledOnce();
+      expect(state().engine).toBeNull();
+    });
   });
 
   describe('preloadModel', () => {
-    afterEach(() => {
-      vi.unstubAllGlobals();
+    it('gooit een fout als cache wissen bezig is', async () => {
+      state().clearingCache = true;
+
+      await expect(service.preloadModel()).rejects.toThrow('WebLLM is bezig met cache wissen');
     });
 
     it('gooit een fout als WebGPU niet beschikbaar is', async () => {
@@ -174,5 +337,51 @@ describe('WebLLMService', () => {
       expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ percentage: 100, isDownloading: false }));
     });
 
+    it('wacht op een bestaande engine promise', async () => {
+      state().gpuAvailable = true;
+      const engine = createEngine();
+      state().enginePromise = Promise.resolve(engine);
+      const onProgress = vi.fn();
+
+      await service.preloadModel(onProgress);
+
+      expect(onProgress).toHaveBeenCalledWith({ percentage: 100, isDownloading: false });
+      expect(mockCreateMLCEngine).not.toHaveBeenCalled();
+    });
+
+    it('geeft download progress door vanuit WebLLM', async () => {
+      state().gpuAvailable = true;
+      mockCreateMLCEngine.mockImplementation(async (_modelId: string, options: { initProgressCallback?: (report: unknown) => void } | undefined) => {
+        options?.initProgressCallback?.({ text: 'Fetching param cache 42MB', progress: 0.42, timeElapsed: 0 });
+        return createEngine();
+      });
+      const onProgress = vi.fn();
+
+      await service.preloadModel(onProgress);
+
+      expect(onProgress).toHaveBeenCalledWith({ percentage: 42, isDownloading: true, mbFetched: 42 });
+    });
+
+    it('geeft niet downloadende progress zonder megabytes door', async () => {
+      state().gpuAvailable = true;
+      mockCreateMLCEngine.mockImplementation(async (_modelId: string, options: { initProgressCallback?: (report: unknown) => void } | undefined) => {
+        options?.initProgressCallback?.({ text: '', progress: 0.1, timeElapsed: 0 });
+        return createEngine();
+      });
+      const onProgress = vi.fn();
+
+      await service.preloadModel(onProgress);
+
+      expect(onProgress).toHaveBeenCalledWith({ percentage: 10, isDownloading: false, mbFetched: undefined });
+    });
+
+    it('reset engine state als engine aanmaken mislukt', async () => {
+      state().gpuAvailable = true;
+      mockCreateMLCEngine.mockRejectedValue(new Error('create mislukt'));
+
+      await expect(service.preloadModel()).rejects.toThrow('create mislukt');
+      expect(state().engine).toBeNull();
+      expect(state().enginePromise).toBeNull();
+    });
   });
 });

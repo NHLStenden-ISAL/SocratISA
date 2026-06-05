@@ -120,6 +120,67 @@
   margin: 40px 0;
 }
 
+.preload-banner {
+  margin: 24px 0 32px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg));
+}
+
+.preload-banner.minimized {
+  padding: 0;
+  overflow: hidden;
+}
+
+.preload-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preload-banner-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.preload-banner-title {
+  margin: 0 0 4px 0 !important;
+  color: var(--accent);
+  font-size: 1.15rem;
+}
+
+.preload-banner p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.preload-banner-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.preload-banner-compact span:first-child {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.preload-banner-compact span:last-child {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
 .preload-status {
   display: flex;
   flex-direction: column;
@@ -188,6 +249,28 @@
 }
 
 
+.cta-performance-tip {
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+  text-align: left;
+}
+
+.cta-performance-tip strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.cta-performance-tip p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .cta-choice-options {
   display: flex;
   flex-direction: column;
@@ -250,6 +333,14 @@
   opacity: 0.8;
 }
 
+.cta-scroll-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
 @media (max-width: 768px) {
   .article {
     margin: 20px auto;
@@ -296,4 +387,10 @@
   .button-container {
     margin: 28px 0;
   }
+  .preload-banner-actions,
+  .preload-banner-compact {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
+
