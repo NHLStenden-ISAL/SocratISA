@@ -172,7 +172,7 @@ function PromptResultView({
         `${t('result_stat_tps')} ${stats.tps}`,
         `${t('result_stat_generate')} ${formatMs(stats.totalTime - stats.ttft)}`,
         `${t('result_stat_total')} ${formatMs(stats.totalTime)}`,
-        `GPU: ${gpuStatus.gpuName ?? 'Unknown'}`,
+        `GPU: ${gpuStatus.gpuName ?? t('status_webgpu_supported')}`,
       ].join('\n');
       await navigator.clipboard.writeText(text);
       showStatsCopyFeedback(t('result_stats_copied'));
