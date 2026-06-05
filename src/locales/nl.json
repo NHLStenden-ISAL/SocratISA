@@ -20,6 +20,7 @@
   "home_dangers_learning": "Dan is er nog een minder zichtbaar risico, want als AI steeds de antwoorden voor je geeft, leer je zelf minder. Je slaat het denkproces over en oefent niet met redeneren, fouten maken en herstellen. Een samenvatting kopiëren voelt efficiënt, maar je mist het moment waarop je zelf verbanden legt. Daardoor raak je afhankelijk van AI op momenten dat je het zelf moet kunnen, zoals bij tentamens of presentaties.",
   "home_dangers_privacy": "Tot slot is er privacy. Alles wat je invoert in een externe AI-dienst kan worden opgeslagen of hergebruikt. Een datalek kan gevoelige informatie blootleggen, maar ook zonder datalek kunnen jouw gegevens in trainingsdata van nieuwe modellen belanden. Deel daarom geen persoonsgegevens, stage-informatie, schoolgegevens of andere vertrouwelijke gegevens zonder er goed over na te denken.",
   "home_dangers_info_link": "Benieuwd hoe generatieve AI zijn antwoorden maakt? Lees verder →",
+  "home_skip_to_cta": "Snap je de risico's al? Ga dan direct naar de prompt tool",
   "info_title": "Hoe generatieve AI werkt",
   "info_intro": "Generatieve AI kan in een paar seconden tekst schrijven, afbeeldingen maken en muziek componeren, maar hoe werkt de technologie erachter eigenlijk? Hieronder leggen we de basis iets dieper uit.",
   "info_practice_title": "Het begint met tekst",

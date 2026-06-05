@@ -333,6 +333,14 @@
   opacity: 0.8;
 }
 
+.cta-scroll-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
 @media (max-width: 768px) {
   .article {
     margin: 20px auto;

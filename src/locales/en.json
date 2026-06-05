@@ -20,6 +20,7 @@
   "home_dangers_learning": "There is also a less visible risk. If AI keeps giving you the answers, you practice less yourself. You skip the thinking process and miss the chance to reason, make mistakes, and recover. Copying a summary feels efficient, but you miss the moment where you make the connections yourself. That can make you dependent on AI when you need to work on your own, such as during an exam or presentation.",
   "home_dangers_privacy": "Privacy matters too. Anything you enter into an external AI service may be stored or reused. A data leak can expose sensitive information, and your data may also end up in training data for future models. Do not share things like personal details, internship information, school information, or confidential material unless you have thought carefully about the risks.",
   "home_dangers_info_link": "Curious how generative AI creates its answers? Read more →",
+  "home_skip_to_cta": "Already understand the risks? Go straight to the prompt tool",
   "info_title": "How generative AI works",
   "info_intro": "Generative AI can write text, create images, and compose music in seconds. But how does the technology behind it actually work? We'll explain the basics in a little more depth below.",
   "info_practice_title": "It starts with text",

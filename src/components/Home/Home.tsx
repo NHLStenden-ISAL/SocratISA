@@ -1,7 +1,7 @@
 /**
  * Home: hoofdpagina met waarschuwing over AI-gebruik in het onderwijs en CTA naar de vragenlijst.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
@@ -22,11 +22,12 @@ export const Home = () => {
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
+  const ctaRef = useRef<HTMLButtonElement>(null);
 
   const isPreloadBannerVisible = isAvailable === true;
   const isPreloadBannerMinimized = preloadOfferDismissed && preloadStatus === 'idle';
 
-  // Laad AI model in de achtergrond met banner keuze 
+  // Laad AI model in de achtergrond met banner keuze
   const handlePreload = async () => {
     setPreloadStatus('loading');
     setPreloadProgress(null);
@@ -42,6 +43,10 @@ export const Home = () => {
 
   const dismissPreloadOffer = () => {
     setPreloadOfferDismissed(true);
+  };
+
+  const scrollToCTA = () => {
+    ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   return (
@@ -82,11 +87,16 @@ export const Home = () => {
             )}
           </section>
         )}
-        
+
         {/* Introductie */}
         <section className="article-text">
           <p>{t('home_intro_1')}</p>
           <p>{t('home_intro_2')}</p>
+          <p>
+            <button className="info-link cta-scroll-link" type="button" onClick={scrollToCTA}>
+              {t('home_skip_to_cta')}
+            </button>
+          </p>
         </section>
 
         {/* AI Dangers */}
@@ -160,6 +170,7 @@ export const Home = () => {
         {/* Knop naar survey */}
         <div className="button-container">
           <button
+            ref={ctaRef}
             className="socratic-button"
             onClick={() => {
               if (preloadStatus !== 'idle') {
