@@ -11,6 +11,8 @@ export interface ISurveyService {
   reset(): void;
 }
 
+export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 // Informatie over de voortgang van AI model ophalen.
 export interface ProgressInfo {
   text?: string;
@@ -71,6 +73,7 @@ export interface IPromptGeneratorService {
     _translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void>;
+  getPreloadStatus(): PreloadStatus;
   abort(): void;
   getCurrentText(): string;
   getIsGenerating(): boolean;

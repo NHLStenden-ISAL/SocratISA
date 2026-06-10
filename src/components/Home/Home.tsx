@@ -1,31 +1,52 @@
 /**
  * Home: hoofdpagina met waarschuwing over AI-gebruik in het onderwijs en CTA naar de vragenlijst.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { Dialog } from '../Dialog/Dialog';
 import { formatProgressText } from '../../utils/progress';
 import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
-import type { ProgressInfo } from '../../types';
+import type { GenerationEvent, PreloadStatus, ProgressInfo } from '../../types';
 import './Home.css';
 
 export const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const gpuStatus = useGPUStatus();
   const { isAvailable } = gpuStatus;
   const { promptGeneratorService } = useServices();
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
-  const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [preloadStatus, setPreloadStatus] = useState<PreloadStatus>(() => promptGeneratorService.getPreloadStatus());
   const [preloadProgress, setPreloadProgress] = useState<ProgressInfo | null>(null);
+  const infoLinkRef = useRef<HTMLAnchorElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
 
   const isPreloadBannerVisible = isAvailable === true;
   const isPreloadBannerMinimized = preloadOfferDismissed && preloadStatus === 'idle';
+
+  useEffect(() => {
+    if ((location.state as { scrollToInfoLink?: boolean } | null)?.scrollToInfoLink) {
+      infoLinkRef.current?.scrollIntoView({ block: 'center' });
+      window.history.replaceState({ ...window.history.state, usr: null }, '');
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const handler = (event: GenerationEvent) => {
+      if (event.type !== 'progress') return;
+      const status = promptGeneratorService.getPreloadStatus();
+      if (status === 'idle') return;
+      setPreloadStatus(status);
+      setPreloadProgress(status === 'loading' ? event.info : null);
+    };
+    promptGeneratorService.subscribe(handler);
+    return () => promptGeneratorService.unsubscribe(handler);
+  }, [promptGeneratorService]);
 
   // Laad AI model in de achtergrond met banner keuze
   const handlePreload = async () => {
@@ -109,7 +130,7 @@ export const Home = () => {
           <p>{t('home_dangers_learning')}</p>
           <p>{t('home_dangers_privacy')}</p>
           <p>
-            <Link to="/info" className="info-link">
+            <Link ref={infoLinkRef} to="/info" className="info-link">
               {t('home_dangers_info_link')}
             </Link>
           </p>

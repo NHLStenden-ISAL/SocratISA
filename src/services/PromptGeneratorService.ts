@@ -9,6 +9,7 @@ import type {
   GenerationEvent,
   GenerationStats,
   ProgressInfo,
+  PreloadStatus,
 } from '../types';
 
 export class PromptGeneratorService implements IPromptGeneratorService {
@@ -26,6 +27,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private gpuUsed = false;
   private lastStats: GenerationStats | undefined = undefined;
   private lastWarning: string | undefined = undefined;
+  private preloadStatus: PreloadStatus = 'idle';
 
   constructor(webLLMService: IWebLLMService, fallbackService: IFallbackService) {
     this.webLLMService = webLLMService;
@@ -88,12 +90,26 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     _translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
+    if (this.preloadStatus === 'loading') return;
+    this.preloadStatus = 'loading';
     const wrappedOnProgress = (info: ProgressInfo) => {
       this.lastProgress = info;
       onProgress?.(info);
       this.emit({ type: 'progress', info });
     };
-    await this.webLLMService.preloadModel(wrappedOnProgress);
+    try {
+      await this.webLLMService.preloadModel(wrappedOnProgress);
+      this.preloadStatus = 'ready';
+      wrappedOnProgress({ percentage: 100, isDownloading: false });
+    } catch (err) {
+      this.preloadStatus = 'error';
+      wrappedOnProgress({ percentage: 0, isDownloading: false });
+      throw err;
+    }
+  }
+
+  getPreloadStatus(): PreloadStatus {
+    return this.preloadStatus;
   }
 
   // Start prompt generatie met de gegeven survey-antwoord

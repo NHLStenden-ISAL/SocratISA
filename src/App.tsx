@@ -75,8 +75,9 @@ function App() {
 
   // Scroll naar top bij navigatie
   useEffect(function scrollToTopOnNavigate() {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+    const isInfoReturn = location.pathname === '/' && (location.state as { scrollToInfoLink?: boolean } | null)?.scrollToInfoLink;
+    if (!isInfoReturn) window.scrollTo(0, 0);
+  }, [location.pathname, location.state]);
 
   // Volg AI generatie status
   useEffect(function trackGenerationState() {

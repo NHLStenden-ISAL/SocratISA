@@ -49,7 +49,7 @@ export const Info = () => {
       <div className="button-container">
         <button
           className="socratic-button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/', { state: { scrollToInfoLink: true } })}
         >
           {t('info_cta_back')}
         </button>

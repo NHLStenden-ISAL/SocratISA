@@ -20,6 +20,7 @@ vi.mock('../../contexts/useServices', () => ({
       preload: mockPreload,
       subscribe: mockSubscribe,
       unsubscribe: mockUnsubscribe,
+      getPreloadStatus: vi.fn(() => 'idle'),
     },
   })),
 }));

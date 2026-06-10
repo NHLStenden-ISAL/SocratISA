@@ -12,6 +12,7 @@ export type {
   GenerationEvent,
   GenerationStats,
   ProgressInfo,
+  PreloadStatus,
 } from './services';
 
 // Antwoorden van de Socratische vragenlijst.
