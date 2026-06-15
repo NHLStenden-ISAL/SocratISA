@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { PromptResult } from '../../components/PromptResult/PromptResult';
-import { ServiceProvider } from '../../contexts';
+import { ServiceProvider, StorageProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
 import type { GenerationEvent } from '../../types';
 import type { Services } from '../../contexts';
@@ -14,6 +14,20 @@ const mockHandleCopy = vi.fn().mockResolvedValue(undefined);
 const mockHandleProvider = vi.fn();
 const mockHandleRetry = vi.fn();
 const mockHandleHome = vi.fn();
+
+vi.mock('../../contexts/useStorage', async () => {
+  const actual = await vi.importActual<typeof import('../../contexts/useStorage')>('../../contexts/useStorage');
+  return {
+    ...actual,
+    useStorage: vi.fn(() => ({
+      getLocalItem: vi.fn(),
+      setLocalItem: vi.fn(),
+      getSessionItem: (key: string) => sessionStorage.getItem(key),
+      setSessionItem: (key: string, value: string) => sessionStorage.setItem(key, value),
+      removeSessionItem: (key: string) => sessionStorage.removeItem(key),
+    })),
+  };
+});
 
 vi.mock('../../hooks', async () => {
   const actual = await vi.importActual('../../hooks');
@@ -56,12 +70,9 @@ function createServices(services: Partial<Services> = {}) {
     surveyService: {} as Services['surveyService'],
     webLLMService: {
       clearModelCache: vi.fn().mockResolvedValue(undefined),
+      setThrottleMs: vi.fn(),
     } as unknown as Services['webLLMService'],
     fallbackService: {} as Services['fallbackService'],
-    providerService: {
-      getProviders: vi.fn().mockReturnValue([]),
-      buildUrl: vi.fn(),
-    } as unknown as Services['providerService'],
     promptGeneratorService: {
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
@@ -72,6 +83,7 @@ function createServices(services: Partial<Services> = {}) {
       getCurrentText: vi.fn().mockReturnValue(''),
       getStats: vi.fn().mockReturnValue(undefined),
       getLastWarning: vi.fn().mockReturnValue(undefined),
+      setThrottleMs: vi.fn(),
     } as unknown as Services['promptGeneratorService'],
     ...services,
   };
@@ -536,17 +548,20 @@ describe('PromptResult', () => {
         getCurrentText: vi.fn().mockReturnValue(''),
         getStats: vi.fn().mockReturnValue(undefined),
         getLastWarning: vi.fn().mockReturnValue(undefined),
+        setThrottleMs: vi.fn(),
       } as unknown as Services['promptGeneratorService'],
     });
 
     render(
       <MemoryRouter>
-        <ServiceProvider services={services}>
-          <MockI18nProvider>
-            <PromptResult />
-            <LocationDisplay />
-          </MockI18nProvider>
-        </ServiceProvider>
+        <StorageProvider>
+          <ServiceProvider services={services}>
+            <MockI18nProvider>
+              <PromptResult />
+              <LocationDisplay />
+            </MockI18nProvider>
+          </ServiceProvider>
+        </StorageProvider>
       </MemoryRouter>,
     );
 

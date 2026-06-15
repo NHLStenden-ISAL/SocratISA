@@ -6,13 +6,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SURVEY_QUESTIONS } from '../services';
 import { useServices } from '../contexts/useServices';
-import { safeSessionStorage, STORAGE_KEYS } from '../utils/storage';
+import { useStorage, type IStorage } from '../contexts/useStorage';
+import { STORAGE_KEYS } from '../services/StorageService';
 import { useGPUStatus } from './useGPUStatus';
 import type { GenerationEvent, ProgressInfo } from '../types';
 
 // Haal AI-model/fallback keuze uit storage
-function getGPUChoice(isAvailable: boolean | null): boolean {
-  const stored = safeSessionStorage.getItem(STORAGE_KEYS.GPU_CHOICE);
+function getGPUChoice(isAvailable: boolean | null, storage: IStorage): boolean {
+  const stored = storage.getSessionItem(STORAGE_KEYS.GPU_CHOICE);
   if (stored === 'true') return true;
   if (stored === 'false') return false;
   return isAvailable === true;
@@ -22,6 +23,7 @@ export function useSurvey() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { surveyService, promptGeneratorService } = useServices();
+  const storage = useStorage();
   const inputRef = useRef<HTMLInputElement>(null);
   const isSubmittingRef = useRef(false);
 
@@ -30,7 +32,7 @@ export function useSurvey() {
   const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [inputError, setInputError] = useState(false);
   const { isAvailable } = useGPUStatus();
-  const gpuAvailable = getGPUChoice(isAvailable);
+  const gpuAvailable = getGPUChoice(isAvailable, storage);
   const currentQ = SURVEY_QUESTIONS[step];
 
   // Sla keuze antwoord op
@@ -116,9 +118,9 @@ export function useSurvey() {
   // Stuur antwoorden naar prompt generator
   const finishSurvey = () => {
     setIsGenerating(true);
-    safeSessionStorage.removeItem(STORAGE_KEYS.PROMPT);
-    safeSessionStorage.removeItem(STORAGE_KEYS.STATS);
-    safeSessionStorage.removeItem(STORAGE_KEYS.EDITED_PROMPT);
+    storage.removeSessionItem(STORAGE_KEYS.PROMPT);
+    storage.removeSessionItem(STORAGE_KEYS.STATS);
+    storage.removeSessionItem(STORAGE_KEYS.EDITED_PROMPT);
     promptGeneratorService.reset();
     promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressInfo);
   };

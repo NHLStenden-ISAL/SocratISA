@@ -1,7 +1,7 @@
 /**
  * services: type-definities voor services.
  */
-import type { SurveyAnswers, Provider } from '.';
+import type { SurveyAnswers } from '.';
 
 // Service voor het beheren van survey antwoorden.
 export interface ISurveyService {
@@ -35,6 +35,7 @@ export interface IWebLLMService {
   clearModelCache(): Promise<void>;
   resetEngine(): void;
   getLastCompletionTokens(): number | null;
+  setThrottleMs(value: number): void;
 }
 
 // Service voor fallback prompt generatie.
@@ -80,10 +81,4 @@ export interface IPromptGeneratorService {
   getIsComplete(): boolean;
   getStats(): GenerationStats | undefined;
   getLastWarning(): string | undefined;
-}
-
-// Service voor het beheren van AI-providers.
-export interface IProviderService {
-  getProviders(): Provider[];
-  buildUrl(provider: Provider, prompt: string): string;
 }

@@ -36,8 +36,11 @@ describe('LanguageContext', () => {
 
   it('laadt de initiele taal uit storage', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('en'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('en'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(
@@ -55,8 +58,11 @@ describe('LanguageContext', () => {
 
   it('wisselt de taal en slaat deze op bij toggle', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('nl'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('nl'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(
@@ -74,13 +80,16 @@ describe('LanguageContext', () => {
     });
 
     expect(screen.getByTestId('lang').textContent).toBe('en');
-    expect(mockStorage.set).toHaveBeenCalledWith('lang', 'en');
+    expect(mockStorage.setLocalItem).toHaveBeenCalledWith('lang', 'en');
   });
 
   it('update document.documentElement.lang bij taalwissel', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('nl'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('nl'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(

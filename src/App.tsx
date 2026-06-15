@@ -10,11 +10,12 @@ import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from './contexts/useTheme';
 import { useLanguage } from './contexts/useLanguage';
 import { useServices } from './contexts/useServices';
+import { useStorage } from './contexts/useStorage';
 import { useGPUStatus } from './hooks';
 import type { GenerationEvent } from './types';
 import { Footer } from './components/Footer/Footer';
 import { Dialog } from './components/Dialog/Dialog';
-import { safeSessionStorage, STORAGE_KEYS } from './utils/storage';
+import { STORAGE_KEYS } from './services/StorageService';
 
 function App() {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ function App() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang } = useLanguage();
+  const storage = useStorage();
   const { promptGeneratorService } = useServices();
   const { isAvailable, gpuName, isChecking } = useGPUStatus();
   const [showLangDialog, setShowLangDialog] = useState(false);
@@ -44,12 +46,12 @@ function App() {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
       promptGeneratorService.abort();
       setIsGenerating(false);
-      safeSessionStorage.removeItem(STORAGE_KEYS.PROMPT);
-      safeSessionStorage.removeItem(STORAGE_KEYS.STATS);
-      safeSessionStorage.removeItem(STORAGE_KEYS.EDITED_PROMPT);
+      storage.removeSessionItem(STORAGE_KEYS.PROMPT);
+      storage.removeSessionItem(STORAGE_KEYS.STATS);
+      storage.removeSessionItem(STORAGE_KEYS.EDITED_PROMPT);
     }
     previousPathRef.current = location.pathname;
-  }, [location.pathname, promptGeneratorService]);
+  }, [location.pathname, promptGeneratorService, storage]);
 
   // Verander taal
   const handleLangToggle = () => {
@@ -172,7 +174,7 @@ function App() {
             className="cta-choice-btn ai"
             onClick={() => {
               setShowCTADialog(false);
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
               navigate('/survey', { state: { gpuAvailable: true } });
             }}
           >
@@ -183,7 +185,7 @@ function App() {
             className="cta-choice-btn fallback"
             onClick={() => {
               setShowCTADialog(false);
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
               navigate('/survey', { state: { gpuAvailable: false } });
             }}
           >

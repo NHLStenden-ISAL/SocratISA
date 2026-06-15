@@ -4,8 +4,11 @@
 import { useContext, createContext } from 'react';
 
 export interface IStorage {
-  get<T>(key: string, fallback: T): T;
-  set<T>(key: string, value: T): void;
+  getLocalItem<T>(key: string, fallback: T): T;
+  setLocalItem<T>(key: string, value: T): void;
+  getSessionItem(key: string): string | null;
+  setSessionItem(key: string, value: string): void;
+  removeSessionItem(key: string): void;
 }
 
 export const StorageContext = createContext<IStorage | undefined>(undefined);

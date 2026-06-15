@@ -4,16 +4,39 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useServices } from '../contexts/useServices';
-import { safeSessionStorage, STORAGE_KEYS } from '../utils/storage';
+import { useStorage } from '../contexts/useStorage';
+import { STORAGE_KEYS } from '../services/StorageService';
 import type { Provider } from '../types';
+
+const PROVIDERS: Provider[] = [
+  {
+    name: 'ChatGPT',
+    buildUrl: (prompt) =>
+      `https://chat.openai.com/?q=${encodeURIComponent(prompt)}`,
+  },
+  {
+    name: 'Claude',
+    buildUrl: (prompt) =>
+      `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
+  },
+  {
+    name: 'Gemini',
+    clipboardOnly: true,
+    buildUrl: () => 'https://gemini.google.com/app',
+  },
+  {
+    name: 'Copilot',
+    clipboardOnly: true,
+    buildUrl: () => 'https://copilot.microsoft.com/',
+  },
+];
 
 export function usePromptResult(initialPrompt: string) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { providerService } = useServices();
+  const storage = useStorage();
   const [edits, setEdits] = useState<string | null>(() => {
-    return safeSessionStorage.getItem(STORAGE_KEYS.EDITED_PROMPT);
+    return storage.getSessionItem(STORAGE_KEYS.EDITED_PROMPT);
   });
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -25,7 +48,7 @@ export function usePromptResult(initialPrompt: string) {
   const prompt = edits ?? initialPrompt;
   const setPrompt = (value: string) => {
     setEdits(value);
-    safeSessionStorage.setItem(STORAGE_KEYS.EDITED_PROMPT, value);
+    storage.setSessionItem(STORAGE_KEYS.EDITED_PROMPT, value);
   };
 
   useEffect(function focusTextareaOnEdit() {
@@ -71,7 +94,7 @@ export function usePromptResult(initialPrompt: string) {
   // Ga naar AI-provider website
   const handleProvider = (provider: Provider) => {
     const openUrl = () => {
-      const url = providerService.buildUrl(provider, prompt);
+      const url = provider.buildUrl(prompt);
       window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -98,6 +121,6 @@ export function usePromptResult(initialPrompt: string) {
     handleProvider,
     handleRetry: () => navigate('/survey'),
     handleHome: () => navigate('/'),
-    providers: providerService.getProviders(),
+    providers: PROVIDERS,
   };
 }

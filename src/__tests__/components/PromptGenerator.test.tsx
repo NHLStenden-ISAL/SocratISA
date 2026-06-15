@@ -16,6 +16,7 @@ const mockGetIsGenerating = vi.fn().mockReturnValue(false);
 const mockGetCurrentText = vi.fn().mockReturnValue('');
 const mockGetStats = vi.fn().mockReturnValue(undefined);
 const mockGetLastWarning = vi.fn().mockReturnValue(undefined);
+const mockSetThrottleMs = vi.fn();
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -27,6 +28,9 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../contexts/useServices', () => ({
   useServices: vi.fn(() => ({
+    webLLMService: {
+      setThrottleMs: mockSetThrottleMs,
+    },
     promptGeneratorService: {
       subscribe: mockSubscribe,
       unsubscribe: mockUnsubscribe,
@@ -39,6 +43,10 @@ vi.mock('../../contexts/useServices', () => ({
       getLastWarning: mockGetLastWarning,
     },
   })),
+}));
+
+vi.mock('../../hooks/useGenerationSettings', () => ({
+  useGenerationSettings: vi.fn(() => ({ throttleMs: 0, setThrottleMs: vi.fn() })),
 }));
 
 function createEventHandler() {

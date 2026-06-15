@@ -2,14 +2,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { StorageService } from '../../services/StorageService';
 
 describe('StorageService', () => {
-  let store: Record<string, string> = {};
+  let localStore: Record<string, string> = {};
+  let sessionStore: Record<string, string> = {};
 
   beforeEach(() => {
-    store = {};
+    localStore = {};
+    sessionStore = {};
     vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => store[key] ?? null),
+      getItem: vi.fn((key: string) => localStore[key] ?? null),
       setItem: vi.fn((key: string, value: string) => {
-        store[key] = value;
+        localStore[key] = value;
+      }),
+    });
+    vi.stubGlobal('sessionStorage', {
+      getItem: vi.fn((key: string) => sessionStore[key] ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        sessionStore[key] = value;
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete sessionStore[key];
       }),
     });
   });
@@ -18,47 +29,47 @@ describe('StorageService', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('get', () => {
+  describe('getLocalItem', () => {
     it('haalt een opgeslagen waarde op', () => {
-      store['taal'] = JSON.stringify('nl');
-      const result = StorageService.get<string>('taal', 'en');
+      localStore['taal'] = JSON.stringify('nl');
+      const result = StorageService.getLocalItem<string>('taal', 'en');
       expect(result).toBe('nl');
     });
 
     it('geeft de fallback terug als de sleutel ontbreekt', () => {
-      const result = StorageService.get<string>('onbekend', 'standaard');
+      const result = StorageService.getLocalItem<string>('onbekend', 'standaard');
       expect(result).toBe('standaard');
     });
 
     it('geeft de fallback terug bij ongeldige JSON', () => {
-      store['broken'] = 'niet-json';
-      const result = StorageService.get<unknown>('broken', 'fallback');
+      localStore['broken'] = 'niet-json';
+      const result = StorageService.getLocalItem<unknown>('broken', 'fallback');
       expect(result).toBe('fallback');
     });
 
     it('kan objecten ophalen', () => {
       const data = { theme: 'dark', lang: 'nl' };
-      store['settings'] = JSON.stringify(data);
-      const result = StorageService.get<typeof data>('settings', { theme: 'light', lang: 'en' });
+      localStore['settings'] = JSON.stringify(data);
+      const result = StorageService.getLocalItem<typeof data>('settings', { theme: 'light', lang: 'en' });
       expect(result).toEqual(data);
     });
 
     it('geeft de fallback terug bij null waarden in localStorage', () => {
-      const result = StorageService.get<string>('niet_aanwezig', 'default');
+      const result = StorageService.getLocalItem<string>('niet_aanwezig', 'default');
       expect(result).toBe('default');
     });
   });
 
-  describe('set', () => {
+  describe('setLocalItem', () => {
     it('slaat een waarde op', () => {
-      StorageService.set('taal', 'en');
-      expect(store['taal']).toBe(JSON.stringify('en'));
+      StorageService.setLocalItem('taal', 'en');
+      expect(localStore['taal']).toBe(JSON.stringify('en'));
     });
 
     it('slaat een object op als JSON', () => {
       const data = { theme: 'dark' };
-      StorageService.set('settings', data);
-      expect(store['settings']).toBe(JSON.stringify(data));
+      StorageService.setLocalItem('settings', data);
+      expect(localStore['settings']).toBe(JSON.stringify(data));
     });
 
     it('negeert een fout bij opslaan zonder te loggen', () => {
@@ -71,10 +82,28 @@ describe('StorageService', () => {
         }),
       });
 
-      expect(() => StorageService.set('sleutel', 'waarde')).not.toThrow();
+      expect(() => StorageService.setLocalItem('sleutel', 'waarde')).not.toThrow();
       expect(warnSpy).not.toHaveBeenCalled();
 
       warnSpy.mockRestore();
+    });
+  });
+
+  describe('sessionStorage', () => {
+    it('haalt een session waarde op', () => {
+      sessionStore['prompt'] = 'test';
+      expect(StorageService.getSessionItem('prompt')).toBe('test');
+    });
+
+    it('slaat een session waarde op', () => {
+      StorageService.setSessionItem('prompt', 'test');
+      expect(sessionStore['prompt']).toBe('test');
+    });
+
+    it('verwijdert een session waarde', () => {
+      sessionStore['prompt'] = 'test';
+      StorageService.removeSessionItem('prompt');
+      expect(sessionStore['prompt']).toBeUndefined();
     });
   });
 });

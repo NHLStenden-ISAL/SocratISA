@@ -1,5 +1,7 @@
+import { createElement, type ReactNode } from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { StorageProvider } from '../../contexts';
 import { useGenerationSettings } from '../../hooks/useGenerationSettings';
 
 const store: Record<string, string> = {};
@@ -17,6 +19,12 @@ const mockStorage = {
   },
 };
 
+function createWrapper() {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(StorageProvider, null, children);
+  };
+}
+
 describe('useGenerationSettings', () => {
   beforeEach(() => {
     Object.keys(store).forEach((k) => delete store[k]);
@@ -28,18 +36,18 @@ describe('useGenerationSettings', () => {
   });
 
   it('geeft standaard 0 terug als er niets in localStorage staat', () => {
-    const { result } = renderHook(() => useGenerationSettings());
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
     expect(result.current.throttleMs).toBe(0);
   });
 
   it('leest throttleMs uit localStorage', () => {
     localStorage.setItem('socratisa_throttle_ms', '50');
-    const { result } = renderHook(() => useGenerationSettings());
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
     expect(result.current.throttleMs).toBe(50);
   });
 
   it('slaat throttleMs op in localStorage', () => {
-    const { result } = renderHook(() => useGenerationSettings());
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
 
     act(() => {
       result.current.setThrottleMs(100);
@@ -50,7 +58,7 @@ describe('useGenerationSettings', () => {
   });
 
   it('beperkt throttleMs tot minimaal 0', () => {
-    const { result } = renderHook(() => useGenerationSettings());
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
 
     act(() => {
       result.current.setThrottleMs(-10);
@@ -60,7 +68,7 @@ describe('useGenerationSettings', () => {
   });
 
   it('beperkt throttleMs tot maximaal 100', () => {
-    const { result } = renderHook(() => useGenerationSettings());
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
 
     act(() => {
       result.current.setThrottleMs(500);

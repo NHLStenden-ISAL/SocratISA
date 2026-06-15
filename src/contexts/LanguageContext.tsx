@@ -20,7 +20,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Geef taal uit localStorage of fallback
   const [lang, setLang] = useState<Language>(() =>
-    storage.get<Language>('lang', fallbackLanguage)
+    storage.getLocalItem<Language>('lang', fallbackLanguage)
   );
 
   // Zet taal
@@ -33,7 +33,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const toggleLang = () => {
     const newLang: Language = lang === 'nl' ? 'en' : 'nl';
     setLang(newLang);
-    storage.set('lang', newLang);
+    storage.setLocalItem('lang', newLang);
   };
 
   return (

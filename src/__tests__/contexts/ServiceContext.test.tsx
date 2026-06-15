@@ -16,7 +16,7 @@ describe('ServiceContext', () => {
       </ServiceProvider>,
     );
 
-    expect(screen.getByTestId('count').textContent).toBe('5');
+    expect(screen.getByTestId('count').textContent).toBe('4');
   });
 
   it('kan custom services injecteren', () => {
@@ -24,7 +24,6 @@ describe('ServiceContext', () => {
       surveyService: {} as Services['surveyService'],
       webLLMService: {} as Services['webLLMService'],
       fallbackService: {} as Services['fallbackService'],
-      providerService: {} as Services['providerService'],
       promptGeneratorService: {} as Services['promptGeneratorService'],
     };
 
@@ -34,6 +33,6 @@ describe('ServiceContext', () => {
       </ServiceProvider>,
     );
 
-    expect(screen.getByTestId('count').textContent).toBe('5');
+    expect(screen.getByTestId('count').textContent).toBe('4');
   });
 });

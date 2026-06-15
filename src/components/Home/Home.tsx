@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useGPUStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
+import { useStorage } from '../../contexts/useStorage';
 import { Dialog } from '../Dialog/Dialog';
 import { formatProgressText } from '../../utils/progress';
-import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
+import { STORAGE_KEYS } from '../../services/StorageService';
 import type { GenerationEvent, PreloadStatus, ProgressInfo } from '../../types';
 import './Home.css';
 
@@ -19,6 +20,7 @@ export const Home = () => {
   const gpuStatus = useGPUStatus();
   const { isAvailable } = gpuStatus;
   const { promptGeneratorService } = useServices();
+  const storage = useStorage();
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [preloadOfferDismissed, setPreloadOfferDismissed] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState<PreloadStatus>(() => promptGeneratorService.getPreloadStatus());
@@ -195,10 +197,10 @@ export const Home = () => {
             className="socratic-button"
             onClick={() => {
               if (preloadStatus !== 'idle') {
-                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+                storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
                 navigate('/survey', { state: { gpuAvailable: true } });
               } else if (isAvailable === false) {
-                safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+                storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
                 navigate('/survey', { state: { gpuAvailable: false } });
               } else {
                 setShowCTADialog(true);
@@ -258,7 +260,7 @@ export const Home = () => {
           <button
             className="cta-choice-btn ai"
             onClick={() => {
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
               navigate('/survey', { state: { gpuAvailable: true } });
             }}
           >
@@ -268,7 +270,7 @@ export const Home = () => {
           <button
             className="cta-choice-btn fallback"
             onClick={() => {
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
               navigate('/survey', { state: { gpuAvailable: false } });
             }}
           >

@@ -77,6 +77,10 @@ export class WebLLMService implements IWebLLMService {
     return MODEL_ID;
   }
 
+  setThrottleMs(value: number): void {
+    WebLLMService.throttleMs = value;
+  }
+
   // Initialiseer AI model in achtergrond
   async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
     if (!WebLLMService.isAvailableForUse()) {

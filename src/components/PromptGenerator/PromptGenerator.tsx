@@ -7,7 +7,6 @@ import { formatProgressText } from '../../utils/progress';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
 import { useGenerationSettings } from '../../hooks/useGenerationSettings';
-import { WebLLMService } from '../../services/WebLLMService';
 import type { SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 interface PromptGeneratorProps {
@@ -18,7 +17,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { promptGeneratorService } = useServices();
+  const { promptGeneratorService, webLLMService } = useServices();
 
   const [phase, setPhase] = useState<'loading' | 'streaming'>('loading');
   const [text, setText] = useState('');
@@ -28,8 +27,8 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
 
   const { throttleMs, setThrottleMs } = useGenerationSettings();
   useEffect(function syncThrottleMs() {
-    WebLLMService.throttleMs = throttleMs;
-  }, [throttleMs]);
+    webLLMService.setThrottleMs(throttleMs);
+  }, [throttleMs, webLLMService]);
 
   // Render tekst soepel token voor token
   const rafRef = useRef<number>(0);

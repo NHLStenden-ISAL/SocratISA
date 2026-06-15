@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { useSurvey } from '../../hooks';
 import { useGPUStatus } from '../../hooks/useGPUStatus';
-import { ServiceProvider } from '../../contexts';
+import { ServiceProvider, StorageProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
 import type { Services } from '../../contexts';
 import type { GenerationEvent } from '../../types';
@@ -46,7 +46,6 @@ function createWrapper(services: Partial<Services> = {}) {
       detectGPU: vi.fn().mockResolvedValue('MockGPU'),
     } as unknown as Services['webLLMService'],
     fallbackService: {} as Services['fallbackService'],
-    providerService: {} as Services['providerService'],
     promptGeneratorService: {
       subscribe: mockSubscribe,
       unsubscribe: mockUnsubscribe,
@@ -62,11 +61,13 @@ function createWrapper(services: Partial<Services> = {}) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <MemoryRouter>
-        <ServiceProvider services={{ ...defaultServices, ...services }}>
-          <MockI18nProvider>
-            {children}
-          </MockI18nProvider>
-        </ServiceProvider>
+        <StorageProvider>
+          <ServiceProvider services={{ ...defaultServices, ...services }}>
+            <MockI18nProvider>
+              {children}
+            </MockI18nProvider>
+          </ServiceProvider>
+        </StorageProvider>
       </MemoryRouter>
     );
   };

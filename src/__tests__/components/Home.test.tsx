@@ -25,6 +25,16 @@ vi.mock('../../contexts/useServices', () => ({
   })),
 }));
 
+vi.mock('../../contexts/useStorage', () => ({
+  useStorage: vi.fn(() => ({
+    getLocalItem: vi.fn(),
+    setLocalItem: vi.fn(),
+    getSessionItem: vi.fn().mockReturnValue(null),
+    setSessionItem: vi.fn(),
+    removeSessionItem: vi.fn(),
+  })),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await import('react-router-dom');
   return {

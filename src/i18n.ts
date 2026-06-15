@@ -12,7 +12,7 @@ type SupportedLanguage = 'nl' | 'en';
 
 // Zoek voor opgeslagen voorkeurstaal
 function getStoredLanguage(): SupportedLanguage | null {
-  const value = StorageService.get<string | null>('lang', null);
+  const value = StorageService.getLocalItem<string | null>('lang', null);
   return value === 'nl' || value === 'en' ? value : null;
 }
 

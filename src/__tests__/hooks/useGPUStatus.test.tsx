@@ -12,7 +12,6 @@ function createWrapper(services: Partial<Services> = {}) {
       detectGPU: vi.fn().mockResolvedValue('NVIDIA GTX 1080'),
     } as unknown as Services['webLLMService'],
     fallbackService: {} as Services['fallbackService'],
-    providerService: {} as Services['providerService'],
     promptGeneratorService: {} as Services['promptGeneratorService'],
   };
 

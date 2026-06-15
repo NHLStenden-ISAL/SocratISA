@@ -10,7 +10,8 @@ import { usePromptResult, useAutoFocus, useGPUStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
-import { safeSessionStorage, STORAGE_KEYS } from '../../utils/storage';
+import { useStorage } from '../../contexts/useStorage';
+import { STORAGE_KEYS } from '../../services/StorageService';
 import type { GenerationStats, Provider } from '../../types';
 import './PromptResult.css';
 
@@ -19,12 +20,13 @@ const STORAGE_KEY_STATS = STORAGE_KEYS.STATS;
 
 // Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status
 export const PromptResult = () => {
+  const storage = useStorage();
   const [prompt, setPrompt] = useState<string | null>(() => {
-    return safeSessionStorage.getItem(STORAGE_KEY_PROMPT);
+    return storage.getSessionItem(STORAGE_KEY_PROMPT);
   });
 
   const [stats, setStats] = useState<GenerationStats | undefined>(() => {
-    const raw = safeSessionStorage.getItem(STORAGE_KEY_STATS);
+    const raw = storage.getSessionItem(STORAGE_KEY_STATS);
     if (raw) {
       try {
         return JSON.parse(raw) as GenerationStats;
@@ -40,13 +42,13 @@ export const PromptResult = () => {
     setPrompt(p);
     setStats(s);
     setWarning(w);
-    safeSessionStorage.setItem(STORAGE_KEY_PROMPT, p);
+    storage.setSessionItem(STORAGE_KEY_PROMPT, p);
     if (s) {
-      safeSessionStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(s));
+      storage.setSessionItem(STORAGE_KEY_STATS, JSON.stringify(s));
     } else {
-      safeSessionStorage.removeItem(STORAGE_KEY_STATS);
+      storage.removeSessionItem(STORAGE_KEY_STATS);
     }
-  }, []);
+  }, [storage]);
 
   if (prompt === null) {
     return <PromptGenerator onComplete={handleComplete} />;
@@ -66,6 +68,7 @@ function PromptResultView({
 }) {
   const { t } = useTranslation();
   const { webLLMService } = useServices();
+  const storage = useStorage();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
@@ -351,7 +354,7 @@ function PromptResultView({
         <div className="result-footer">
           <button className="footer-btn" onClick={() => {
             if (isAvailable === false) {
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
               navigate('/survey', { state: { gpuAvailable: false } });
             } else {
               setShowRetryDialog(true);
@@ -398,7 +401,7 @@ function PromptResultView({
           <button
             className="cta-choice-btn ai"
             onClick={() => {
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
               setShowRetryDialog(false);
               navigate('/survey', { state: { gpuAvailable: true } });
             }}
@@ -409,7 +412,7 @@ function PromptResultView({
           <button
             className="cta-choice-btn fallback"
             onClick={() => {
-              safeSessionStorage.setItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
               setShowRetryDialog(false);
               navigate('/survey', { state: { gpuAvailable: false } });
             }}
