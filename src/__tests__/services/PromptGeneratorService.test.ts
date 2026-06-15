@@ -207,7 +207,7 @@ describe('PromptGeneratorService', () => {
       expect(fallbackService.generatePrompt).toHaveBeenCalledWith(answers, translate);
 
       const types = events.map((e) => e.type);
-      expect(types).toEqual(['firstToken', 'token', 'complete']);
+      expect(types).toEqual(['complete']);
     });
 
     it('zet currentText op de fallback prompt', async () => {

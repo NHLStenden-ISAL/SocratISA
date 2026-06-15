@@ -3,6 +3,7 @@
  */
 import type * as webllm from '@mlc-ai/web-llm';
 import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
+import { getStyleHintKey } from '../utils/styleHints';
 
 // Gebruikte model
 const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
@@ -192,20 +193,9 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
-  // Pak meerkeuze antwoord
-  private getStyleHintKey(styleKey: string): string {
-    const map: Record<string, string> = {
-      survey_option_visual: 'style_hint_visual',
-      survey_option_step: 'style_hint_step',
-      survey_option_conceptual: 'style_hint_conceptual',
-      survey_option_practical: 'style_hint_practical',
-    };
-    return map[styleKey] || 'style_hint_default';
-  }
-
   // Maak de systeem prompt met alle survey-antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
-    const styleHintKey = this.getStyleHintKey(answers.styleKey);
+    const styleHintKey = getStyleHintKey(answers.styleKey);
     return translate('webllm_system_prompt', {
       subject: answers.subject,
       topic: answers.topic,

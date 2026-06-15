@@ -57,6 +57,21 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.listeners.forEach(l => l(event));
   }
 
+  private emitProgress(info: ProgressInfo, onProgress?: (info: ProgressInfo) => void): void {
+    this.lastProgress = info;
+    onProgress?.(info);
+    this.emit({ type: 'progress', info });
+  }
+
+  private completeGeneration(text: string, stats?: GenerationStats, warning?: string): void {
+    this.currentText = text;
+    this.lastStats = stats;
+    this.lastWarning = warning;
+    this.complete = true;
+    this.generating = false;
+    this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats, warning: this.lastWarning });
+  }
+
   // Verwijder de begin aan einde tags van de resultaat prompt
   private cleanOutput(text: string): string {
     const cleaned = this.stripThinkTag(text);
@@ -92,11 +107,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   ): Promise<void> {
     if (this.preloadStatus === 'loading') return;
     this.preloadStatus = 'loading';
-    const wrappedOnProgress = (info: ProgressInfo) => {
-      this.lastProgress = info;
-      onProgress?.(info);
-      this.emit({ type: 'progress', info });
-    };
+    const wrappedOnProgress = (info: ProgressInfo) => this.emitProgress(info, onProgress);
     try {
       await this.webLLMService.preloadModel(wrappedOnProgress);
       this.preloadStatus = 'ready';
@@ -156,11 +167,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   ): Promise<void> {
     let firstTokenSent = false;
 
-    const wrappedOnProgress = (info: ProgressInfo) => {
-      this.lastProgress = info;
-      onProgress?.(info);
-      this.emit({ type: 'progress', info });
-    };
+    const wrappedOnProgress = (info: ProgressInfo) => this.emitProgress(info, onProgress);
 
     for await (const token of this.webLLMService.generatePromptStream(answers, translate, wrappedOnProgress)) {
       if (abortCtrl.signal.aborted) {
@@ -184,11 +191,9 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     }
 
     if (!abortCtrl.signal.aborted) {
-      this.currentText = this.cleanOutput(this.currentText);
-      this.complete = true;
-      this.generating = false;
-      this.lastStats = this.buildStats(this.webLLMService.getLastCompletionTokens() ?? undefined);
-      this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats });
+      const text = this.cleanOutput(this.currentText);
+      const stats = this.buildStats(this.webLLMService.getLastCompletionTokens() ?? undefined);
+      this.completeGeneration(text, stats);
       this.webLLMService.resetEngine();
     }
   }
@@ -200,14 +205,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     warning?: string,
   ): void {
     const raw = this.fallbackService.generatePrompt(answers, translate);
-    this.currentText = this.cleanOutput(raw);
-    this.firstTokenTime = performance.now();
-    this.emit({ type: 'firstToken', text: this.currentText });
-    this.emit({ type: 'token', text: this.currentText });
-    this.lastWarning = warning;
-    this.complete = true;
-    this.generating = false;
-    this.emit({ type: 'complete', text: this.currentText, warning });
+    this.completeGeneration(this.cleanOutput(raw), undefined, warning);
   }
 
   private async handleGenerationError(
