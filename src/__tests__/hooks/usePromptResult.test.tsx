@@ -2,32 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { usePromptResult } from '../../hooks';
-import { ServiceProvider } from '../../contexts';
+import { StorageProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
-import type { Services } from '../../contexts';
 
-function createWrapper(services: Partial<Services> = {}) {
-  const defaultServices = {
-    surveyService: {} as Services['surveyService'],
-    webLLMService: {} as Services['webLLMService'],
-    fallbackService: {} as Services['fallbackService'],
-    providerService: {
-      getProviders: vi.fn().mockReturnValue([
-        { name: 'ChatGPT', buildUrl: (p: string) => `https://chat.openai.com/?q=${encodeURIComponent(p)}` },
-      ]),
-      buildUrl: vi.fn().mockReturnValue('https://chat.openai.com/?q=test'),
-    } as unknown as Services['providerService'],
-    promptGeneratorService: {} as Services['promptGeneratorService'],
-  };
-
+function createWrapper() {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <MemoryRouter>
-        <ServiceProvider services={{ ...defaultServices, ...services }}>
+        <StorageProvider>
           <MockI18nProvider>
             {children}
           </MockI18nProvider>
-        </ServiceProvider>
+        </StorageProvider>
       </MemoryRouter>
     );
   };
@@ -75,7 +61,7 @@ describe('usePromptResult', () => {
     });
 
     act(() => {
-      result.current.setPrompt('bewerkte prompt');
+      result.current.setEditedPrompt('bewerkte prompt');
     });
 
     expect(result.current.prompt).toBe('bewerkte prompt');
@@ -94,7 +80,7 @@ describe('usePromptResult', () => {
     expect(result.current.isCopying).toBe(false);
   });
 
-  it('toont feedback bij succesvol kopiëren', async () => {
+  it('toont copyFeedback bij succesvol kopiëren', async () => {
     const { result } = renderHook(() => usePromptResult('test'), {
       wrapper: createWrapper(),
     });
@@ -103,7 +89,7 @@ describe('usePromptResult', () => {
       await result.current.handleCopy();
     });
 
-    expect(result.current.feedback).not.toBeNull();
+    expect(result.current.copyFeedback).not.toBeNull();
   });
 
   it('handelt een klembord fout af', async () => {
@@ -118,10 +104,10 @@ describe('usePromptResult', () => {
     });
 
     expect(result.current.isCopying).toBe(false);
-    expect(result.current.feedback).not.toBeNull();
+    expect(result.current.copyFeedback).not.toBeNull();
   });
 
-  it('opent een provider URL voor niet-clipboardOnly providers', () => {
+  it('opent een provider URL voor niet clipboard providers', () => {
     const openMock = vi.fn();
     vi.stubGlobal('open', openMock);
 
@@ -129,14 +115,14 @@ describe('usePromptResult', () => {
       wrapper: createWrapper(),
     });
 
-    const chatgpt = result.current.providers.find((p) => p.name === 'ChatGPT')!;
+    const chatgpt = result.current.providers.find((provider) => provider.name === 'ChatGPT')!;
 
     act(() => {
       result.current.handleProvider(chatgpt);
     });
 
     expect(openMock).toHaveBeenCalledWith(
-      'https://chat.openai.com/?q=test',
+      'https://chat.openai.com/?q=test%20prompt',
       '_blank',
       'noopener,noreferrer',
     );
@@ -145,28 +131,15 @@ describe('usePromptResult', () => {
     vi.unstubAllGlobals();
   });
 
-  it('kopieert naar klembord voor clipboardOnly providers en opent de URL zonder params', async () => {
+  it('kopieert naar klembord voor clipboard providers en opent de URL zonder params', async () => {
     const openMock = vi.fn();
     vi.stubGlobal('open', openMock);
 
-    const providers = [
-      {
-        name: 'Gemini',
-        clipboardOnly: true,
-        buildUrl: () => 'https://gemini.google.com/app',
-      },
-    ];
-
     const { result } = renderHook(() => usePromptResult('test prompt'), {
-      wrapper: createWrapper({
-        providerService: {
-          getProviders: vi.fn().mockReturnValue(providers),
-          buildUrl: vi.fn().mockReturnValue('https://gemini.google.com/app'),
-        } as unknown as Services['providerService'],
-      }),
+      wrapper: createWrapper(),
     });
 
-    const gemini = result.current.providers.find((p) => p.name === 'Gemini')!;
+    const gemini = result.current.providers.find((provider) => provider.name === 'Gemini')!;
 
     await act(async () => {
       await result.current.handleProvider(gemini);
@@ -187,7 +160,7 @@ describe('usePromptResult', () => {
       wrapper: createWrapper(),
     });
 
-    expect(result.current.providers).toHaveLength(1);
+    expect(result.current.providers).toHaveLength(4);
     expect(result.current.providers[0].name).toBe('ChatGPT');
   });
 });

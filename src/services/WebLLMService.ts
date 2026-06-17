@@ -3,6 +3,7 @@
  */
 import type * as webllm from '@mlc-ai/web-llm';
 import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
+import { getStyleHintKey } from '../utils/styleHints';
 
 // Gebruikte model
 const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
@@ -15,7 +16,7 @@ const APP_CONFIG: webllm.AppConfig = {
       model_id: MODEL_ID,
       model_lib:
         'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
-      // Zo laag mogelijk voor verminderen van VRAM gebruik
+      // Zo laag mogelijk in belang van VRAM gebruik
       overrides: {
         context_window_size: 2048,
         max_history_size: 1,
@@ -28,32 +29,33 @@ export class WebLLMService implements IWebLLMService {
   private static engine: webllm.MLCEngine | null = null;
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
   private static clearingCache = false;
-  private static gpuAvailable: boolean | null = null;
-  static throttleMs = 0;
+  private static modelCompatible: boolean | null = null;
+  static streamDelayMs = 0;
   private lastCompletionTokens: number | null = null;
 
-  // Controleer of WebGPU bruikbaar is
-  async canUseWebGPU(): Promise<boolean> {
-    if (WebLLMService.gpuAvailable !== null) return WebLLMService.gpuAvailable;
+  // Controleer of het gebruikers apparaat mogelijk het model kan gebruiken
+  // Sinds VRAM niet direct gemeten kan worden maken we een schatting gebaseerd op shader buffers
+  async canUseModel(): Promise<boolean> {
+    if (WebLLMService.modelCompatible !== null) return WebLLMService.modelCompatible;
 
     try {
       type NavGPU = { gpu: { requestAdapter(options?: { powerPreference: string }): Promise<unknown | null> } };
       const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter({ powerPreference: 'high-performance' });
       if (!adapter) {
-        WebLLMService.gpuAvailable = false;
+        WebLLMService.modelCompatible = false;
         return false;
       }
 
       const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
       if (limits.maxStorageBuffersPerShaderStage < 10) {
-        WebLLMService.gpuAvailable = false;
+        WebLLMService.modelCompatible = false;
         return false;
       }
 
-      WebLLMService.gpuAvailable = true;
+      WebLLMService.modelCompatible = true;
       return true;
     } catch {
-      WebLLMService.gpuAvailable = false;
+      WebLLMService.modelCompatible = false;
       return false;
     }
   }
@@ -77,17 +79,21 @@ export class WebLLMService implements IWebLLMService {
     return MODEL_ID;
   }
 
+  setStreamDelayMs(value: number): void {
+    WebLLMService.streamDelayMs = value;
+  }
+
   // Initialiseer AI model in achtergrond
   async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
-    if (!WebLLMService.isAvailableForUse()) {
+    if (!WebLLMService.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (WebLLMService.gpuAvailable === null) {
-      await this.canUseWebGPU();
+    if (WebLLMService.modelCompatible === null) {
+      await this.canUseModel();
     }
 
-    if (!WebLLMService.gpuAvailable) {
+    if (!WebLLMService.modelCompatible) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
@@ -105,7 +111,7 @@ export class WebLLMService implements IWebLLMService {
     await WebLLMService.createEngine(onProgress);
   }
 
-  // Initialiseer WebLLM
+  // Lazy load en configureer de WebLLM engine
   private static async createEngine(
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
@@ -120,26 +126,26 @@ export class WebLLMService implements IWebLLMService {
 
     try {
       WebLLMService.engine = await WebLLMService.enginePromise;
-    } catch (err) {
+    } catch (error) {
       WebLLMService.enginePromise = null;
       WebLLMService.engine = null;
-      throw err;
+      throw error;
     }
     WebLLMService.enginePromise = null;
   }
 
   // Bereken progressie van AI model ophalen
   private static parseProgressReport(report: { text: string; progress: number }): ProgressInfo {
-    const rawText = report.text || '';
-    const pct = Math.round(report.progress * 100);
-    const isDownloading = rawText.startsWith('Fetching param cache');
-    const mbMatch = rawText.match(/(\d+)MB/);
-    const mbFetched = mbMatch ? parseInt(mbMatch[1], 10) : undefined;
+    const progressText = report.text || '';
+    const percentage = Math.round(report.progress * 100);
+    const isDownloading = progressText.startsWith('Fetching param cache');
+    const megabyteMatch = progressText.match(/(\d+)MB/);
+    const fetchedMegabytes = megabyteMatch ? parseInt(megabyteMatch[1], 10) : undefined;
 
-    return { percentage: pct, isDownloading, mbFetched };
+    return { percentage, isDownloading, fetchedMegabytes };
   }
 
-  private static isAvailableForUse(): boolean {
+  private static isReadyForUse(): boolean {
     return !WebLLMService.clearingCache;
   }
 
@@ -153,13 +159,13 @@ export class WebLLMService implements IWebLLMService {
       if (WebLLMService.engine) {
         try {
           await WebLLMService.engine.unload();
-        } catch (err) {
-          console.warn('WebLLMService: engine unload bij cache wissen:', err);
+        } catch (error) {
+          console.warn('WebLLMService: engine unload bij cache wissen:', error);
         }
         WebLLMService.engine = null;
       }
       WebLLMService.enginePromise = null;
-      WebLLMService.gpuAvailable = null;
+      WebLLMService.modelCompatible = null;
 
       const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
       await deleteModelAllInfoInCache(MODEL_ID, APP_CONFIG);
@@ -179,6 +185,7 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  // Reset de engine
   resetEngine(): void {
     const engine = WebLLMService.engine;
     WebLLMService.engine = null;
@@ -188,20 +195,9 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
-  // Pak meerkeuze antwoord
-  private getStyleHintKey(styleKey: string): string {
-    const map: Record<string, string> = {
-      survey_option_visual: 'style_hint_visual',
-      survey_option_step: 'style_hint_step',
-      survey_option_conceptual: 'style_hint_conceptual',
-      survey_option_practical: 'style_hint_practical',
-    };
-    return map[styleKey] || 'style_hint_default';
-  }
-
   // Maak de systeem prompt met alle survey-antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
-    const styleHintKey = this.getStyleHintKey(answers.styleKey);
+    const styleHintKey = getStyleHintKey(answers.styleKey);
     return translate('webllm_system_prompt', {
       subject: answers.subject,
       topic: answers.topic,
@@ -215,15 +211,15 @@ export class WebLLMService implements IWebLLMService {
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string> {
-    if (!WebLLMService.isAvailableForUse()) {
+    if (!WebLLMService.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (WebLLMService.gpuAvailable === null) {
-      await this.canUseWebGPU();
+    if (WebLLMService.modelCompatible === null) {
+      await this.canUseModel();
     }
 
-    if (!WebLLMService.gpuAvailable) {
+    if (!WebLLMService.modelCompatible) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
@@ -276,8 +272,8 @@ export class WebLLMService implements IWebLLMService {
       const content = chunk.choices[0]?.delta?.content ?? '';
       if (content) yield content;
 
-      if (WebLLMService.throttleMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, WebLLMService.throttleMs));
+      if (WebLLMService.streamDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, WebLLMService.streamDelayMs));
       }
     }
   }

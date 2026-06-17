@@ -8,7 +8,6 @@ export type {
   IWebLLMService,
   IFallbackService,
   IPromptGeneratorService,
-  IProviderService,
   GenerationEvent,
   GenerationStats,
   ProgressInfo,

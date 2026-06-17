@@ -1,10 +1,17 @@
 /**
- * StorageService: abstraheert localStorage operaties.
+ * StorageService: abstraheert browser storage operaties.
  */
+export const STORAGE_KEYS = {
+  PROMPT: 'socratisa_result_prompt',
+  STATS: 'socratisa_result_stats',
+  EDITED_PROMPT: 'socratisa_result_edited_prompt',
+  MODEL_CHOICE: 'socratisa_model_choice',
+} as const;
+
 export class StorageService {
 
   // Haal waarde uit localStorage
-  static get<T>(key: string, fallback: T): T {
+  static getLocalItem<T>(key: string, fallback: T): T {
     try {
       const value = localStorage.getItem(key);
       return value !== null ? (JSON.parse(value) as T) : fallback;
@@ -14,9 +21,36 @@ export class StorageService {
   }
 
   // Zet waarde in localStorage
-  static set<T>(key: string, value: T): void {
+  static setLocalItem<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Negeer storage errors
+    }
+  }
+
+  // Haal waarde uit sessionStorage
+  static getSessionItem(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  // Zet waarde in sessionStorage
+  static setSessionItem(key: string, value: string): void {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // Negeer storage errors
+    }
+  }
+
+  // Verwijder waarde uit sessionStorage
+  static removeSessionItem(key: string): void {
+    try {
+      sessionStorage.removeItem(key);
     } catch {
       // Negeer storage errors
     }

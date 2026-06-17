@@ -7,7 +7,6 @@ import {
   SurveyService,
   WebLLMService,
   FallbackService,
-  ProviderService,
   PromptGeneratorService,
 } from '../services';
 
@@ -15,7 +14,6 @@ import type {
   ISurveyService,
   IWebLLMService,
   IFallbackService,
-  IProviderService,
   IPromptGeneratorService,
 } from '../types';
 
@@ -23,18 +21,19 @@ export interface Services {
   surveyService: ISurveyService;
   webLLMService: IWebLLMService;
   fallbackService: IFallbackService;
-  providerService: IProviderService;
   promptGeneratorService: IPromptGeneratorService;
 }
 
+const webLLMService = new WebLLMService();
+const fallbackService = new FallbackService();
+
 export const defaultServices: Services = {
   surveyService: new SurveyService(),
-  webLLMService: new WebLLMService(),
-  fallbackService: new FallbackService(),
-  providerService: new ProviderService(),
+  webLLMService,
+  fallbackService,
   promptGeneratorService: new PromptGeneratorService(
-    new WebLLMService(),
-    new FallbackService(),
+    webLLMService,
+    fallbackService,
   ),
 };
 

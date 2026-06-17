@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { PromptResult } from '../../components/PromptResult/PromptResult';
-import { ServiceProvider } from '../../contexts';
+import { ServiceProvider, StorageProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
 import type { GenerationEvent } from '../../types';
 import type { Services } from '../../contexts';
@@ -15,29 +15,43 @@ const mockHandleProvider = vi.fn();
 const mockHandleRetry = vi.fn();
 const mockHandleHome = vi.fn();
 
+vi.mock('../../contexts/useStorage', async () => {
+  const actual = await vi.importActual<typeof import('../../contexts/useStorage')>('../../contexts/useStorage');
+  return {
+    ...actual,
+    useStorage: vi.fn(() => ({
+      getLocalItem: vi.fn(),
+      setLocalItem: vi.fn(),
+      getSessionItem: (key: string) => sessionStorage.getItem(key),
+      setSessionItem: (key: string, value: string) => sessionStorage.setItem(key, value),
+      removeSessionItem: (key: string) => sessionStorage.removeItem(key),
+    })),
+  };
+});
+
 vi.mock('../../hooks', async () => {
   const actual = await vi.importActual('../../hooks');
   return {
     ...actual,
     usePromptResult: vi.fn(),
-    useGPUStatus: vi.fn().mockReturnValue({
-      isAvailable: null,
+    useModelStatus: vi.fn().mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     }),
   };
 });
 
-import { useGPUStatus, usePromptResult } from '../../hooks';
+import { useModelStatus, usePromptResult } from '../../hooks';
 
 function setupMockPromptResult(overrides: Partial<ReturnType<typeof usePromptResult>> = {}) {
   vi.mocked(usePromptResult).mockReturnValue({
     prompt: 'Gegenereerde prompt tekst',
     isEditing: false,
-    feedback: null,
+    copyFeedback: null,
     isCopying: false,
     textareaRef: { current: null },
-    setPrompt: mockSetPrompt,
+    setEditedPrompt: mockSetPrompt,
     handleEdit: mockHandleEdit,
     handleDone: mockHandleDone,
     handleCopy: mockHandleCopy,
@@ -45,7 +59,7 @@ function setupMockPromptResult(overrides: Partial<ReturnType<typeof usePromptRes
     handleRetry: mockHandleRetry,
     handleHome: mockHandleHome,
     providers: [
-      { name: 'ChatGPT', buildUrl: (p: string) => `https://chat.openai.com/?q=${p}` },
+      { name: 'ChatGPT', buildUrl: (prompt: string) => `https://chat.openai.com/?q=${prompt}` },
     ],
     ...overrides,
   });
@@ -56,12 +70,9 @@ function createServices(services: Partial<Services> = {}) {
     surveyService: {} as Services['surveyService'],
     webLLMService: {
       clearModelCache: vi.fn().mockResolvedValue(undefined),
+      setStreamDelayMs: vi.fn(),
     } as unknown as Services['webLLMService'],
     fallbackService: {} as Services['fallbackService'],
-    providerService: {
-      getProviders: vi.fn().mockReturnValue([]),
-      buildUrl: vi.fn(),
-    } as unknown as Services['providerService'],
     promptGeneratorService: {
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
@@ -72,6 +83,7 @@ function createServices(services: Partial<Services> = {}) {
       getCurrentText: vi.fn().mockReturnValue(''),
       getStats: vi.fn().mockReturnValue(undefined),
       getLastWarning: vi.fn().mockReturnValue(undefined),
+      setStreamDelayMs: vi.fn(),
     } as unknown as Services['promptGeneratorService'],
     ...services,
   };
@@ -86,8 +98,8 @@ describe('PromptResult', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.setItem('socratisa_result_prompt', 'test');
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -253,8 +265,8 @@ describe('PromptResult', () => {
     expect(mockHandleProvider).not.toHaveBeenCalled();
   });
 
-  it('toont feedback na kopiëren', () => {
-    setupMockPromptResult({ feedback: 'Gekopieerd!' });
+  it('toont copyFeedback na kopiëren', () => {
+    setupMockPromptResult({ copyFeedback: 'Gekopieerd!' });
 
     render(
       <MemoryRouter>
@@ -362,8 +374,8 @@ describe('PromptResult', () => {
     }
   });
 
-  it('toont feedback voor een mislukte clipboard aanroep', () => {
-    setupMockPromptResult({ feedback: 'result_copy_failed' });
+  it('toont copyFeedback voor een mislukte clipboard aanroep', () => {
+    setupMockPromptResult({ copyFeedback: 'result_copy_failed' });
 
     render(
       <MemoryRouter>
@@ -409,10 +421,10 @@ describe('PromptResult', () => {
     expect(screen.queryByRole('region', { name: 'result_stats_aria' })).not.toBeInTheDocument();
   });
 
-  it('kopieert statistieken en toont succesfeedback', async () => {
+  it('kopieert statistieken en toont succescopyFeedback', async () => {
     setupMockPromptResult();
     sessionStorage.setItem('socratisa_result_stats', JSON.stringify({ ttft: 1000, totalTime: 3000, tps: 2, completionTokens: 6 }));
-    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+    vi.mocked(useModelStatus).mockReturnValue({ canUseModel: true, gpuName: 'RTX', isChecking: false });
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
@@ -432,10 +444,10 @@ describe('PromptResult', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('GPU: RTX'));
   });
 
-  it('toont foutfeedback als statistieken kopiëren mislukt', async () => {
+  it('toont foutcopyFeedback als statistieken kopiëren mislukt', async () => {
     setupMockPromptResult();
     sessionStorage.setItem('socratisa_result_stats', JSON.stringify({ ttft: 1000, totalTime: 3000, tps: 2 }));
-    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: null, isChecking: false });
+    vi.mocked(useModelStatus).mockReturnValue({ canUseModel: true, gpuName: null, isChecking: false });
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('clipboard')) } });
 
     render(
@@ -455,7 +467,7 @@ describe('PromptResult', () => {
 
   it('gaat direct naar fallback retry als GPU niet beschikbaar is', () => {
     setupMockPromptResult();
-    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: false, gpuName: null, isChecking: false });
+    vi.mocked(useModelStatus).mockReturnValue({ canUseModel: false, gpuName: null, isChecking: false });
 
     render(
       <MemoryRouter>
@@ -469,12 +481,12 @@ describe('PromptResult', () => {
     fireEvent.click(screen.getByLabelText('result_retry_aria_v2'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/survey');
-    expect(sessionStorage.getItem('socratisa_gpu_choice')).toBe('false');
+    expect(sessionStorage.getItem('socratisa_model_choice')).toBe('false');
   });
 
   it('opent retry keuze en navigeert naar AI generatie', () => {
     setupMockPromptResult();
-    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+    vi.mocked(useModelStatus).mockReturnValue({ canUseModel: true, gpuName: 'RTX', isChecking: false });
 
     render(
       <MemoryRouter>
@@ -489,12 +501,12 @@ describe('PromptResult', () => {
     fireEvent.click(screen.getByText('home_cta_dialog_ai'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/survey');
-    expect(sessionStorage.getItem('socratisa_gpu_choice')).toBe('true');
+    expect(sessionStorage.getItem('socratisa_model_choice')).toBe('true');
   });
 
   it('toont een cache fout als modelcache wissen mislukt', async () => {
     setupMockPromptResult();
-    vi.mocked(useGPUStatus).mockReturnValue({ isAvailable: true, gpuName: 'RTX', isChecking: false });
+    vi.mocked(useModelStatus).mockReturnValue({ canUseModel: true, gpuName: 'RTX', isChecking: false });
     const services = createServices({
       webLLMService: {
         clearModelCache: vi.fn().mockRejectedValue(new Error('cache fout')),
@@ -525,8 +537,8 @@ describe('PromptResult', () => {
     let handler: ((event: GenerationEvent) => void) | null = null;
     const services = createServices({
       promptGeneratorService: {
-        subscribe: vi.fn((h: (event: GenerationEvent) => void) => {
-          handler = h;
+        subscribe: vi.fn((eventHandler: (event: GenerationEvent) => void) => {
+          handler = eventHandler;
         }),
         unsubscribe: vi.fn(),
         reset: vi.fn(),
@@ -536,17 +548,20 @@ describe('PromptResult', () => {
         getCurrentText: vi.fn().mockReturnValue(''),
         getStats: vi.fn().mockReturnValue(undefined),
         getLastWarning: vi.fn().mockReturnValue(undefined),
+        setStreamDelayMs: vi.fn(),
       } as unknown as Services['promptGeneratorService'],
     });
 
     render(
       <MemoryRouter>
-        <ServiceProvider services={services}>
-          <MockI18nProvider>
-            <PromptResult />
-            <LocationDisplay />
-          </MockI18nProvider>
-        </ServiceProvider>
+        <StorageProvider>
+          <ServiceProvider services={services}>
+            <MockI18nProvider>
+              <PromptResult />
+              <LocationDisplay />
+            </MockI18nProvider>
+          </ServiceProvider>
+        </StorageProvider>
       </MemoryRouter>,
     );
 

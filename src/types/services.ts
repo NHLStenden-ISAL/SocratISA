@@ -1,7 +1,7 @@
 /**
  * services: type-definities voor services.
  */
-import type { SurveyAnswers, Provider } from '.';
+import type { SurveyAnswers } from '.';
 
 // Service voor het beheren van survey antwoorden.
 export interface ISurveyService {
@@ -18,12 +18,12 @@ export interface ProgressInfo {
   text?: string;
   percentage: number;
   isDownloading: boolean;
-  mbFetched?: number;
+  fetchedMegabytes?: number;
 }
 
 // Service voor WebLLM functionaliteit en modelbeheer.
 export interface IWebLLMService {
-  canUseWebGPU(): Promise<boolean>;
+  canUseModel(): Promise<boolean>;
   detectGPU(): Promise<string | null>;
   preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void>;
   generatePromptStream(
@@ -35,6 +35,7 @@ export interface IWebLLMService {
   clearModelCache(): Promise<void>;
   resetEngine(): void;
   getLastCompletionTokens(): number | null;
+  setStreamDelayMs(value: number): void;
 }
 
 // Service voor fallback prompt generatie.
@@ -65,14 +66,11 @@ export interface IPromptGeneratorService {
   reset(): void;
   start(
     answers: SurveyAnswers,
-    gpuAvailable: boolean,
+    canUseModel: boolean,
     translate: (key: string, options?: Record<string, string>) => string,
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void>;
-  preload(
-    _translate: (key: string, options?: Record<string, string>) => string,
-    onProgress?: (info: ProgressInfo) => void,
-  ): Promise<void>;
+  preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void>;
   getPreloadStatus(): PreloadStatus;
   abort(): void;
   getCurrentText(): string;
@@ -80,10 +78,4 @@ export interface IPromptGeneratorService {
   getIsComplete(): boolean;
   getStats(): GenerationStats | undefined;
   getLastWarning(): string | undefined;
-}
-
-// Service voor het beheren van AI-providers.
-export interface IProviderService {
-  getProviders(): Provider[];
-  buildUrl(provider: Provider, prompt: string): string;
 }

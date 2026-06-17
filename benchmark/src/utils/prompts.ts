@@ -46,7 +46,7 @@ export function buildInput(testCase: BenchmarkTestCase, language: Language): Ben
   };
 }
 
-/** Bouw de display naam voor een leerstijl key. voor de UI weergave. */
+/** Namen voor leerstijl keys in de benchmark UI. */
 const styleDisplayNames: Record<string, { nl: string; en: string }> = {
   survey_option_visual: { nl: 'Visueel & Voorbeelden', en: 'Visual & Examples' },
   survey_option_step: { nl: 'Stap-voor-stap', en: 'Step-by-step' },

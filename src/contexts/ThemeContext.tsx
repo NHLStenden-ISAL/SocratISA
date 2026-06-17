@@ -15,13 +15,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Geef thema uit localStorage of licht
   const [theme, setTheme] = useState<Theme>(() =>
-    storage.get<Theme>('theme', 'light')
+    storage.getLocalItem<Theme>('theme', 'light')
   );
 
   // Zet thema
   useEffect(function syncTheme() {
     document.documentElement.setAttribute('data-theme', theme);
-    storage.set('theme', theme);
+    storage.setLocalItem('theme', theme);
   }, [theme, storage]);
 
   // Wissel thema

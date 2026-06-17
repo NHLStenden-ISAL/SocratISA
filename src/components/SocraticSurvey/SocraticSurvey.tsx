@@ -16,7 +16,7 @@ export const SocraticSurvey = () => {
     progressInfo,
     inputError,
     setInputError,
-    currentQ,
+    currentQuestion,
     inputRef,
     handleNext,
     handleOptionSelect,
@@ -59,21 +59,21 @@ export const SocraticSurvey = () => {
             {t('survey_step', { current: step + 1, total: totalSteps })}
           </span>
           <h1 id="survey-question" tabIndex={-1}>
-            {t(currentQ.questionKey)}
+            {t(currentQuestion.questionKey)}
           </h1>
-          <p className="description">{t(currentQ.descriptionKey)}</p>
+          <p className="description">{t(currentQuestion.descriptionKey)}</p>
 
           <div className="input-area">
             {/* Open vraag */}
-            {currentQ.type === 'text' ? (
+            {currentQuestion.type === 'text' ? (
               <form
                 className="text-input-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
+                onSubmit={(event) => {
+                  event.preventDefault();
                   if (inputRef.current?.value) handleNext(inputRef.current.value);
                 }}
               >
-                <label htmlFor="survey-input" className="sr-only">{t(currentQ.questionKey)}</label>
+                <label htmlFor="survey-input" className="sr-only">{t(currentQuestion.questionKey)}</label>
                 <input
                   id="survey-input"
                   ref={inputRef}
@@ -95,7 +95,7 @@ export const SocraticSurvey = () => {
             ) : (
               // Keuze vraag
               <div className="options-grid">
-                {currentQ.optionKeys?.map(key => (
+                {currentQuestion.optionKeys?.map(key => (
                   <button
                     key={key}
                     className="option-btn"
@@ -109,7 +109,7 @@ export const SocraticSurvey = () => {
           </div>
 
           {/* Volgende vraag tip */}
-          {currentQ.type === 'text' && (
+          {currentQuestion.type === 'text' && (
             <>
               {inputError && (
                 <div className="survey-error" id="survey-error" role="alert">

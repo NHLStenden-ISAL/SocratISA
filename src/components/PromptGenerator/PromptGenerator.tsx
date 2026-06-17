@@ -7,7 +7,6 @@ import { formatProgressText } from '../../utils/progress';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../contexts/useServices';
 import { useGenerationSettings } from '../../hooks/useGenerationSettings';
-import { WebLLMService } from '../../services/WebLLMService';
 import type { SurveyAnswers, GenerationEvent, ProgressInfo } from '../../types';
 
 interface PromptGeneratorProps {
@@ -18,7 +17,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { promptGeneratorService } = useServices();
+  const { promptGeneratorService, webLLMService } = useServices();
 
   const [phase, setPhase] = useState<'loading' | 'streaming'>('loading');
   const [text, setText] = useState('');
@@ -26,12 +25,12 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const [generationError, setGenerationError] = useState<Error | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
-  const { throttleMs, setThrottleMs } = useGenerationSettings();
-  useEffect(function syncThrottleMs() {
-    WebLLMService.throttleMs = throttleMs;
-  }, [throttleMs]);
+  const { streamDelayMs, setStreamDelayMs } = useGenerationSettings();
+  useEffect(function syncStreamDelayMs() {
+    webLLMService.setStreamDelayMs(streamDelayMs);
+  }, [streamDelayMs, webLLMService]);
 
-  // Render tekst soepel token voor token
+  // Zet chunks in batches zodat we niet per token renderen
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
   const lastFlushedRef = useRef('');
@@ -49,7 +48,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     }
   }, [phase]);
 
-  // Hou generatie token voor token bij en voeg het achtervoegsel toe wanneer het klaar is
+  // Hou generatie token voor token bij
   useEffect(function subscribeToGeneration() {
     if (promptGeneratorService.getIsComplete()) {
       if (rafRef.current) {
@@ -91,12 +90,12 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       }
     };
 
-    // Bekijk GPU beschikbaarheid en survey-antwoorden, start generatie met antwoorden zo mogelijk
+    // Start generatie met survey-antwoorden, laat sjabloon zien als er geen antwoorden zijn
     const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
-    const gpuAvailable: boolean = location.state?.gpuAvailable ?? false;
+    const canUseModel: boolean = location.state?.canUseModel ?? false;
     if (!promptGeneratorService.getIsGenerating()) {
       promptGeneratorService.reset();
-      promptGeneratorService.start(answers, gpuAvailable, t, setProgressInfo);
+      promptGeneratorService.start(answers, canUseModel, t, setProgressInfo);
     }
 
     promptGeneratorService.subscribe(handleEvent);
@@ -110,7 +109,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     };
   }, [location, t, promptGeneratorService, onComplete, flushPendingText]);
 
-  const gpuAvailable = (location.state as { gpuAvailable?: boolean } | undefined)?.gpuAvailable ?? false;
+  const canUseModel = (location.state as { canUseModel?: boolean } | undefined)?.canUseModel ?? false;
 
   // Error scherm
   if (generationError) {
@@ -137,11 +136,11 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   }
 
   // Generatie snelheid slider
-  const speedControl = gpuAvailable && (
+  const speedControl = canUseModel && (
     <div className="generation-setting">
       <div className="slider-header">
         <span className="slider-title">{t('generation_speed_label')}</span>
-        <span className="slider-value">{throttleMs} ms</span>
+        <span className="slider-value">{streamDelayMs} ms</span>
       </div>
       <input
         id="throttle-slider"
@@ -149,10 +148,10 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         min={0}
         max={100}
         step={1}
-        value={throttleMs}
-        onChange={(e) => {
-          const val = parseInt(e.target.value, 10);
-          setThrottleMs(val);
+        value={streamDelayMs}
+        onChange={(event) => {
+          const parsedStreamDelayMs = parseInt(event.target.value, 10);
+          setStreamDelayMs(parsedStreamDelayMs);
         }}
         aria-label={t('generation_speed_aria')}
       />

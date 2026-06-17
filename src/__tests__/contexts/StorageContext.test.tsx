@@ -4,8 +4,8 @@ import { StorageProvider, useStorage } from '../../contexts';
 
 function TestComponent() {
   const storage = useStorage();
-  storage.set('test', 'value');
-  const value = storage.get('test', 'default');
+  storage.setLocalItem('test', 'value');
+  const value = storage.getLocalItem('test', 'default');
   return <div data-testid="value">{value}</div>;
 }
 
@@ -53,13 +53,16 @@ describe('StorageContext', () => {
 
   it('kan een custom storage injecteren', () => {
     const customStorage = {
-      get: vi.fn().mockReturnValue('custom'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('custom'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     function CustomTest() {
       const storage = useStorage();
-      const value = storage.get('key', 'fallback');
+      const value = storage.getLocalItem('key', 'fallback');
       return <div data-testid="custom">{value}</div>;
     }
 
@@ -70,6 +73,6 @@ describe('StorageContext', () => {
     );
 
     expect(screen.getByTestId('custom').textContent).toBe('custom');
-    expect(customStorage.get).toHaveBeenCalledWith('key', 'fallback');
+    expect(customStorage.getLocalItem).toHaveBeenCalledWith('key', 'fallback');
   });
 });

@@ -10,48 +10,50 @@ const MODEL_ID = benchmarkConfig.model;
 
 export class WebLLMAdapter {
   private static engine: webllm.MLCEngine | null = null;
+  // Deel dezelfde laadactie wanneer meerdere calls tegelijk het model nodig hebben
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
   private static clearingCache = false;
-  private static gpuAvailable: boolean | null = null;
+  private static modelCompatible: boolean | null = null;
 
-  // Controleer of WebGPU bruikbaar is
-  async canUseWebGPU(): Promise<boolean> {
-    if (WebLLMAdapter.gpuAvailable !== null) return WebLLMAdapter.gpuAvailable;
+  // Controleer of het gebruikers apparaat mogelijk het model kan gebruiken
+  // Sinds VRAM niet direct gemeten kan worden maken we een schatting gebaseerd op shader buffers
+  async canUseModel(): Promise<boolean> {
+    if (WebLLMAdapter.modelCompatible !== null) return WebLLMAdapter.modelCompatible;
 
     try {
       type NavGPU = { gpu: { requestAdapter(): Promise<unknown | null> } };
-      const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
-      if (!adapter) {
-        WebLLMAdapter.gpuAvailable = false;
+      const webGpuAdapter = await (navigator as unknown as NavGPU).gpu.requestAdapter();
+      if (!webGpuAdapter) {
+        WebLLMAdapter.modelCompatible = false;
         return false;
       }
 
-      // Minimum nodig om mogelijk het model te laden
-      const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
+      // WebLLM heeft genoeg storage buffers per shader stage nodig om het model te kunnen laden
+      const limits = (webGpuAdapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
       if (limits.maxStorageBuffersPerShaderStage < 10) {
-        WebLLMAdapter.gpuAvailable = false;
+        WebLLMAdapter.modelCompatible = false;
         return false;
       }
 
-      WebLLMAdapter.gpuAvailable = true;
+      WebLLMAdapter.modelCompatible = true;
       return true;
     } catch {
-      WebLLMAdapter.gpuAvailable = false;
+      WebLLMAdapter.modelCompatible = false;
       return false;
     }
   }
 
-  // Initialiseer AI model in achtergrond
+  // Laad AI model voordat de benchmark start
   async preloadModel(onProgress?: (text: string) => void): Promise<void> {
-    if (!WebLLMAdapter.isAvailableForUse()) {
+    if (!WebLLMAdapter.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (WebLLMAdapter.gpuAvailable === null) {
-      await this.canUseWebGPU();
+    if (WebLLMAdapter.modelCompatible === null) {
+      await this.canUseModel();
     }
 
-    if (!WebLLMAdapter.gpuAvailable) {
+    if (!WebLLMAdapter.modelCompatible) {
       throw new Error('WebGPU niet beschikbaar');
     }
 
@@ -72,15 +74,15 @@ export class WebLLMAdapter {
 
     try {
       WebLLMAdapter.engine = await WebLLMAdapter.enginePromise;
-    } catch (err) {
+    } catch (error) {
       WebLLMAdapter.enginePromise = null;
       WebLLMAdapter.engine = null;
-      throw err;
+      throw error;
     }
     WebLLMAdapter.enginePromise = null;
   }
 
-  private static isAvailableForUse(): boolean {
+  private static isReadyForUse(): boolean {
     return !WebLLMAdapter.clearingCache;
   }
 
@@ -91,9 +93,9 @@ export class WebLLMAdapter {
     WebLLMAdapter.clearingCache = true;
 
     try {
-      await this.unloadModel();
+      await this.unloadEngine();
       WebLLMAdapter.enginePromise = null;
-      WebLLMAdapter.gpuAvailable = null;
+      WebLLMAdapter.modelCompatible = null;
 
       const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
       await deleteModelAllInfoInCache(MODEL_ID);
@@ -102,7 +104,7 @@ export class WebLLMAdapter {
     }
   }
 
-  async unloadModel(): Promise<void> {
+  async unloadEngine(): Promise<void> {
     const engine = WebLLMAdapter.engine;
     WebLLMAdapter.engine = null;
     WebLLMAdapter.enginePromise = null;
@@ -112,17 +114,17 @@ export class WebLLMAdapter {
     }
   }
 
-  // Genereer de prompt
+  // Genereer benchmark prompt en meet hoe lang dit duurt
   async generate(testCase: BenchmarkTestCase, language: Language): Promise<{ output: string; durationMs: number }> {
-    if (!WebLLMAdapter.isAvailableForUse()) {
+    if (!WebLLMAdapter.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
     }
 
-    if (WebLLMAdapter.gpuAvailable === null) {
-      await this.canUseWebGPU();
+    if (WebLLMAdapter.modelCompatible === null) {
+      await this.canUseModel();
     }
 
-    if (!WebLLMAdapter.gpuAvailable) {
+    if (!WebLLMAdapter.modelCompatible) {
       throw new Error('WebGPU niet beschikbaar');
     }
 

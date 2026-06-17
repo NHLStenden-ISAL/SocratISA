@@ -30,8 +30,11 @@ describe('ThemeContext', () => {
 
   it('laadt het initiele thema uit storage', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('dark'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('dark'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(
@@ -47,8 +50,11 @@ describe('ThemeContext', () => {
 
   it('wisselt het thema en slaat het op bij toggle', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('light'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('light'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(
@@ -64,13 +70,16 @@ describe('ThemeContext', () => {
     });
 
     expect(screen.getByTestId('theme').textContent).toBe('dark');
-    expect(mockStorage.set).toHaveBeenCalledWith('theme', 'dark');
+    expect(mockStorage.setLocalItem).toHaveBeenCalledWith('theme', 'dark');
   });
 
   it('update data-theme attribuut bij themawissel', () => {
     const mockStorage = {
-      get: vi.fn().mockReturnValue('light'),
-      set: vi.fn(),
+      getLocalItem: vi.fn().mockReturnValue('light'),
+      setLocalItem: vi.fn(),
+      getSessionItem: vi.fn().mockReturnValue(null),
+      setSessionItem: vi.fn(),
+      removeSessionItem: vi.fn(),
     };
 
     render(

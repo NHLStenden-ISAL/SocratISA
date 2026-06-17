@@ -15,10 +15,10 @@ const STORAGE_KEY = 'benchmark-results';
 /** Haal de initiële status uit sessionStorage. */
 function getInitialState(): { results: BenchmarkResult[]; status: string } {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (raw) return { results: JSON.parse(raw), status: 'Klaar' };
+    const storedResults = sessionStorage.getItem(STORAGE_KEY);
+    if (storedResults) return { results: JSON.parse(storedResults), status: 'Klaar' };
   } catch {
-    //Negeer storage errors
+    // Negeer storage errors
   }
   return { results: [], status: 'Niet geladen' };
 }
@@ -26,11 +26,12 @@ function getInitialState(): { results: BenchmarkResult[]; status: string } {
 const initialState = getInitialState();
 
 export const BenchmarkPage = () => {
-  const adapter = useRef(new WebLLMAdapter()).current;
-  const running = useRef(false);
+  const webLLMAdapter = useRef(new WebLLMAdapter()).current;
+  // Ref blijft actueel binnen de async benchmark loops
+  const isRunningRef = useRef(false);
 
-  const [loaded, setLoaded] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState(initialState.status);
   const [results, setResults] = useState<BenchmarkResult[]>(initialState.results);
 
@@ -45,37 +46,37 @@ export const BenchmarkPage = () => {
 
   /** Laad het WebLLM model in */
   const loadModel = async () => {
-    setBusy(true);
+    setIsBusy(true);
     setStatus('Model laden');
 
     try {
-      await adapter.preloadModel((text) => {
+      await webLLMAdapter.preloadModel((text) => {
         setStatus(text || 'Model laden...');
       });
-      setLoaded(true);
+      setIsModelLoaded(true);
       setStatus('Model geladen');
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : String(err));
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
     } finally {
-      setBusy(false);
+      setIsBusy(false);
     }
   };
 
   /** Verwijder het WebLLM model uit de cache. */
-  const deleteModel = async () => {
-    setBusy(true);
+  const clearCachedModel = async () => {
+    setIsBusy(true);
     setStatus('AI model verwijderen');
 
     try {
-      await adapter.clearModelCache();
-      setLoaded(false);
+      await webLLMAdapter.clearModelCache();
+      setIsModelLoaded(false);
       setResults([]);
       sessionStorage.removeItem(STORAGE_KEY);
       setStatus('AI model verwijderd');
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : String(err));
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
     } finally {
-      setBusy(false);
+      setIsBusy(false);
     }
   };
 
@@ -83,7 +84,7 @@ export const BenchmarkPage = () => {
   const waitBetweenTests = async (seconds: number) => {
     const end = Date.now() + seconds * 1000;
 
-    while (running.current && Date.now() < end) {
+    while (isRunningRef.current && Date.now() < end) {
       setStatus(`GPU rust ${Math.ceil((end - Date.now()) / 1000)}s`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
@@ -94,27 +95,27 @@ export const BenchmarkPage = () => {
     const nextResults: BenchmarkResult[] = [];
 
     for (let index = 0; index < testCases.length; index += 1) {
-      if (!running.current) break;
+      if (!isRunningRef.current) break;
 
       const testCase = testCases[index];
       setStatus(`Test uitvoeren: ${testCase.id}`);
       const input = buildInput(testCase, benchmarkConfig.language);
 
       try {
-        const result = await adapter.generate(testCase, benchmarkConfig.language);
+        const generated = await webLLMAdapter.generate(testCase, benchmarkConfig.language);
         nextResults.push({
           id: testCase.id,
           input,
-          output: result.output,
+          output: generated.output,
           error: null,
-          durationMs: result.durationMs,
+          durationMs: generated.durationMs,
         });
-      } catch (err) {
+      } catch (error) {
         nextResults.push({
           id: testCase.id,
           input,
           output: null,
-          error: err instanceof Error ? err.message : String(err),
+          error: error instanceof Error ? error.message : String(error),
           durationMs: 0,
         });
       }
@@ -122,7 +123,7 @@ export const BenchmarkPage = () => {
       setResults([...nextResults]);
       persistResults([...nextResults]);
 
-      if (running.current && index < testCases.length - 1 && benchmarkConfig.bufferSeconds > 0) {
+      if (isRunningRef.current && index < testCases.length - 1 && benchmarkConfig.bufferSeconds > 0) {
         await waitBetweenTests(benchmarkConfig.bufferSeconds);
       }
     }
@@ -130,19 +131,19 @@ export const BenchmarkPage = () => {
     return nextResults;
   };
 
-  /** Voer de benchmark uit, herhaal volgens config.repeatCount. */
+  /** Voer benchmark runs uit, download elke run en ontlaad daarna het model. */
   const runTests = async () => {
-    if (!loaded || busy) return;
+    if (!isModelLoaded || isBusy) return;
 
     sessionStorage.removeItem(STORAGE_KEY);
 
-    running.current = true;
-    setBusy(true);
+    isRunningRef.current = true;
+    setIsBusy(true);
     setResults([]);
 
     try {
       for (let run = 1; run <= benchmarkConfig.repeatCount; run += 1) {
-        if (!running.current) break;
+        if (!isRunningRef.current) break;
 
         if (benchmarkConfig.repeatCount > 1) {
           setStatus(`Run ${run}/${benchmarkConfig.repeatCount}`);
@@ -150,32 +151,32 @@ export const BenchmarkPage = () => {
 
         const nextResults = await runSingleSet();
 
-        if (running.current && nextResults.length > 0) {
+        if (isRunningRef.current && nextResults.length > 0) {
           await downloadResults(nextResults);
         }
 
-        if (running.current && run < benchmarkConfig.repeatCount) {
+        if (isRunningRef.current && run < benchmarkConfig.repeatCount) {
           setStatus('Wachten voor volgende run');
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
     } finally {
-      const finished = running.current;
-      running.current = false;
+      const finished = isRunningRef.current;
+      isRunningRef.current = false;
       try {
-        await adapter.unloadModel();
-        setLoaded(false);
+        await webLLMAdapter.unloadEngine();
+        setIsModelLoaded(false);
       } catch {
         // Negeer ontlaad errors
       }
       setStatus(finished ? 'Klaar' : 'Gestopt');
-      setBusy(false);
+      setIsBusy(false);
     }
   };
 
   /** Stop de lopende benchmark. */
   const stopTests = () => {
-    running.current = false;
+    isRunningRef.current = false;
     setStatus('Stoppen na huidige test');
   };
 
@@ -184,8 +185,8 @@ export const BenchmarkPage = () => {
     await downloadResults(results);
   }, [results]);
 
-  const averageDuration = results.length
-    ? results.reduce((total, result) => total + result.durationMs, 0) / results.length / 1000
+  const averageSeconds = results.length
+    ? results.reduce((totalMs, result) => totalMs + result.durationMs, 0) / results.length / 1000
     : 0;
 
   return (
@@ -221,11 +222,11 @@ export const BenchmarkPage = () => {
           <strong>{benchmarkConfig.repeatCount}</strong>
         </div>
         <div className="actions">
-          <button onClick={loadModel} disabled={busy || loaded}>Model laden</button>
-          <button onClick={runTests} disabled={busy || !loaded}>Tests uitvoeren</button>
-          <button onClick={stopTests} disabled={!busy || !loaded}>Stop</button>
-          <button onClick={deleteModel} disabled={busy}>AI model verwijderen</button>
-          <button onClick={handleDownloadResults} disabled={results.length === 0 || busy}>
+          <button onClick={loadModel} disabled={isBusy || isModelLoaded}>Model laden</button>
+          <button onClick={runTests} disabled={isBusy || !isModelLoaded}>Tests uitvoeren</button>
+          <button onClick={stopTests} disabled={!isBusy || !isModelLoaded}>Stop</button>
+          <button onClick={clearCachedModel} disabled={isBusy}>AI model verwijderen</button>
+          <button onClick={handleDownloadResults} disabled={results.length === 0 || isBusy}>
             Resultaten downloaden
           </button>
         </div>
@@ -238,11 +239,11 @@ export const BenchmarkPage = () => {
           <p>uitgevoerd van {testCases.length}</p>
         </article>
         <article>
-          <span>{averageDuration.toFixed(1)}s</span>
+          <span>{averageSeconds.toFixed(1)}s</span>
           <p>gemiddelde tijd</p>
         </article>
         <article>
-          <span>{results.filter((result) => result.error).length}</span>
+          <span>{results.filter((savedResult) => savedResult.error).length}</span>
           <p>errors</p>
         </article>
       </section>
@@ -250,7 +251,7 @@ export const BenchmarkPage = () => {
       {/* Benchmark testcases en resultaten */}
       <section className="results" aria-label="Benchmark resultaten">
         {testCases.map((testCase) => {
-          const result = results.find((item) => item.id === testCase.id);
+          const result = results.find((savedResult) => savedResult.id === testCase.id);
           const input = buildInput(testCase, benchmarkConfig.language);
 
           return (

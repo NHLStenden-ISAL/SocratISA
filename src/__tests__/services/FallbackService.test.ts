@@ -4,7 +4,7 @@ import type { SurveyAnswers } from '../../types';
 
 describe('FallbackService', () => {
   const service = new FallbackService();
-  const translate = vi.fn((key: string, options?: Record<string, string>) => {
+  const t = vi.fn((key: string, options?: Record<string, string>) => {
     if (key === 'prompt_template') {
       return `Onderwerp: ${options?.subject}, Topic: ${options?.topic}, Stijl: ${options?.styleHint}`;
     }
@@ -12,7 +12,7 @@ describe('FallbackService', () => {
   });
 
   beforeEach(() => {
-    translate.mockClear();
+    t.mockClear();
   });
 
   it('genereert een prompt met de juiste template en stijlhint', () => {
@@ -22,10 +22,10 @@ describe('FallbackService', () => {
       styleKey: 'survey_option_visual',
     };
 
-    service.generatePrompt(answers, translate);
+    service.generatePrompt(answers, t);
 
-    expect(translate).toHaveBeenCalledWith('style_hint_visual');
-    expect(translate).toHaveBeenCalledWith('prompt_template', {
+    expect(t).toHaveBeenCalledWith('style_hint_visual');
+    expect(t).toHaveBeenCalledWith('prompt_template', {
       subject: 'Wiskunde',
       topic: 'Algebra',
       styleHint: 'style_hint_visual',
@@ -41,11 +41,11 @@ describe('FallbackService', () => {
     ];
 
     styleKeys.forEach((styleKey) => {
-      translate.mockClear();
+      t.mockClear();
       const answers: SurveyAnswers = { subject: 'A', topic: 'B', styleKey };
-      service.generatePrompt(answers, translate);
+      service.generatePrompt(answers, t);
       const expectedHint = styleKey.replace('survey_option_', 'style_hint_');
-      expect(translate).toHaveBeenCalledWith(expectedHint);
+      expect(t).toHaveBeenCalledWith(expectedHint);
     });
   });
 
@@ -56,22 +56,22 @@ describe('FallbackService', () => {
       styleKey: 'onbekende_stijl',
     };
 
-    service.generatePrompt(answers, translate);
+    service.generatePrompt(answers, t);
 
-    expect(translate).toHaveBeenCalledWith('style_hint_default');
+    expect(t).toHaveBeenCalledWith('style_hint_default');
   });
 
-  it('roept translate aan met de juiste opties', () => {
+  it('roept t aan met de juiste opties', () => {
     const answers: SurveyAnswers = {
       subject: 'Natuurkunde',
       topic: 'Quantum',
       styleKey: 'survey_option_practical',
     };
 
-    service.generatePrompt(answers, translate);
+    service.generatePrompt(answers, t);
 
-    expect(translate).toHaveBeenCalledWith('style_hint_practical');
-    expect(translate).toHaveBeenCalledWith('prompt_template', {
+    expect(t).toHaveBeenCalledWith('style_hint_practical');
+    expect(t).toHaveBeenCalledWith('prompt_template', {
       subject: 'Natuurkunde',
       topic: 'Quantum',
       styleHint: 'style_hint_practical',

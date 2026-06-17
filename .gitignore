@@ -12,6 +12,7 @@ dist-ssr
 *.local
 docs/
 coverage/
+.env
 
 .vscode/*
 !.vscode/extensions.json

@@ -15,7 +15,7 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
   }
 
   return {
-    canUseWebGPU: vi.fn().mockResolvedValue(true),
+    canUseModel: vi.fn().mockResolvedValue(true),
     detectGPU: vi.fn().mockResolvedValue('MockGPU'),
     preloadModel: vi.fn().mockImplementation((_onProgress?: (info: ProgressInfo) => void) => {
       _onProgress?.({ text: 'Loading model...', percentage: 0, isDownloading: false });
@@ -26,6 +26,7 @@ function createMockWebLLMService(tokens: string[] = []): IWebLLMService {
     clearModelCache: vi.fn().mockResolvedValue(undefined),
     resetEngine: vi.fn(),
     getLastCompletionTokens: vi.fn().mockReturnValue(null),
+    setStreamDelayMs: vi.fn(),
   };
 }
 
@@ -35,7 +36,7 @@ function createMockFallbackService(prompt: string = 'fallback prompt'): IFallbac
   };
 }
 
-const translate = vi.fn((key: string, options?: Record<string, string>) => {
+const t = vi.fn((key: string, options?: Record<string, string>) => {
   if (options) {
     return `${key}: ${Object.values(options).join(', ')}`;
   }
@@ -57,7 +58,7 @@ describe('PromptGeneratorService', () => {
     webLLMService = createMockWebLLMService();
     fallbackService = createMockFallbackService();
     service = new PromptGeneratorService(webLLMService, fallbackService);
-    translate.mockClear();
+    t.mockClear();
   });
 
   describe('subscribe / unsubscribe', () => {
@@ -70,7 +71,7 @@ describe('PromptGeneratorService', () => {
       service = new PromptGeneratorService(webLLMService, fallbackService);
       service.subscribe(listener);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
 
       expect(events.length).toBeGreaterThan(0);
       service.unsubscribe(listener);
@@ -88,7 +89,7 @@ describe('PromptGeneratorService', () => {
       service.subscribe(listener);
       service.unsubscribe(listener);
 
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
       expect(events).toHaveLength(0);
     });
 
@@ -103,7 +104,7 @@ describe('PromptGeneratorService', () => {
       const earlyListener = (event: GenerationEvent) => earlyEvents.push(event);
 
       service.subscribe(earlyListener);
-      const startPromise = service.start(answers, true, translate);
+      const startPromise = service.start(answers, true, t);
 
       await new Promise((resolve) => setTimeout(resolve, 10));
       service.subscribe(lateListener);
@@ -123,14 +124,14 @@ describe('PromptGeneratorService', () => {
       const events: GenerationEvent[] = [];
       service.subscribe((event) => events.push(event));
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
 
-      const types = events.map((e) => e.type);
+      const types = events.map((event) => event.type);
       expect(types).toContain('firstToken');
       expect(types).toContain('token');
       expect(types).toContain('complete');
 
-      const completeEvent = events.find((e) => e.type === 'complete');
+      const completeEvent = events.find((event) => event.type === 'complete');
       expect(completeEvent).toBeDefined();
       expect(completeEvent?.type === 'complete' && completeEvent.text).toBe('Hallo wereld!');
     });
@@ -140,11 +141,11 @@ describe('PromptGeneratorService', () => {
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
       const onProgress = vi.fn();
-      await service.start(answers, true, translate, onProgress);
+      await service.start(answers, true, t, onProgress);
 
       expect(webLLMService.generatePromptStream).toHaveBeenCalledWith(
         answers,
-        translate,
+        t,
         expect.any(Function),
       );
     });
@@ -154,7 +155,7 @@ describe('PromptGeneratorService', () => {
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
       const onProgress = vi.fn();
-      await service.start(answers, true, translate, onProgress);
+      await service.start(answers, true, t, onProgress);
 
       expect(onProgress).toHaveBeenCalled();
     });
@@ -163,7 +164,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['Hallo', ' wereld']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
       expect(service.getCurrentText()).toBe('Hallo wereld');
     });
 
@@ -172,7 +173,7 @@ describe('PromptGeneratorService', () => {
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
       expect(service.getIsGenerating()).toBe(false);
-      const promise = service.start(answers, true, translate);
+      const promise = service.start(answers, true, t);
       expect(service.getIsGenerating()).toBe(true);
       await promise;
       expect(service.getIsGenerating()).toBe(false);
@@ -182,7 +183,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['test']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
       expect(service.getIsComplete()).toBe(true);
     });
 
@@ -190,7 +191,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['test']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
 
       expect(webLLMService.resetEngine).toHaveBeenCalled();
     });
@@ -201,21 +202,21 @@ describe('PromptGeneratorService', () => {
       const events: GenerationEvent[] = [];
       service.subscribe((event) => events.push(event));
 
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
 
-      expect(fallbackService.generatePrompt).toHaveBeenCalledWith(answers, translate);
+      expect(fallbackService.generatePrompt).toHaveBeenCalledWith(answers, t);
 
-      const types = events.map((e) => e.type);
-      expect(types).toEqual(['firstToken', 'token', 'complete']);
+      const types = events.map((event) => event.type);
+      expect(types).toEqual(['complete']);
     });
 
     it('zet currentText op de fallback prompt', async () => {
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
       expect(service.getCurrentText()).toBe('fallback prompt');
     });
 
     it('zet complete op true na fallback generatie', async () => {
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
       expect(service.getIsComplete()).toBe(true);
       expect(service.getIsGenerating()).toBe(false);
     });
@@ -242,10 +243,10 @@ describe('PromptGeneratorService', () => {
       const events: GenerationEvent[] = [];
       service.subscribe((event) => events.push(event));
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
 
       expect(fallbackService.generatePrompt).toHaveBeenCalled();
-      const completeEvent = events.find((e) => e.type === 'complete');
+      const completeEvent = events.find((event) => event.type === 'complete');
       expect(completeEvent).toBeDefined();
     });
 
@@ -264,9 +265,9 @@ describe('PromptGeneratorService', () => {
       const events: GenerationEvent[] = [];
       service.subscribe((event) => events.push(event));
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
 
-      const errorEvent = events.find((e) => e.type === 'error');
+      const errorEvent = events.find((event) => event.type === 'error');
       expect(errorEvent).toBeDefined();
       expect(errorEvent?.type === 'error' && errorEvent.error.message).toBe('Fallback fout');
     });
@@ -277,7 +278,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['Hallo', ' wereld', '!']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      const promise = service.start(answers, true, translate);
+      const promise = service.start(answers, true, t);
       service.abort();
       await promise;
 
@@ -294,7 +295,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['test']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      const promise = service.start(answers, true, translate);
+      const promise = service.start(answers, true, t);
       service.abort();
       await promise;
 
@@ -305,7 +306,7 @@ describe('PromptGeneratorService', () => {
 
   describe('reset', () => {
     it('wist de huidige tekst', async () => {
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
       expect(service.getCurrentText()).not.toBe('');
 
       service.reset();
@@ -313,7 +314,7 @@ describe('PromptGeneratorService', () => {
     });
 
     it('reset generating en complete status', async () => {
-      await service.start(answers, false, translate);
+      await service.start(answers, false, t);
       expect(service.getIsComplete()).toBe(true);
 
       service.reset();
@@ -334,7 +335,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['Tekst ', '[EINDE]']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
       expect(service.getCurrentText()).toBe('Tekst');
     });
 
@@ -342,7 +343,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['Tekst ', '[END]']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
       expect(service.getCurrentText()).toBe('Tekst');
     });
 
@@ -350,7 +351,7 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['Tekst  ', '  [EINDE]  ']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      await service.start(answers, true, translate);
+      await service.start(answers, true, t);
       expect(service.getCurrentText()).toBe('Tekst');
     });
   });
@@ -360,8 +361,8 @@ describe('PromptGeneratorService', () => {
       webLLMService = createMockWebLLMService(['test']);
       service = new PromptGeneratorService(webLLMService, fallbackService);
 
-      const promise1 = service.start(answers, true, translate);
-      const promise2 = service.start(answers, true, translate);
+      const promise1 = service.start(answers, true, t);
+      const promise2 = service.start(answers, true, t);
 
       await promise1;
       await promise2;
@@ -375,16 +376,16 @@ describe('PromptGeneratorService', () => {
       const events: GenerationEvent[] = [];
       service.subscribe((event) => events.push(event));
 
-      await service.preload(translate);
+      await service.preloadModel();
 
       expect(webLLMService.preloadModel).toHaveBeenCalled();
-      const progressEvent = events.find((e) => e.type === 'progress');
+      const progressEvent = events.find((event) => event.type === 'progress');
       expect(progressEvent).toBeDefined();
     });
 
     it('stuurt progress events door naar onProgress callback', async () => {
       const onProgress = vi.fn();
-      await service.preload(translate, onProgress);
+      await service.preloadModel(onProgress);
       expect(onProgress).toHaveBeenCalled();
     });
 
@@ -394,7 +395,7 @@ describe('PromptGeneratorService', () => {
 
       service = new PromptGeneratorService(errorWebLLM, fallbackService);
 
-      await expect(service.preload(translate)).rejects.toThrow('Preload fout');
+      await expect(service.preloadModel()).rejects.toThrow('Preload fout');
     });
   });
 });
