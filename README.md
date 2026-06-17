@@ -14,68 +14,50 @@ Dit project richt zich op privacy, educeren over bewust AI gebruik en de vaardig
 
 Dit project maakt gebruik van [Bun](https://bun.sh/) als runtime en package manager. Zorg dat Bun is geïnstalleerd voordat je begint.
 
-Installatie instructie:
+Installatie instructie (MacOS/Linux):
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Commando's kunnen ook worden uitgevoerd met `npm` inplaats van `bun`, maar dit is niet aanbevolen.
+Installatie instructie (Windows):
+```bash
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
 
 ## Codebase Overzicht
 
 ### Tech Stack
 
+- Runtime en package manager: Bun
 - Taal: TypeScript
 - UI: React, React Router
 - Bundelaar: Vite
-- Testen: Vitest, React Testing Library
-- Linting: ESLint + typescript-eslint
-- I18n: i18next + react-i18next
-- Iconen: FontAwesome
-- Lokale AI: WebLLM + WebGPU
-
-### Architectuur
-
-De applicatie volgt een drie-lagen architectuur:
-
-**Presentatielaag (Frontend)**
-- UI-componenten in React + TypeScript
-- Beheer van state via React Context
-- Routing via React Router
-
-**Servicelaag (Business Logica)**
-- WebLLMService: interactie met lokaal AI model via WebGPU
-- FallbackService: generatie van standaard prompts zonder WebGPU
-- PromptGeneratorService: coördineert prompt generatie, events en statistieken
-- SurveyService: verzamelt en valideert vragenlijstantwoorden
-- ProviderService: bouwt URLs voor externe AI-providers
-
-**Datalaag (Data)**
-- localStorage: gebruikersvoorkeuren
-- sessionStorage: promptresultaat tijdens sessie
-- StorageService: abstractie over localStorage operaties
-
-Alle lagen communiceren via dependency injection met React Context.
+- Testen: Vitest, React Testing Library, jsdom, V8 coverage
+- Linting: ESLint, typescript-eslint, React Hooks, React Refresh
+- Internationalisatie: i18next, react-i18next
+- Lokale AI: WebLLM, WebGPU
+- Deployment: GitHub Actions, GitHub Pages
 
 ### Mapstructuur
 
-- `public/` - Statische bestanden
-- `src/components/` - UI-componenten
-- `src/contexts/` - React context providers en hooks
-- `src/hooks/` - React hooks voor state-logica
-- `src/services/` - Bedrijfslogica en externe integraties
-- `src/types/` - TypeScript typedefinities
-- `src/utils/` - Kleine hulpfuncties
-- `src/locales/` - Vertaal JSON-bestanden
-- `src/__tests__/` - Unit- en componenttesten
-- `benchmark/` - Benchmark-applicatie voor het testen van prompt kwaliteit
+- `public/`: statische bestanden
+- `src/components/`: UI componenten
+- `src/contexts/`: React Context providers en hooks
+- `src/hooks/`: React hooks voor state logica
+- `src/services/`: bedrijfslogica, storage en WebLLM integratie
+- `src/types/`: TypeScript typedefinities en service interfaces
+- `src/utils/`: kleine hulpfuncties
+- `src/locales/`: vertaal JSON bestanden
+- `src/__tests__/`: unit en componenttesten
+- `benchmark/`: aparte benchmark applicatie voor promptkwaliteit
+- `.github/workflows/`: GitHub Pages deployment workflow
 
 ## Commands
 
-- `bun run dev` - Start dev-server
-- `bun run build` - Type-check (`tsc -b`) gevolgd door productiebuild (`vite build`)
-- `bun run preview` - Start server vanuit de productiebuild
-- `bun run lint` - Draai ESLint over het hele project
-- `bun run test` - Draai alle tests via Vitest
-- `bun run test:coverage` - Draai Vitest met V8 coverage reporter
-- `bun run test:benchmark` - Start de dev-server voor de benchmark-applicatie
+- `bun run dev`: start de dev server
+- `bun run build`: typecheck en productiebuild
+- `bun run preview`: start server vanuit de productiebuild
+- `bun run lint`: draai ESLint over het hele project
+- `bun run test`: draai alle tests via Vitest
+- `bun run test:coverage`: draai Vitest met V8 coverage reporter
+- `bun run test:benchmark`: start de dev server voor de benchmark applicatie
