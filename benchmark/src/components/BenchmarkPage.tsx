@@ -18,7 +18,7 @@ function getInitialState(): { results: BenchmarkResult[]; status: string } {
     const storedResults = sessionStorage.getItem(STORAGE_KEY);
     if (storedResults) return { results: JSON.parse(storedResults), status: 'Klaar' };
   } catch {
-    //Negeer storage errors
+    // Negeer storage errors
   }
   return { results: [], status: 'Niet geladen' };
 }
@@ -27,6 +27,7 @@ const initialState = getInitialState();
 
 export const BenchmarkPage = () => {
   const webLLMAdapter = useRef(new WebLLMAdapter()).current;
+  // Ref blijft actueel binnen de async benchmark loops
   const isRunningRef = useRef(false);
 
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -130,7 +131,7 @@ export const BenchmarkPage = () => {
     return nextResults;
   };
 
-  /** Voer de benchmark uit, herhaal volgens config.repeatCount. */
+  /** Voer benchmark runs uit, download elke run en ontlaad daarna het model. */
   const runTests = async () => {
     if (!isModelLoaded || isBusy) return;
 

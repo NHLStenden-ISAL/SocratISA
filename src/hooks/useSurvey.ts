@@ -87,7 +87,7 @@ export function useSurvey() {
     }
   }, [step, currentQuestion.type, currentQuestion.id, surveyService]);
 
-  // Ga naar result bij error of eerste token gegenereerd
+  // Ga naar result bij error, eerste token gegenereerd of volledige generatie
   useEffect(function navigateOnFirstToken() {
     if (!isGenerating) return;
 

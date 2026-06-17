@@ -34,7 +34,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.fallbackService = fallbackService;
   }
 
-  // Beheert AI generatie status 
+  // Zet listeners voor generatie events en geeft state door
   subscribe(listener: (event: GenerationEvent) => void): void {
     this.listeners.add(listener);
     if (this.generating && this.lastProgress !== null) {
@@ -72,7 +72,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.emit({ type: 'complete', text: this.currentText, stats: this.lastStats, warning: this.lastWarning });
   }
 
-  // Verwijder de begin aan einde tags van de resultaat prompt
+  // Verwijder de reasoning en einde tags van de resultaat prompt
   private cleanOutput(text: string): string {
     const cleaned = this.stripThinkSection(text);
     return cleaned.replace(/\[EINDE\]|\[END\]/g, '').trim();
@@ -138,7 +138,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.abortController = abortController;
 
     try {
-      // Maak prompt met/zonder AI model gebaseerd op model beschikbaarheid
+      // Maak prompt met/zonder AI model gebaseerd op gebruiker keuze
       if (canUseModel) {
         await this.startModelGeneration(answers, translate, abortController, onProgress);
       } else {
@@ -205,6 +205,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
     this.completeGeneration(this.cleanOutput(fallbackPrompt), undefined, warning);
   }
 
+  // Reset de engine bij error en probeer opnieuw met fallback
   private async handleGenerationError(
     error: unknown,
     answers: SurveyAnswers,

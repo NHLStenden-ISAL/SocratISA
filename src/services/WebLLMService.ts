@@ -16,7 +16,7 @@ const APP_CONFIG: webllm.AppConfig = {
       model_id: MODEL_ID,
       model_lib:
         'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
-      // Zo laag mogelijk voor verminderen van VRAM gebruik
+      // Zo laag mogelijk in belang van VRAM gebruik
       overrides: {
         context_window_size: 2048,
         max_history_size: 1,
@@ -33,7 +33,8 @@ export class WebLLMService implements IWebLLMService {
   static streamDelayMs = 0;
   private lastCompletionTokens: number | null = null;
 
-  // Controleer of WebGPU bruikbaar is
+  // Controleer of het gebruikers apparaat mogelijk het model kan gebruiken
+  // Sinds VRAM niet direct gemeten kan worden maken we een schatting gebaseerd op shader buffers
   async canUseModel(): Promise<boolean> {
     if (WebLLMService.modelCompatible !== null) return WebLLMService.modelCompatible;
 
@@ -110,7 +111,7 @@ export class WebLLMService implements IWebLLMService {
     await WebLLMService.createEngine(onProgress);
   }
 
-  // Initialiseer WebLLM
+  // Lazy load en configureer de WebLLM engine
   private static async createEngine(
     onProgress?: (info: ProgressInfo) => void,
   ): Promise<void> {
@@ -184,6 +185,7 @@ export class WebLLMService implements IWebLLMService {
     }
   }
 
+  // Reset de engine
   resetEngine(): void {
     const engine = WebLLMService.engine;
     WebLLMService.engine = null;

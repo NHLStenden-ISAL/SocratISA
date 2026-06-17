@@ -15,7 +15,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n } = useTranslation();
   const storage = useStorage();
 
-  // Als browser taal nl is, zet dan nl, anders en
+  // Als browser/localStorage taal nl is, zet dan nl, anders en
   const fallbackLanguage: Language = i18n.resolvedLanguage?.startsWith('nl') ? 'nl' : 'en';
 
   // Geef taal uit localStorage of fallback

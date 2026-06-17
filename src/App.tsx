@@ -41,7 +41,7 @@ function App() {
     document.title = titles[location.pathname] ?? 'SocratISA';
   }, [location.pathname, t]);
 
-  // Stop AI generatie bij verlating result pagina
+  // Stop AI generatie en verwijder prompt en stats bij verlating result pagina
   useEffect(function abortGenerationOnLeave() {
     if (previousPathRef.current === '/result' && location.pathname !== '/result') {
       promptGeneratorService.abort();
@@ -136,7 +136,7 @@ function App() {
         </button>
       </nav>
 
-      {/* Popup AI model ophalen in achtergrond */}
+      {/* Popup taal veranderen */}
       <Dialog
         isOpen={showLanguageDialog}
         onClose={closeLanguageDialog}

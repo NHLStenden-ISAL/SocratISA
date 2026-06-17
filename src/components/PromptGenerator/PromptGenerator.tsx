@@ -30,7 +30,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     webLLMService.setStreamDelayMs(streamDelayMs);
   }, [streamDelayMs, webLLMService]);
 
-  // Render tekst soepel token voor token
+  // Zet chunks in batches zodat we niet per token renderen
   const rafRef = useRef<number>(0);
   const pendingTextRef = useRef('');
   const lastFlushedRef = useRef('');
@@ -48,7 +48,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     }
   }, [phase]);
 
-  // Hou generatie token voor token bij en voeg het achtervoegsel toe wanneer het klaar is
+  // Hou generatie token voor token bij
   useEffect(function subscribeToGeneration() {
     if (promptGeneratorService.getIsComplete()) {
       if (rafRef.current) {
@@ -90,7 +90,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       }
     };
 
-    // Bekijk model beschikbaarheid en survey-antwoorden, start generatie met antwoorden zo mogelijk
+    // Start generatie met survey-antwoorden, laat sjabloon zien als er geen antwoorden zijn
     const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
     const canUseModel: boolean = location.state?.canUseModel ?? false;
     if (!promptGeneratorService.getIsGenerating()) {

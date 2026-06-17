@@ -10,11 +10,13 @@ const MODEL_ID = benchmarkConfig.model;
 
 export class WebLLMAdapter {
   private static engine: webllm.MLCEngine | null = null;
+  // Deel dezelfde laadactie wanneer meerdere calls tegelijk het model nodig hebben
   private static enginePromise: Promise<webllm.MLCEngine> | null = null;
   private static clearingCache = false;
   private static modelCompatible: boolean | null = null;
 
-  // Controleer of WebGPU bruikbaar is
+  // Controleer of het gebruikers apparaat mogelijk het model kan gebruiken
+  // Sinds VRAM niet direct gemeten kan worden maken we een schatting gebaseerd op shader buffers
   async canUseModel(): Promise<boolean> {
     if (WebLLMAdapter.modelCompatible !== null) return WebLLMAdapter.modelCompatible;
 
@@ -26,7 +28,7 @@ export class WebLLMAdapter {
         return false;
       }
 
-      // Minimum nodig om mogelijk het model te laden
+      // WebLLM heeft genoeg storage buffers per shader stage nodig om het model te kunnen laden
       const limits = (webGpuAdapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
       if (limits.maxStorageBuffersPerShaderStage < 10) {
         WebLLMAdapter.modelCompatible = false;
@@ -41,7 +43,7 @@ export class WebLLMAdapter {
     }
   }
 
-  // Initialiseer AI model in achtergrond
+  // Laad AI model voordat de benchmark start
   async preloadModel(onProgress?: (text: string) => void): Promise<void> {
     if (!WebLLMAdapter.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
@@ -112,7 +114,7 @@ export class WebLLMAdapter {
     }
   }
 
-  // Genereer de prompt
+  // Genereer benchmark prompt en meet hoe lang dit duurt
   async generate(testCase: BenchmarkTestCase, language: Language): Promise<{ output: string; durationMs: number }> {
     if (!WebLLMAdapter.isReadyForUse()) {
       throw new Error('WebLLM is bezig met cache wissen');
