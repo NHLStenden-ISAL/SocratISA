@@ -1,17 +1,10 @@
 import type { Language } from '../types';
 
 export const benchmarkConfig = {
-  // Keuze uit nl/en systeemprompt
-  language: "en" as Language,
-
-  // Keuze uit model (alle opties zijn te vinden op https://github.com/mlc-ai/web-llm/blob/main/src/config.ts#L346)
-  model: "Qwen3.5-4B-q4f32_1-MLC",
-
-  // Tijd in seconden tussen tests
-  bufferSeconds: 10,
-
-  // Aantal herhalingen van de benchmark
-  repeatCount: 10,
+  language: (import.meta.env.VITE_BENCHMARK_LANGUAGE || 'en') as Language,
+  model: import.meta.env.VITE_BENCHMARK_MODEL || 'Qwen3.5-4B-q4f32_1-MLC',
+  bufferSeconds: Number(import.meta.env.VITE_BENCHMARK_BUFFER_SECONDS || 10),
+  repeatCount: Number(import.meta.env.VITE_BENCHMARK_REPEAT_COUNT || 10),
 
   // Systeemprompts die samen met userMessages en styleHints de model invoer vormen
   systemPrompts: {
