@@ -61,7 +61,7 @@ describe('usePromptResult', () => {
     });
 
     act(() => {
-      result.current.setPrompt('bewerkte prompt');
+      result.current.setEditedPrompt('bewerkte prompt');
     });
 
     expect(result.current.prompt).toBe('bewerkte prompt');
@@ -80,7 +80,7 @@ describe('usePromptResult', () => {
     expect(result.current.isCopying).toBe(false);
   });
 
-  it('toont feedback bij succesvol kopiëren', async () => {
+  it('toont copyFeedback bij succesvol kopiëren', async () => {
     const { result } = renderHook(() => usePromptResult('test'), {
       wrapper: createWrapper(),
     });
@@ -89,7 +89,7 @@ describe('usePromptResult', () => {
       await result.current.handleCopy();
     });
 
-    expect(result.current.feedback).not.toBeNull();
+    expect(result.current.copyFeedback).not.toBeNull();
   });
 
   it('handelt een klembord fout af', async () => {
@@ -104,7 +104,7 @@ describe('usePromptResult', () => {
     });
 
     expect(result.current.isCopying).toBe(false);
-    expect(result.current.feedback).not.toBeNull();
+    expect(result.current.copyFeedback).not.toBeNull();
   });
 
   it('opent een provider URL voor niet clipboard providers', () => {
@@ -115,7 +115,7 @@ describe('usePromptResult', () => {
       wrapper: createWrapper(),
     });
 
-    const chatgpt = result.current.providers.find((p) => p.name === 'ChatGPT')!;
+    const chatgpt = result.current.providers.find((provider) => provider.name === 'ChatGPT')!;
 
     act(() => {
       result.current.handleProvider(chatgpt);
@@ -139,7 +139,7 @@ describe('usePromptResult', () => {
       wrapper: createWrapper(),
     });
 
-    const gemini = result.current.providers.find((p) => p.name === 'Gemini')!;
+    const gemini = result.current.providers.find((provider) => provider.name === 'Gemini')!;
 
     await act(async () => {
       await result.current.handleProvider(gemini);

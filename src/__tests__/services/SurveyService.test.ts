@@ -51,7 +51,7 @@ describe('SurveyService', () => {
   describe('SURVEY_QUESTIONS', () => {
     it('bevat de verwachte vragen', () => {
       expect(SURVEY_QUESTIONS).toHaveLength(3);
-      expect(SURVEY_QUESTIONS.map((q) => q.id)).toEqual([
+      expect(SURVEY_QUESTIONS.map((question) => question.id)).toEqual([
         'subject',
         'topic',
         'style',
@@ -59,7 +59,7 @@ describe('SurveyService', () => {
     });
 
     it('heeft een selectievraag met opties voor stijl', () => {
-      const styleQuestion = SURVEY_QUESTIONS.find((q) => q.id === 'style');
+      const styleQuestion = SURVEY_QUESTIONS.find((question) => question.id === 'style');
       expect(styleQuestion?.type).toBe('select');
       expect(styleQuestion?.optionKeys).toHaveLength(4);
     });

@@ -10,14 +10,14 @@ const mockSubscribe = vi.fn();
 const mockUnsubscribe = vi.fn();
 
 vi.mock('../../hooks', () => ({
-  useGPUStatus: vi.fn(),
-  useGenerationSettings: vi.fn(() => ({ throttleMs: 0, setThrottleMs: vi.fn() })),
+  useModelStatus: vi.fn(),
+  useGenerationSettings: vi.fn(() => ({ streamDelayMs: 0, setStreamDelayMs: vi.fn() })),
 }));
 
 vi.mock('../../contexts/useServices', () => ({
   useServices: vi.fn(() => ({
     promptGeneratorService: {
-      preload: mockPreload,
+      preloadModel: mockPreload,
       subscribe: mockSubscribe,
       unsubscribe: mockUnsubscribe,
       getPreloadStatus: vi.fn(() => 'idle'),
@@ -43,7 +43,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-import { useGPUStatus } from '../../hooks';
+import { useModelStatus } from '../../hooks';
 
 describe('Home', () => {
   beforeEach(() => {
@@ -54,8 +54,8 @@ describe('Home', () => {
   });
 
   it('rendert de landingspagina', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: false,
       gpuName: null,
       isChecking: false,
     });
@@ -73,8 +73,8 @@ describe('Home', () => {
   });
 
   it('toont een preload banner als GPU beschikbaar is', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });
@@ -93,8 +93,8 @@ describe('Home', () => {
   });
 
   it('toont geen preload dialoog als GPU niet beschikbaar is', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: false,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: false,
       gpuName: null,
       isChecking: false,
     });
@@ -111,8 +111,8 @@ describe('Home', () => {
   });
 
   it('toont geen preload dialoog terwijl GPU status nog wordt gecontroleerd', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -129,8 +129,8 @@ describe('Home', () => {
   });
 
   it('toont een keuzedialoog bij klik op CTA', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -153,8 +153,8 @@ describe('Home', () => {
   });
 
   it('toont een gebruiksvriendelijke prestatietip in de keuzedialoog', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -175,8 +175,8 @@ describe('Home', () => {
   });
 
   it('navigeert naar survey met GPU bij kiezen voor AI-model', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -195,12 +195,12 @@ describe('Home', () => {
     const aiButton = screen.getByText('home_cta_dialog_ai');
     fireEvent.click(aiButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { gpuAvailable: true } });
+    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { canUseModel: true } });
   });
 
   it('navigeert naar survey zonder GPU bij kiezen voor fallback', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: null,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: null,
       gpuName: null,
       isChecking: true,
     });
@@ -219,12 +219,12 @@ describe('Home', () => {
     const fallbackButton = screen.getByText('home_cta_dialog_fallback');
     fireEvent.click(fallbackButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { gpuAvailable: false } });
+    expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { canUseModel: false } });
   });
 
   it('minimaliseert de preload banner bij klik op dismiss', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });
@@ -245,8 +245,8 @@ describe('Home', () => {
   });
 
   it('klapt de preload banner weer open', () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });
@@ -268,8 +268,8 @@ describe('Home', () => {
 
   it('start preload en toont status bij klik op confirm', async () => {
     mockPreload.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });
@@ -296,8 +296,8 @@ describe('Home', () => {
   });
 
   it('toont een foutstatus als preload mislukt', async () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });
@@ -324,8 +324,8 @@ describe('Home', () => {
   });
 
   it('toont ready status als preload voltooid is', async () => {
-    vi.mocked(useGPUStatus).mockReturnValue({
-      isAvailable: true,
+    vi.mocked(useModelStatus).mockReturnValue({
+      canUseModel: true,
       gpuName: null,
       isChecking: false,
     });

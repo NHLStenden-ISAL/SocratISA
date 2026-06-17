@@ -5,7 +5,7 @@ export const STORAGE_KEYS = {
   PROMPT: 'socratisa_result_prompt',
   STATS: 'socratisa_result_stats',
   EDITED_PROMPT: 'socratisa_result_edited_prompt',
-  GPU_CHOICE: 'socratisa_gpu_choice',
+  MODEL_CHOICE: 'socratisa_model_choice',
 } as const;
 
 export class StorageService {

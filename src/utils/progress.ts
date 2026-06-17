@@ -21,9 +21,9 @@ export function formatProgressText(
     : t('home_preload_cache');
 
   // MB gedownload/opgehaald text
-  const mb = progressInfo.mbFetched != null
-    ? `: ${progressInfo.mbFetched} MB`
+  const megabytesText = progressInfo.fetchedMegabytes != null
+    ? `: ${progressInfo.fetchedMegabytes} MB`
     : '';
 
-  return `${action}${mb} (${progressInfo.percentage}%)`;
+  return `${action}${megabytesText} (${progressInfo.percentage}%)`;
 }

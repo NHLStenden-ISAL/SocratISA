@@ -26,13 +26,13 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
     firstButton?.focus();
 
     // Geeft keyboard shortcuts voor de popup navigeren met focus trap
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         onClose();
         return;
       }
 
-      if (e.key !== 'Tab') return;
+      if (event.key !== 'Tab') return;
       const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
@@ -41,11 +41,11 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
         first.focus();
       }
     };
@@ -69,7 +69,7 @@ export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', child
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
       <div className="dialog-box" ref={dialogRef}>
         <h3 id={titleId}>{title}</h3>

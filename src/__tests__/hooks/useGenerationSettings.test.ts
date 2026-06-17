@@ -15,7 +15,7 @@ const mockStorage = {
     delete store[key];
   },
   clear: () => {
-    Object.keys(store).forEach((k) => delete store[k]);
+    Object.keys(store).forEach((key) => delete store[key]);
   },
 };
 
@@ -27,7 +27,7 @@ function createWrapper() {
 
 describe('useGenerationSettings', () => {
   beforeEach(() => {
-    Object.keys(store).forEach((k) => delete store[k]);
+    Object.keys(store).forEach((key) => delete store[key]);
     Object.defineProperty(globalThis, 'localStorage', {
       value: mockStorage,
       writable: true,
@@ -37,43 +37,43 @@ describe('useGenerationSettings', () => {
 
   it('geeft standaard 0 terug als er niets in localStorage staat', () => {
     const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
-    expect(result.current.throttleMs).toBe(0);
+    expect(result.current.streamDelayMs).toBe(0);
   });
 
-  it('leest throttleMs uit localStorage', () => {
-    localStorage.setItem('socratisa_throttle_ms', '50');
+  it('leest streamDelayMs uit localStorage', () => {
+    localStorage.setItem('socratisa_stream_delay_ms', '50');
     const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
-    expect(result.current.throttleMs).toBe(50);
+    expect(result.current.streamDelayMs).toBe(50);
   });
 
-  it('slaat throttleMs op in localStorage', () => {
-    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
-
-    act(() => {
-      result.current.setThrottleMs(100);
-    });
-
-    expect(result.current.throttleMs).toBe(100);
-    expect(localStorage.getItem('socratisa_throttle_ms')).toBe('100');
-  });
-
-  it('beperkt throttleMs tot minimaal 0', () => {
+  it('slaat streamDelayMs op in localStorage', () => {
     const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
 
     act(() => {
-      result.current.setThrottleMs(-10);
+      result.current.setStreamDelayMs(100);
     });
 
-    expect(result.current.throttleMs).toBe(0);
+    expect(result.current.streamDelayMs).toBe(100);
+    expect(localStorage.getItem('socratisa_stream_delay_ms')).toBe('100');
   });
 
-  it('beperkt throttleMs tot maximaal 100', () => {
+  it('beperkt streamDelayMs tot minimaal 0', () => {
     const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
 
     act(() => {
-      result.current.setThrottleMs(500);
+      result.current.setStreamDelayMs(-10);
     });
 
-    expect(result.current.throttleMs).toBe(100);
+    expect(result.current.streamDelayMs).toBe(0);
+  });
+
+  it('beperkt streamDelayMs tot maximaal 100', () => {
+    const { result } = renderHook(() => useGenerationSettings(), { wrapper: createWrapper() });
+
+    act(() => {
+      result.current.setStreamDelayMs(500);
+    });
+
+    expect(result.current.streamDelayMs).toBe(100);
   });
 });

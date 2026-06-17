@@ -35,19 +35,19 @@ export function usePromptResult(initialPrompt: string) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const storage = useStorage();
-  const [edits, setEdits] = useState<string | null>(() => {
+  const [editedPrompt, setEditedPromptState] = useState<string | null>(() => {
     return storage.getSessionItem(STORAGE_KEYS.EDITED_PROMPT);
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | null>(null);
 
   // Bepaal huidige prompt en sta bewerken toe
-  const prompt = edits ?? initialPrompt;
-  const setPrompt = (value: string) => {
-    setEdits(value);
+  const prompt = editedPrompt ?? initialPrompt;
+  const setEditedPrompt = (value: string) => {
+    setEditedPromptState(value);
     storage.setSessionItem(STORAGE_KEYS.EDITED_PROMPT, value);
   };
 
@@ -61,12 +61,12 @@ export function usePromptResult(initialPrompt: string) {
   const handleDone = () => setIsEditing(false);
 
   // Laat kopieer confirmatie zien
-  const showFeedback = (msg: string) => {
+  const showCopyFeedback = (message: string) => {
     if (feedbackTimerRef.current) {
       clearTimeout(feedbackTimerRef.current);
     }
-    setFeedback(msg);
-    feedbackTimerRef.current = window.setTimeout(() => setFeedback(null), 2000);
+    setCopyFeedback(message);
+    feedbackTimerRef.current = window.setTimeout(() => setCopyFeedback(null), 2000);
   };
 
   // Kopieer resultaat prompt
@@ -74,9 +74,9 @@ export function usePromptResult(initialPrompt: string) {
     setIsCopying(true);
     try {
       await navigator.clipboard.writeText(prompt);
-      showFeedback(t('result_copied'));
+      showCopyFeedback(t('result_copied'));
     } catch {
-      showFeedback(t('result_copy_failed'));
+      showCopyFeedback(t('result_copy_failed'));
     } finally {
       setIsCopying(false);
     }
@@ -101,7 +101,7 @@ export function usePromptResult(initialPrompt: string) {
     if (provider.clipboardOnly) {
       navigator.clipboard.writeText(prompt).then(openUrl).catch(() => {
         openUrl();
-        showFeedback(t('result_copy_failed'));
+        showCopyFeedback(t('result_copy_failed'));
       });
     } else {
       openUrl();
@@ -111,10 +111,10 @@ export function usePromptResult(initialPrompt: string) {
   return {
     prompt,
     isEditing,
-    feedback,
+    copyFeedback,
     isCopying,
     textareaRef,
-    setPrompt,
+    setEditedPrompt,
     handleEdit,
     handleDone,
     handleCopy,

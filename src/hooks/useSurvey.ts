@@ -8,15 +8,15 @@ import { SURVEY_QUESTIONS } from '../services';
 import { useServices } from '../contexts/useServices';
 import { useStorage, type IStorage } from '../contexts/useStorage';
 import { STORAGE_KEYS } from '../services/StorageService';
-import { useGPUStatus } from './useGPUStatus';
+import { useModelStatus } from './useModelStatus';
 import type { GenerationEvent, ProgressInfo } from '../types';
 
 // Haal AI-model/fallback keuze uit storage
-function getGPUChoice(isAvailable: boolean | null, storage: IStorage): boolean {
-  const stored = storage.getSessionItem(STORAGE_KEYS.GPU_CHOICE);
-  if (stored === 'true') return true;
-  if (stored === 'false') return false;
-  return isAvailable === true;
+function shouldUseModel(canRunModel: boolean | null, storage: IStorage): boolean {
+  const savedChoice = storage.getSessionItem(STORAGE_KEYS.MODEL_CHOICE);
+  if (savedChoice === 'true') return true;
+  if (savedChoice === 'false') return false;
+  return canRunModel === true;
 }
 
 export function useSurvey() {
@@ -31,16 +31,16 @@ export function useSurvey() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [inputError, setInputError] = useState(false);
-  const { isAvailable } = useGPUStatus();
-  const gpuAvailable = getGPUChoice(isAvailable, storage);
-  const currentQ = SURVEY_QUESTIONS[step];
+  const { canUseModel: canRunModel } = useModelStatus();
+  const useModel = shouldUseModel(canRunModel, storage);
+  const currentQuestion = SURVEY_QUESTIONS[step];
 
   // Sla keuze antwoord op
   const handleOptionSelect = (key: string) => {
     if (isSubmittingRef.current) return;
 
     isSubmittingRef.current = true;
-    surveyService.setAnswer(currentQ.id, key);
+    surveyService.setAnswer(currentQuestion.id, key);
     advanceStep();
   };
 
@@ -56,7 +56,7 @@ export function useSurvey() {
       return;
     }
 
-    surveyService.setAnswer(currentQ.id, value);
+    surveyService.setAnswer(currentQuestion.id, value);
     setInputError(false);
     advanceStep();
   };
@@ -80,12 +80,12 @@ export function useSurvey() {
   useEffect(function syncAnswerOnStepChange() {
     isSubmittingRef.current = false;
 
-    if (currentQ.type === 'text' && inputRef.current) {
-      const prevAnswer = surveyService.getAnswer(currentQ.id);
-      inputRef.current.value = prevAnswer;
+    if (currentQuestion.type === 'text' && inputRef.current) {
+      const previousAnswer = surveyService.getAnswer(currentQuestion.id);
+      inputRef.current.value = previousAnswer;
       inputRef.current.focus();
     }
-  }, [step, currentQ.type, currentQ.id, surveyService]);
+  }, [step, currentQuestion.type, currentQuestion.id, surveyService]);
 
   // Ga naar result bij error of eerste token gegenereerd
   useEffect(function navigateOnFirstToken() {
@@ -93,7 +93,7 @@ export function useSurvey() {
 
     const navigateToResult = () => {
       const answers = surveyService.toSurveyAnswers();
-      navigate('/result', { state: { answers, gpuAvailable } });
+      navigate('/result', { state: { answers, canUseModel: useModel } });
     };
 
     if (promptGeneratorService.getIsComplete()) {
@@ -113,7 +113,7 @@ export function useSurvey() {
 
     promptGeneratorService.subscribe(handleEvent);
     return () => promptGeneratorService.unsubscribe(handleEvent);
-  }, [isGenerating, gpuAvailable, navigate, surveyService, promptGeneratorService]);
+  }, [isGenerating, useModel, navigate, surveyService, promptGeneratorService]);
 
   // Stuur antwoorden naar prompt generator
   const finishSurvey = () => {
@@ -122,7 +122,7 @@ export function useSurvey() {
     storage.removeSessionItem(STORAGE_KEYS.STATS);
     storage.removeSessionItem(STORAGE_KEYS.EDITED_PROMPT);
     promptGeneratorService.reset();
-    promptGeneratorService.start(surveyService.toSurveyAnswers(), gpuAvailable, t, setProgressInfo);
+    promptGeneratorService.start(surveyService.toSurveyAnswers(), useModel, t, setProgressInfo);
   };
 
   return {
@@ -131,7 +131,7 @@ export function useSurvey() {
     progressInfo,
     inputError,
     setInputError,
-    currentQ,
+    currentQuestion,
     inputRef,
     handleNext,
     handleOptionSelect,

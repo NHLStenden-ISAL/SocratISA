@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useGPUStatus } from '../../hooks';
+import { useModelStatus } from '../../hooks';
 import { useServices } from '../../contexts/useServices';
 import { useStorage } from '../../contexts/useStorage';
 import { Dialog } from '../Dialog/Dialog';
@@ -17,8 +17,8 @@ export const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const gpuStatus = useGPUStatus();
-  const { isAvailable } = gpuStatus;
+  const modelStatus = useModelStatus();
+  const { canUseModel } = modelStatus;
   const { promptGeneratorService } = useServices();
   const storage = useStorage();
   const [showCTADialog, setShowCTADialog] = useState(false);
@@ -28,7 +28,7 @@ export const Home = () => {
   const infoLinkRef = useRef<HTMLAnchorElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
 
-  const isPreloadBannerVisible = isAvailable === true;
+  const isPreloadBannerVisible = canUseModel === true;
   const isPreloadBannerMinimized = preloadOfferDismissed && preloadStatus === 'idle';
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export const Home = () => {
     setPreloadStatus('loading');
     setPreloadProgress(null);
     try {
-      await promptGeneratorService.preload(t, setPreloadProgress);
+      await promptGeneratorService.preloadModel(setPreloadProgress);
       setPreloadStatus('ready');
       setPreloadProgress(null);
     } catch {
@@ -197,11 +197,11 @@ export const Home = () => {
             className="socratic-button"
             onClick={() => {
               if (preloadStatus !== 'idle') {
-                storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
-                navigate('/survey', { state: { gpuAvailable: true } });
-              } else if (isAvailable === false) {
-                storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
-                navigate('/survey', { state: { gpuAvailable: false } });
+                storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'true');
+                navigate('/survey', { state: { canUseModel: true } });
+              } else if (canUseModel === false) {
+                storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'false');
+                navigate('/survey', { state: { canUseModel: false } });
               } else {
                 setShowCTADialog(true);
               }
@@ -260,8 +260,8 @@ export const Home = () => {
           <button
             className="cta-choice-btn ai"
             onClick={() => {
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
-              navigate('/survey', { state: { gpuAvailable: true } });
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'true');
+              navigate('/survey', { state: { canUseModel: true } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
@@ -270,8 +270,8 @@ export const Home = () => {
           <button
             className="cta-choice-btn fallback"
             onClick={() => {
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
-              navigate('/survey', { state: { gpuAvailable: false } });
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'false');
+              navigate('/survey', { state: { canUseModel: false } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>

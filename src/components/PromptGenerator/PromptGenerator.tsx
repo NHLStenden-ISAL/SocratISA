@@ -25,10 +25,10 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const [generationError, setGenerationError] = useState<Error | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
-  const { throttleMs, setThrottleMs } = useGenerationSettings();
-  useEffect(function syncThrottleMs() {
-    webLLMService.setThrottleMs(throttleMs);
-  }, [throttleMs, webLLMService]);
+  const { streamDelayMs, setStreamDelayMs } = useGenerationSettings();
+  useEffect(function syncStreamDelayMs() {
+    webLLMService.setStreamDelayMs(streamDelayMs);
+  }, [streamDelayMs, webLLMService]);
 
   // Render tekst soepel token voor token
   const rafRef = useRef<number>(0);
@@ -90,12 +90,12 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       }
     };
 
-    // Bekijk GPU beschikbaarheid en survey-antwoorden, start generatie met antwoorden zo mogelijk
+    // Bekijk model beschikbaarheid en survey-antwoorden, start generatie met antwoorden zo mogelijk
     const answers: SurveyAnswers = location.state?.answers ?? { subject: '', topic: '', styleKey: '' };
-    const gpuAvailable: boolean = location.state?.gpuAvailable ?? false;
+    const canUseModel: boolean = location.state?.canUseModel ?? false;
     if (!promptGeneratorService.getIsGenerating()) {
       promptGeneratorService.reset();
-      promptGeneratorService.start(answers, gpuAvailable, t, setProgressInfo);
+      promptGeneratorService.start(answers, canUseModel, t, setProgressInfo);
     }
 
     promptGeneratorService.subscribe(handleEvent);
@@ -109,7 +109,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     };
   }, [location, t, promptGeneratorService, onComplete, flushPendingText]);
 
-  const gpuAvailable = (location.state as { gpuAvailable?: boolean } | undefined)?.gpuAvailable ?? false;
+  const canUseModel = (location.state as { canUseModel?: boolean } | undefined)?.canUseModel ?? false;
 
   // Error scherm
   if (generationError) {
@@ -136,11 +136,11 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   }
 
   // Generatie snelheid slider
-  const speedControl = gpuAvailable && (
+  const speedControl = canUseModel && (
     <div className="generation-setting">
       <div className="slider-header">
         <span className="slider-title">{t('generation_speed_label')}</span>
-        <span className="slider-value">{throttleMs} ms</span>
+        <span className="slider-value">{streamDelayMs} ms</span>
       </div>
       <input
         id="throttle-slider"
@@ -148,10 +148,10 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
         min={0}
         max={100}
         step={1}
-        value={throttleMs}
-        onChange={(e) => {
-          const val = parseInt(e.target.value, 10);
-          setThrottleMs(val);
+        value={streamDelayMs}
+        onChange={(event) => {
+          const parsedStreamDelayMs = parseInt(event.target.value, 10);
+          setStreamDelayMs(parsedStreamDelayMs);
         }}
         aria-label={t('generation_speed_aria')}
       />

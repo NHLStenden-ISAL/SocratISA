@@ -5,11 +5,11 @@ import { StorageProvider } from '../../contexts';
 import { MockI18nProvider } from '../helpers/mockI18n';
 
 function TestComponent() {
-  const { lang, toggleLang } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
   return (
     <div>
-      <span data-testid="lang">{lang}</span>
-      <button onClick={toggleLang} data-testid="toggle">Wissel</button>
+      <span data-testid="language">{language}</span>
+      <button onClick={toggleLanguage} data-testid="toggle">Wissel</button>
     </div>
   );
 }
@@ -53,7 +53,7 @@ describe('LanguageContext', () => {
       </StorageProvider>,
     );
 
-    expect(screen.getByTestId('lang').textContent).toBe('en');
+    expect(screen.getByTestId('language').textContent).toBe('en');
   });
 
   it('wisselt de taal en slaat deze op bij toggle', () => {
@@ -79,8 +79,8 @@ describe('LanguageContext', () => {
       screen.getByTestId('toggle').click();
     });
 
-    expect(screen.getByTestId('lang').textContent).toBe('en');
-    expect(mockStorage.setLocalItem).toHaveBeenCalledWith('lang', 'en');
+    expect(screen.getByTestId('language').textContent).toBe('en');
+    expect(mockStorage.setLocalItem).toHaveBeenCalledWith('language', 'en');
   });
 
   it('update document.documentElement.lang bij taalwissel', () => {

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult, useAutoFocus, useGPUStatus } from '../../hooks';
+import { usePromptResult, useAutoFocus, useModelStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
@@ -21,15 +21,15 @@ const STORAGE_KEY_STATS = STORAGE_KEYS.STATS;
 // Weergeeft generatie, resultaat prompt met acties en statistieken of waarschuwing gebaseerd op prompt status
 export const PromptResult = () => {
   const storage = useStorage();
-  const [prompt, setPrompt] = useState<string | null>(() => {
+  const [prompt, setGeneratedPrompt] = useState<string | null>(() => {
     return storage.getSessionItem(STORAGE_KEY_PROMPT);
   });
 
   const [stats, setStats] = useState<GenerationStats | undefined>(() => {
-    const raw = storage.getSessionItem(STORAGE_KEY_STATS);
-    if (raw) {
+    const storedStats = storage.getSessionItem(STORAGE_KEY_STATS);
+    if (storedStats) {
       try {
-        return JSON.parse(raw) as GenerationStats;
+        return JSON.parse(storedStats) as GenerationStats;
       } catch {
         return undefined;
       }
@@ -38,13 +38,13 @@ export const PromptResult = () => {
   });
 
   const [warning, setWarning] = useState<string | undefined>();
-  const handleComplete = useCallback(function handleComplete(p: string, s?: GenerationStats, w?: string) {
-    setPrompt(p);
-    setStats(s);
-    setWarning(w);
-    storage.setSessionItem(STORAGE_KEY_PROMPT, p);
-    if (s) {
-      storage.setSessionItem(STORAGE_KEY_STATS, JSON.stringify(s));
+  const handleComplete = useCallback(function handleComplete(completedPrompt: string, generationStats?: GenerationStats, generationWarning?: string) {
+    setGeneratedPrompt(completedPrompt);
+    setStats(generationStats);
+    setWarning(generationWarning);
+    storage.setSessionItem(STORAGE_KEY_PROMPT, completedPrompt);
+    if (generationStats) {
+      storage.setSessionItem(STORAGE_KEY_STATS, JSON.stringify(generationStats));
     } else {
       storage.removeSessionItem(STORAGE_KEY_STATS);
     }
@@ -75,8 +75,8 @@ function PromptResultView({
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState<'idle' | 'clearing' | 'done' | 'error'>('idle');
   const navigate = useNavigate();
-  const gpuStatus = useGPUStatus();
-  const { isAvailable } = gpuStatus;
+  const modelStatus = useModelStatus();
+  const { canUseModel } = modelStatus;
   const [showRetryDialog, setShowRetryDialog] = useState(false);
   const [isCopyingStats, setIsCopyingStats] = useState(false);
   const [statsCopyFeedback, setStatsCopyFeedback] = useState<string | null>(null);
@@ -102,10 +102,10 @@ function PromptResultView({
   const {
     prompt: displayPrompt,
     isEditing,
-    feedback,
+    copyFeedback,
     isCopying,
     textareaRef,
-    setPrompt,
+    setEditedPrompt,
     handleEdit,
     handleDone,
     handleCopy,
@@ -149,10 +149,10 @@ function PromptResultView({
   const handleDownload = () => {
     const blob = new Blob([displayPrompt], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'socratisa-prompt.txt';
-    a.click();
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = 'socratisa-prompt.txt';
+    downloadLink.click();
     URL.revokeObjectURL(url);
   };
 
@@ -175,7 +175,7 @@ function PromptResultView({
         `${t('result_stat_tps')} ${stats.tps}`,
         `${t('result_stat_generate')} ${formatMs(stats.totalTime - stats.ttft)}`,
         `${t('result_stat_total')} ${formatMs(stats.totalTime)}`,
-        `GPU: ${gpuStatus.gpuName ?? t('status_webgpu_supported')}`,
+        `GPU: ${modelStatus.gpuName ?? t('status_webgpu_supported')}`,
       ].join('\n');
       await navigator.clipboard.writeText(text);
       showStatsCopyFeedback(t('result_stats_copied'));
@@ -247,7 +247,7 @@ function PromptResultView({
               className="prompt-textarea"
               aria-label={t('result_textarea_label')}
               value={displayPrompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(event) => setEditedPrompt(event.target.value)}
               rows={Math.max(8, displayPrompt.split('\n').length + 2)}
             />
           ) : (
@@ -295,7 +295,7 @@ function PromptResultView({
         </div>
 
         {/* Bewerk/Kopieer confirmatie */}
-        {feedback && <div className="copy-feedback" role="status" aria-live="polite">{feedback}</div>}
+        {copyFeedback && <div className="copy-feedback" role="status" aria-live="polite">{copyFeedback}</div>}
 
         {/* AI-provider knoppen */}
         <div className="provider-section">
@@ -345,7 +345,7 @@ function PromptResultView({
         </Dialog>
 
         {/* Opnieuw genereren/Terug naar home/Verwijder model cache knoppen */}
-        {isAvailable && (
+        {canUseModel && (
           <div className="footer-warning" role="note">
             <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
             <span>{t('result_leave_warning')}</span>
@@ -353,9 +353,9 @@ function PromptResultView({
         )}
         <div className="result-footer">
           <button className="footer-btn" onClick={() => {
-            if (isAvailable === false) {
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
-              navigate('/survey', { state: { gpuAvailable: false } });
+            if (canUseModel === false) {
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'false');
+              navigate('/survey', { state: { canUseModel: false } });
             } else {
               setShowRetryDialog(true);
             }
@@ -365,7 +365,7 @@ function PromptResultView({
           <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
             <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
           </button>
-          {isAvailable && (
+          {canUseModel && (
             <button
               className="footer-btn"
               onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
@@ -401,9 +401,9 @@ function PromptResultView({
           <button
             className="cta-choice-btn ai"
             onClick={() => {
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'true');
               setShowRetryDialog(false);
-              navigate('/survey', { state: { gpuAvailable: true } });
+              navigate('/survey', { state: { canUseModel: true } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
@@ -412,9 +412,9 @@ function PromptResultView({
           <button
             className="cta-choice-btn fallback"
             onClick={() => {
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'false');
               setShowRetryDialog(false);
-              navigate('/survey', { state: { gpuAvailable: false } });
+              navigate('/survey', { state: { canUseModel: false } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
@@ -423,7 +423,7 @@ function PromptResultView({
         </div>
       </Dialog>
 
-      {isAvailable && (
+      {canUseModel && (
         /* Popup verwijder model cache */
         <Dialog
           isOpen={showClearCacheDialog}

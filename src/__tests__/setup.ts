@@ -15,7 +15,7 @@ Object.defineProperty(globalThis, 'localStorage', {
       delete store[key];
     },
     clear: () => {
-      Object.keys(store).forEach((k) => delete store[k]);
+      Object.keys(store).forEach((key) => delete store[key]);
     },
   },
   writable: true,

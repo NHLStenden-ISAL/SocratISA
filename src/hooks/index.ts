@@ -1,7 +1,7 @@
 /**
  * Hooks: barrel export voor alle custom hooks.
  */
-export { useGPUStatus, type GPUStatus } from './useGPUStatus';
+export { useModelStatus, type ModelStatus } from './useModelStatus';
 export { usePromptResult } from './usePromptResult';
 export { useSurvey } from './useSurvey';
 export { useGenerationSettings } from './useGenerationSettings';

@@ -11,7 +11,7 @@ import { useTheme } from './contexts/useTheme';
 import { useLanguage } from './contexts/useLanguage';
 import { useServices } from './contexts/useServices';
 import { useStorage } from './contexts/useStorage';
-import { useGPUStatus } from './hooks';
+import { useModelStatus } from './hooks';
 import type { GenerationEvent } from './types';
 import { Footer } from './components/Footer/Footer';
 import { Dialog } from './components/Dialog/Dialog';
@@ -22,11 +22,11 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { lang, toggleLang } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
   const storage = useStorage();
   const { promptGeneratorService } = useServices();
-  const { isAvailable, gpuName, isChecking } = useGPUStatus();
-  const [showLangDialog, setShowLangDialog] = useState(false);
+  const { canUseModel, gpuName, isChecking } = useModelStatus();
+  const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const previousPathRef = useRef(location.pathname);
@@ -54,26 +54,26 @@ function App() {
   }, [location.pathname, promptGeneratorService, storage]);
 
   // Verander taal
-  const handleLangToggle = () => {
+  const handleLanguageToggle = () => {
     if (location.pathname === '/result') {
-      setShowLangDialog(true);
+      setShowLanguageDialog(true);
     } else {
-      toggleLang();
+      toggleLanguage();
     }
   };
 
   // Verander taal (met confirmatie)
-  const confirmLangToggle = () => {
-    toggleLang();
-    setShowLangDialog(false);
-    if (isAvailable === true) {
+  const confirmLanguageToggle = () => {
+    toggleLanguage();
+    setShowLanguageDialog(false);
+    if (canUseModel === true) {
       setShowCTADialog(true);
     } else {
       navigate('/survey');
     }
   };
 
-  const closeLangDialog = () => setShowLangDialog(false);
+  const closeLanguageDialog = () => setShowLanguageDialog(false);
 
   // Scroll naar top bij navigatie
   useEffect(function scrollToTopOnNavigate() {
@@ -107,12 +107,12 @@ function App() {
     <>
     <div className="panel">
       <div className="status-indicator" role="status">
-        <span className={`status-dot ${isChecking ? '' : isAvailable ? 'webgpu' : 'fallback'}`} aria-hidden="true"></span>
-        {/* WebGPU beschikbaarheid */}
+        <span className={`status-dot ${isChecking ? '' : canUseModel ? 'webgpu' : 'fallback'}`} aria-hidden="true"></span>
+        {/* Model beschikbaarheid */}
         <span className="status-text">
           {isChecking
             ? t('status_checking_gpu')
-            : isAvailable
+            : canUseModel
               ? t('status_webgpu', { name: gpuName ?? 'GPU' })
               : t('status_fallback')}
         </span>
@@ -122,14 +122,14 @@ function App() {
       <nav className="top-nav" aria-label={t('nav_controls_label')}>
         <button
           className="toggle-btn"
-          onClick={handleLangToggle}
+          onClick={handleLanguageToggle}
           disabled={isGenerating}
           aria-label={t('aria_switch_lang_v2', {
-            visible: lang === 'nl' ? 'EN' : 'NL',
-            lang: lang === 'nl' ? 'English' : 'Nederlands',
+            visible: language === 'nl' ? 'EN' : 'NL',
+            lang: language === 'nl' ? 'English' : 'Nederlands',
           })}
         >
-          {lang === 'nl' ? 'EN' : 'NL'}
+          {language === 'nl' ? 'EN' : 'NL'}
         </button>
         <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
           <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} aria-hidden="true" />
@@ -138,16 +138,16 @@ function App() {
 
       {/* Popup AI model ophalen in achtergrond */}
       <Dialog
-        isOpen={showLangDialog}
-        onClose={closeLangDialog}
+        isOpen={showLanguageDialog}
+        onClose={closeLanguageDialog}
         title={t('lang_dialog_title')}
         titleId="lang-dialog-title"
         actions={
           <>
-            <button className="dialog-btn secondary" onClick={() => setShowLangDialog(false)}>
+            <button className="dialog-btn secondary" onClick={() => setShowLanguageDialog(false)}>
               {t('lang_dialog_cancel')}
             </button>
-            <button className="dialog-btn primary" onClick={confirmLangToggle}>
+            <button className="dialog-btn primary" onClick={confirmLanguageToggle}>
               {t('lang_dialog_confirm')}
             </button>
           </>
@@ -174,8 +174,8 @@ function App() {
             className="cta-choice-btn ai"
             onClick={() => {
               setShowCTADialog(false);
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'true');
-              navigate('/survey', { state: { gpuAvailable: true } });
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'true');
+              navigate('/survey', { state: { canUseModel: true } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
@@ -185,8 +185,8 @@ function App() {
             className="cta-choice-btn fallback"
             onClick={() => {
               setShowCTADialog(false);
-              storage.setSessionItem(STORAGE_KEYS.GPU_CHOICE, 'false');
-              navigate('/survey', { state: { gpuAvailable: false } });
+              storage.setSessionItem(STORAGE_KEYS.MODEL_CHOICE, 'false');
+              navigate('/survey', { state: { canUseModel: false } });
             }}
           >
             <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>

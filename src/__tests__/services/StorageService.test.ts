@@ -48,9 +48,9 @@ describe('StorageService', () => {
     });
 
     it('kan objecten ophalen', () => {
-      const data = { theme: 'dark', lang: 'nl' };
+      const data = { theme: 'dark', language: 'nl' };
       localStore['settings'] = JSON.stringify(data);
-      const result = StorageService.getLocalItem<typeof data>('settings', { theme: 'light', lang: 'en' });
+      const result = StorageService.getLocalItem<typeof data>('settings', { theme: 'light', language: 'en' });
       expect(result).toEqual(data);
     });
 

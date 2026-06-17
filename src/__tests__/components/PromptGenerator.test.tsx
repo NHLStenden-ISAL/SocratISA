@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../contexts/useServices', () => ({
   useServices: vi.fn(() => ({
     webLLMService: {
-      setThrottleMs: mockSetThrottleMs,
+      setStreamDelayMs: mockSetThrottleMs,
     },
     promptGeneratorService: {
       subscribe: mockSubscribe,
@@ -46,13 +46,13 @@ vi.mock('../../contexts/useServices', () => ({
 }));
 
 vi.mock('../../hooks/useGenerationSettings', () => ({
-  useGenerationSettings: vi.fn(() => ({ throttleMs: 0, setThrottleMs: vi.fn() })),
+  useGenerationSettings: vi.fn(() => ({ streamDelayMs: 0, setStreamDelayMs: vi.fn() })),
 }));
 
 function createEventHandler() {
   let handler: ((event: GenerationEvent) => void) | null = null;
-  mockSubscribe.mockImplementation((h: (event: GenerationEvent) => void) => {
-    handler = h;
+  mockSubscribe.mockImplementation((eventHandler: (event: GenerationEvent) => void) => {
+    handler = eventHandler;
   });
   return () => handler;
 }
@@ -72,7 +72,7 @@ describe('PromptGenerator', () => {
 
   it('toont een laadstatus bij initiële render', () => {
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -85,7 +85,7 @@ describe('PromptGenerator', () => {
 
   it('start generatie als er nog geen generatie loopt', () => {
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -100,7 +100,7 @@ describe('PromptGenerator', () => {
     const getHandler = createEventHandler();
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -125,7 +125,7 @@ describe('PromptGenerator', () => {
     const getHandler = createEventHandler();
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -146,7 +146,7 @@ describe('PromptGenerator', () => {
     const getHandler = createEventHandler();
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -168,7 +168,7 @@ describe('PromptGenerator', () => {
     mockGetCurrentText.mockReturnValue('Al voltooid');
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -188,7 +188,7 @@ describe('PromptGenerator', () => {
     mockGetLastWarning.mockReturnValue('memory_warning');
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -206,7 +206,7 @@ describe('PromptGenerator', () => {
     const getHandler = createEventHandler();
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>
@@ -225,7 +225,7 @@ describe('PromptGenerator', () => {
 
   it('unsubscribet bij unmount', () => {
     const { unmount } = render(
-      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, gpuAvailable: true } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
         <MockI18nProvider>
           <PromptGenerator onComplete={mockOnComplete} />
         </MockI18nProvider>

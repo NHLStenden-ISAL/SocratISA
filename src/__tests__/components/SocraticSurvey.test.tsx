@@ -35,7 +35,7 @@ function setupMockSurvey(overrides: Partial<ReturnType<typeof useSurvey>> = {}) 
     progressInfo: null,
     inputError: false,
     setInputError: mockSetInputError,
-    currentQ: defaultQuestion,
+    currentQuestion: defaultQuestion,
     inputRef: { current: null },
     handleNext: mockHandleNext,
     handleOptionSelect: mockHandleOptionSelect,
@@ -68,7 +68,7 @@ describe('SocraticSurvey', () => {
 
   it('rendert een selectie vraag met opties', () => {
     setupMockSurvey({
-      currentQ: {
+      currentQuestion: {
         id: 'style',
         questionKey: 'survey_q_style',
         descriptionKey: 'survey_q_style_desc',
@@ -114,7 +114,7 @@ describe('SocraticSurvey', () => {
 
   it('roept handleOptionSelect aan bij optie klik', () => {
     setupMockSurvey({
-      currentQ: {
+      currentQuestion: {
         id: 'style',
         questionKey: 'survey_q_style',
         descriptionKey: 'survey_q_style_desc',
@@ -196,7 +196,7 @@ describe('SocraticSurvey', () => {
   });
 
   it('toont de LoadingScreen tijdens generatie', () => {
-    setupMockSurvey({ isGenerating: true, progressInfo: { text: 'Loading...', percentage: 0, isDownloading: false, mbFetched: undefined } });
+    setupMockSurvey({ isGenerating: true, progressInfo: { text: 'Loading...', percentage: 0, isDownloading: false, fetchedMegabytes: undefined } });
 
     render(
       <MemoryRouter>

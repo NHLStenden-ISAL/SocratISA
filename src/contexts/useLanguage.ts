@@ -5,8 +5,8 @@ import { useContext, createContext } from 'react';
 import type { Language } from '../types';
 
 export interface LanguageContextValue {
-  lang: Language;
-  toggleLang: () => void;
+  language: Language;
+  toggleLanguage: () => void;
 }
 
 export const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
