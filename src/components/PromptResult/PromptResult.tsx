@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faHome, faTrashCan, faDownload, faExclamationTriangle, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
-import { usePromptResult, useAutoFocus, useModelStatus } from '../../hooks';
+import { usePromptResult, useModelStatus } from '../../hooks';
 import { PromptGenerator } from '../PromptGenerator/PromptGenerator';
 import { Dialog } from '../Dialog/Dialog';
 import { useServices } from '../../contexts/useServices';
@@ -69,7 +69,6 @@ function PromptResultView({
   const { t } = useTranslation();
   const { webLLMService } = useServices();
   const storage = useStorage();
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
@@ -81,8 +80,6 @@ function PromptResultView({
   const [isCopyingStats, setIsCopyingStats] = useState(false);
   const [statsCopyFeedback, setStatsCopyFeedback] = useState<string | null>(null);
   const statsCopyTimerRef = useRef<number | null>(null);
-
-  useAutoFocus(headingRef);
 
   useEffect(function cleanupStatsCopyTimer() {
     return () => {
@@ -191,7 +188,7 @@ function PromptResultView({
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h1 ref={headingRef} tabIndex={-1}>{t('result_title')}</h1>
+          <h1 tabIndex={-1} autoFocus>{t('result_title')}</h1>
         </div>
 
         {/* Generatie statistieken */}

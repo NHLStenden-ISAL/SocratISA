@@ -7,6 +7,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import './i18n';
 import './index.css';
+import './components/Progress/Progress.css';
 import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';

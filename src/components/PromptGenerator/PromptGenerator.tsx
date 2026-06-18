@@ -168,11 +168,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       <div className="loading-screen result-loading" role="status" aria-live="polite" tabIndex={-1} ref={loadingRef}>
         <div className="loading-content">
           <div className="spinner" aria-hidden="true"></div>
-          {progressInfo && (
-            <div className="loading-progress-track">
-              <div className="loading-progress-fill" style={{ width: `${progressInfo.percentage}%` }}></div>
-            </div>
-          )}
+          {progressInfo && <progress className="progress loading" value={progressInfo.percentage} max={100} />}
           {progressInfo?.isDownloading && (
             <p className="loading-eta">{t('home_preload_eta')}</p>
           )}

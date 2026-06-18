@@ -33,19 +33,7 @@ export const SocraticSurvey = () => {
     <div className="survey-container">
 
       {/* Survey progressie bar */}
-      <div
-        className="survey-progress"
-        role="progressbar"
-        aria-valuenow={step + 1}
-        aria-valuemin={1}
-        aria-valuemax={totalSteps}
-        aria-label={t('survey_progress_label')}
-      >
-        <div
-          className="progress-bar"
-          style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-        ></div>
-      </div>
+      <progress className="progress survey" value={step + 1} max={totalSteps} aria-label={t('survey_progress_label')} />
 
       {/* Annuleer knop */}
       <button className="cancel-survey" onClick={handleCancel} aria-label={t('survey_cancel_label')}>

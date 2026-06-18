@@ -400,7 +400,7 @@ describe('PromptResult', () => {
     );
 
     fireEvent.click(screen.getByLabelText('result_provider_aria'));
-    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent(screen.getByRole('dialog'), new Event('cancel'));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(mockHandleProvider).not.toHaveBeenCalled();

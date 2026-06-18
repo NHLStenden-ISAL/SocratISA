@@ -17,20 +17,6 @@
   overscroll-behavior: none;
 }
 
-.survey-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  background: var(--code-bg);
-}
-
-.progress-bar {
-  height: 100%;
-  background: var(--accent-bg);
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
 .cancel-survey {
   position: absolute;

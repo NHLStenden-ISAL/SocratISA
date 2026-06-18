@@ -15,69 +15,42 @@ export interface DialogProps {
 }
 
 export const Dialog = ({ isOpen, onClose, title, titleId = 'dialog-title', children, actions }: DialogProps) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  useEffect(function manageDialogFocus() {
+  useEffect(function manageDialog() {
     if (!isOpen) return;
 
+    const dialog = dialogRef.current;
     const previouslyFocused = document.activeElement;
 
-    const firstButton = dialogRef.current?.querySelector('button');
-    firstButton?.focus();
-
-    // Geeft keyboard shortcuts voor de popup navigeren met focus trap
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-        return;
-      }
-
-      if (event.key !== 'Tab') return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-
-      if (!focusable || focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
+    dialog?.showModal?.();
+    if (dialog && !dialog.open) dialog.setAttribute('open', '');
+    dialog?.querySelector('button')?.focus();
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      if (previouslyFocused instanceof HTMLElement) {
-        previouslyFocused.focus();
-      }
+      dialog?.close?.();
+      dialog?.removeAttribute('open');
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    // Popup
-    <div
-      className="dialog-overlay"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="dialog-box"
       aria-labelledby={titleId}
+      onCancel={onClose}
       onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
-      <div className="dialog-box" ref={dialogRef}>
+      <div className="dialog-content">
         <h3 id={titleId}>{title}</h3>
         {children}
         <div className="dialog-actions">
           {actions}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

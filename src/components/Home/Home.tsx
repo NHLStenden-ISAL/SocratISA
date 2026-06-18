@@ -214,9 +214,7 @@ export const Home = () => {
             <div className="preload-status" role="status" aria-live="polite">
               <div className="preload-spinner" aria-hidden="true"></div>
               <div className="preload-progress-area">
-                <div className="progress-bar-track">
-                  <div className="progress-bar-fill" style={{ width: `${preloadProgress?.percentage ?? 0}%` }}></div>
-                </div>
+                <progress className="progress preload" value={preloadProgress?.percentage ?? 0} max={100} />
                 {preloadProgress?.isDownloading && (
                   <span className="loading-eta">{t('home_preload_eta')}</span>
                 )}

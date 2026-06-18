@@ -222,8 +222,8 @@ describe('SocraticSurvey', () => {
     );
 
     const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveAttribute('aria-valuenow', '2');
-    expect(progressBar).toHaveAttribute('aria-valuemax', '3');
+    expect(progressBar).toHaveAttribute('value', '2');
+    expect(progressBar).toHaveAttribute('max', '3');
   });
 
   it('reset inputError bij input wijziging', () => {
