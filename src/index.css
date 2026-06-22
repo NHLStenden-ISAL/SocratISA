@@ -49,8 +49,6 @@
   --code-bg: #f4f3ec;
   --accent: #005AA8;
   --accent-bg: #E7222E;
-  --accent-border: #E7222E;
-  --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -105,8 +103,6 @@ html[data-theme="dark"] {
   --code-bg: #16213e;
   --accent: #4da6ff;
   --accent-bg: #ff4d4d;
-  --accent-border: #ff4d4d;
-  --social-bg: rgba(22, 33, 62, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.3) 0 10px 15px -3px, rgba(0, 0, 0, 0.2) 0 4px 6px -2px;
   color-scheme: dark;

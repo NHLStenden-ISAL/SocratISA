@@ -4,4 +4,3 @@
 export { useModelStatus, type ModelStatus } from './useModelStatus';
 export { usePromptResult } from './usePromptResult';
 export { useSurvey } from './useSurvey';
-export { useGenerationSettings } from './useGenerationSettings';

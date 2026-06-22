@@ -127,7 +127,6 @@
   "result_stats_copied": "Statistieken gekopieerd!",
   "result_stats_copy_failed": "Statistieken kopiëren mislukt",
   "result_leave_warning": "Vergeet niet om het AI-model te verwijderen wanneer je helemaal klaar bent met deze website als deze gedownload is, zodat er opslagruimte vrijkomt.",
-  "result_feedback_form": "Geef feedback op deze tool",
   "result_error_title": "Probleem bij het genereren van je prompt",
   "result_error_body": "We konden de prompt niet afronden. Ga terug naar de vragenlijst en probeer het opnieuw.",
   "result_error_retry": "Terug naar vragenlijst",

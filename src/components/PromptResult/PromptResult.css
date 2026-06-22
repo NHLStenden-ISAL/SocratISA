@@ -476,25 +476,6 @@ html[data-theme="dark"] .footer-btn {
   font-weight: 500;
 }
 
-.feedback-form-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-.feedback-form-link {
-  font-family: var(--sans);
-  font-size: 0.85rem;
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: opacity 0.15s;
-}
-
-.feedback-form-link:hover {
-  opacity: 0.8;
-}
-
 @media (max-width: 850px) {
   .result-container {
     margin: 24px 16px;

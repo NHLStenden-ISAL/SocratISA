@@ -127,7 +127,6 @@
   "result_stats_copied": "Statistics copied!",
   "result_stats_copy_failed": "Copying statistics failed",
   "result_leave_warning": "When you are completely done with this website, delete the AI model if it has been downloaded to free up storage space.",
-  "result_feedback_form": "Give feedback on this tool",
   "result_error_title": "Problem generating your prompt",
   "result_error_body": "We could not finish generating the prompt. Go back to the survey and try again.",
   "result_error_retry": "Back to survey",
