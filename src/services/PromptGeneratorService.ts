@@ -81,7 +81,10 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   private stripThinkSection(text: string): string {
     const closingThinkTagIndex = text.lastIndexOf('</think>');
     if (closingThinkTagIndex === -1) {
-      return text.replace(/<\/?think>/g, '').trim();
+      const openingThinkTagIndex = text.indexOf('<think>');
+      return openingThinkTagIndex === -1
+        ? text.replace(/<\/?think>/g, '').trim()
+        : text.substring(0, openingThinkTagIndex).trim();
     }
     return text.substring(closingThinkTagIndex + '</think>'.length).trim();
   }

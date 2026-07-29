@@ -4,14 +4,14 @@
 import { benchmarkConfig } from '../config/config';
 import type { BenchmarkResult } from '../types';
 
-export async function downloadResults(results: BenchmarkResult[]): Promise<void> {
+export async function downloadResults(results: BenchmarkResult[], model = benchmarkConfig.model): Promise<void> {
   if (results.length === 0) return;
 
   const summary = {
     createdAt: new Date().toISOString(),
     config: {
       language: benchmarkConfig.language,
-      model: benchmarkConfig.model,
+      model,
       bufferSeconds: benchmarkConfig.bufferSeconds,
     },
     results,

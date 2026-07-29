@@ -1,8 +1,31 @@
 import type { Language } from '../types';
 
+export const benchmarkModels = [
+  { id: 'onnx-community/Qwen3.5-2B-ONNX', name: 'Qwen3.5 2B', enableThinking: false },
+  { id: 'onnx-community/granite-4.0-h-micro-ONNX', name: 'Granite 4.0 H Micro 3B', enableThinking: false },
+  { id: 'flackzz/EuroLLM-1.7B-Instruct-ONNX', name: 'EuroLLM 1.7B Instruct', enableThinking: false },
+  { id: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX', name: 'LFM2.5 1.2B Instruct', enableThinking: false },
+  { id: 'onnx-community/Apertus-v1.1-1.5B-Instruct-ONNX', name: 'Apertus v1.1 1.5B Instruct', enableThinking: false },
+  { id: 'onnx-community/gemma-3-1b-it-ONNX', name: 'Gemma 3 1B Instruct', enableThinking: false },
+  { id: 'LiquidAI/LFM2.5-1.2B-Thinking-ONNX', name: 'LFM2.5 1.2B Thinking', enableThinking: true },
+  { id: 'HuggingFaceTB/SmolLM3-3B-ONNX', name: 'SmolLM3 3B', enableThinking: false },
+  { id: 'onnx-community/granite-4.0-1b-ONNX-web', name: 'Granite 4.0 1B', enableThinking: false },
+  { id: 'onnx-community/Llama-3.2-3B-Instruct-ONNX', name: 'Llama 3.2 3B Instruct', enableThinking: false },
+  { id: 'onnx-community/gemma-4-E2B-it-ONNX', name: 'Gemma 4 E2B Instruct', enableThinking: false },
+] as const;
+
+export type BenchmarkDtype = 'q4' | 'q4f16' | 'fp16';
+
+const configuredModel = import.meta.env.VITE_BENCHMARK_MODEL;
+const configuredDtype = import.meta.env.VITE_BENCHMARK_DTYPE;
+const selectedModel = benchmarkModels.some((model) => model.id === configuredModel)
+  ? configuredModel
+  : benchmarkModels[0].id;
+
 export const benchmarkConfig = {
   language: (import.meta.env.VITE_BENCHMARK_LANGUAGE || 'en') as Language,
-  model: import.meta.env.VITE_BENCHMARK_MODEL || 'Qwen3.5-4B-q4f32_1-MLC',
+  model: selectedModel,
+  dtype: (configuredDtype === 'q4f16' || configuredDtype === 'fp16' ? configuredDtype : 'q4') as BenchmarkDtype,
   bufferSeconds: Number(import.meta.env.VITE_BENCHMARK_BUFFER_SECONDS || 10),
   repeatCount: Number(import.meta.env.VITE_BENCHMARK_REPEAT_COUNT || 10),
 

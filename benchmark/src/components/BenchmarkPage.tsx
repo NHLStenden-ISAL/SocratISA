@@ -2,8 +2,8 @@
  * BenchmarkPage: benchmark UI voor het testen van socratische prompt generatie.
  */
 import { useCallback, useRef, useState } from 'react';
-import { WebLLMAdapter } from '../adapters/WebLLMAdapter';
-import { benchmarkConfig } from '../config/config';
+import { TransformersAdapter } from '../adapters/TransformersAdapter';
+import { benchmarkConfig, benchmarkModels } from '../config/config';
 import { buildInput, getStyleDisplayName } from '../utils/prompts';
 import { testCases } from '../config/testCases';
 import { downloadResults } from '../utils/download';
@@ -11,11 +11,12 @@ import type { BenchmarkResult } from '../types';
 import './BenchmarkPage.css';
 
 const STORAGE_KEY = 'benchmark-results';
+const getStorageKey = (model: string) => `${STORAGE_KEY}:${model}`;
 
 /** Haal de initiële status uit sessionStorage. */
 function getInitialState(): { results: BenchmarkResult[]; status: string } {
   try {
-    const storedResults = sessionStorage.getItem(STORAGE_KEY);
+    const storedResults = sessionStorage.getItem(getStorageKey(benchmarkConfig.model));
     if (storedResults) return { results: JSON.parse(storedResults), status: 'Klaar' };
   } catch {
     // Negeer storage errors
@@ -26,10 +27,11 @@ function getInitialState(): { results: BenchmarkResult[]; status: string } {
 const initialState = getInitialState();
 
 export const BenchmarkPage = () => {
-  const webLLMAdapter = useRef(new WebLLMAdapter()).current;
+  const transformersAdapter = useRef(new TransformersAdapter());
   // Ref blijft actueel binnen de async benchmark loops
   const isRunningRef = useRef(false);
 
+  const [selectedModel, setSelectedModel] = useState(benchmarkConfig.model);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState(initialState.status);
@@ -38,19 +40,19 @@ export const BenchmarkPage = () => {
   /** Bewaar resultaten in sessionStorage voor pagina verversen */
   const persistResults = useCallback((next: BenchmarkResult[]) => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      sessionStorage.setItem(getStorageKey(selectedModel), JSON.stringify(next));
     } catch {
       // Negeer storage errors
     }
-  }, []);
+  }, [selectedModel]);
 
-  /** Laad het WebLLM model in */
+  /** Laad het Transformers.js model in */
   const loadModel = async () => {
     setIsBusy(true);
     setStatus('Model laden');
 
     try {
-      await webLLMAdapter.preloadModel((text) => {
+      await transformersAdapter.current.preloadModel((text) => {
         setStatus(text || 'Model laden...');
       });
       setIsModelLoaded(true);
@@ -62,16 +64,16 @@ export const BenchmarkPage = () => {
     }
   };
 
-  /** Verwijder het WebLLM model uit de cache. */
+  /** Verwijder het Transformers.js model uit de cache. */
   const clearCachedModel = async () => {
     setIsBusy(true);
     setStatus('AI model verwijderen');
 
     try {
-      await webLLMAdapter.clearModelCache();
+      await transformersAdapter.current.clearModelCache();
       setIsModelLoaded(false);
       setResults([]);
-      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(getStorageKey(selectedModel));
       setStatus('AI model verwijderd');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
@@ -102,7 +104,7 @@ export const BenchmarkPage = () => {
       const input = buildInput(testCase, benchmarkConfig.language);
 
       try {
-        const generated = await webLLMAdapter.generate(testCase, benchmarkConfig.language);
+        const generated = await transformersAdapter.current.generate(testCase, benchmarkConfig.language);
         nextResults.push({
           id: testCase.id,
           input,
@@ -135,7 +137,7 @@ export const BenchmarkPage = () => {
   const runTests = async () => {
     if (!isModelLoaded || isBusy) return;
 
-    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(getStorageKey(selectedModel));
 
     isRunningRef.current = true;
     setIsBusy(true);
@@ -152,7 +154,7 @@ export const BenchmarkPage = () => {
         const nextResults = await runSingleSet();
 
         if (isRunningRef.current && nextResults.length > 0) {
-          await downloadResults(nextResults);
+          await downloadResults(nextResults, selectedModel);
         }
 
         if (isRunningRef.current && run < benchmarkConfig.repeatCount) {
@@ -164,7 +166,7 @@ export const BenchmarkPage = () => {
       const finished = isRunningRef.current;
       isRunningRef.current = false;
       try {
-        await webLLMAdapter.unloadEngine();
+        await transformersAdapter.current.unloadEngine();
         setIsModelLoaded(false);
       } catch {
         // Negeer ontlaad errors
@@ -182,8 +184,8 @@ export const BenchmarkPage = () => {
 
   /** Download alle resultaten als JSON bestand. */
   const handleDownloadResults = useCallback(async () => {
-    await downloadResults(results);
-  }, [results]);
+    await downloadResults(results, selectedModel);
+  }, [results, selectedModel]);
 
   const averageSeconds = results.length
     ? results.reduce((totalMs, result) => totalMs + result.durationMs, 0) / results.length / 1000
@@ -205,9 +207,28 @@ export const BenchmarkPage = () => {
           <span className="label">Status</span>
           <strong>{status}</strong>
         </div>
-        <div>
+        <label>
           <span className="label">Model</span>
-          <strong>{benchmarkConfig.model}</strong>
+          <select
+            value={selectedModel}
+            disabled={isBusy || isModelLoaded}
+            onChange={(event) => {
+              const modelId = event.target.value;
+              transformersAdapter.current = new TransformersAdapter(modelId, benchmarkConfig.dtype);
+              setSelectedModel(modelId);
+              setResults([]);
+              sessionStorage.removeItem(getStorageKey(modelId));
+              setStatus('Niet geladen');
+            }}
+          >
+            {benchmarkModels.map((model) => (
+              <option value={model.id} key={model.id}>{model.name}</option>
+            ))}
+          </select>
+        </label>
+        <div>
+          <span className="label">Kwantisatie</span>
+          <strong>{benchmarkConfig.dtype}</strong>
         </div>
         <div>
           <span className="label">Buffer</span>
