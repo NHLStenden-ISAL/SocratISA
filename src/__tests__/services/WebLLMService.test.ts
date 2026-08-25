@@ -1,20 +1,44 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
+import { pipeline } from '@huggingface/transformers';
 import { WebLLMService } from '../../services/WebLLMService';
-import { CreateMLCEngine, deleteModelAllInfoInCache } from '@mlc-ai/web-llm';
 
-vi.mock('@mlc-ai/web-llm', () => ({
-  CreateMLCEngine: vi.fn(),
-  deleteModelAllInfoInCache: vi.fn().mockResolvedValue(undefined),
+vi.mock('@huggingface/transformers', () => ({
+  pipeline: vi.fn(),
+  env: { cacheKey: 'transformers-cache' },
+  TextStreamer: class MockTextStreamer {
+    callback_function: (text: string) => void;
+    token_callback_function: (tokens: bigint[]) => void;
+
+    constructor(_tokenizer: unknown, options: {
+      callback_function: (text: string) => void;
+      token_callback_function: (tokens: bigint[]) => void;
+    }) {
+      this.callback_function = options.callback_function;
+      this.token_callback_function = options.token_callback_function;
+    }
+  },
+  InterruptableStoppingCriteria: class MockStoppingCriteria {
+    interrupt = vi.fn();
+  },
 }));
 
-const mockCreateMLCEngine = CreateMLCEngine as unknown as Mock;
+const mockPipeline = pipeline as unknown as Mock;
 
-const mockDeleteCache = deleteModelAllInfoInCache as unknown as Mock;
+type MockStreamer = {
+  callback_function(text: string): void;
+  token_callback_function(tokens: bigint[]): void;
+};
+
+type MockGenerator = Mock & {
+  tokenizer: object;
+  dispose: Mock;
+};
 
 type WebLLMServiceState = {
-  engine: unknown | null;
-  enginePromise: Promise<unknown> | null;
+  generator: MockGenerator | null;
+  generatorPromise: Promise<MockGenerator> | null;
+  stoppingCriteria: { interrupt(): void } | null;
   clearingCache: boolean;
   modelCompatible: boolean | null;
   streamDelayMs: number;
@@ -24,34 +48,37 @@ function state() {
   return WebLLMService as unknown as WebLLMServiceState;
 }
 
-function createEngine(overrides: Record<string, unknown> = {}) {
-  return {
-    interruptGenerate: vi.fn().mockResolvedValue(undefined),
-    unload: vi.fn().mockResolvedValue(undefined),
-    resetChat: vi.fn().mockResolvedValue(undefined),
-    chat: {
-      completions: {
-        create: vi.fn(),
-      },
-    },
-    ...overrides,
-  };
+function createGenerator(chunks: string[] = []): MockGenerator {
+  const generator = vi.fn(async (_messages: unknown, options: { streamer?: MockStreamer }) => {
+    for (const chunk of chunks) {
+      options.streamer?.token_callback_function([1n]);
+      options.streamer?.callback_function(chunk);
+    }
+    return [{ generated_text: [] }];
+  }) as MockGenerator;
+  generator.tokenizer = {};
+  generator.dispose = vi.fn().mockResolvedValue(undefined);
+  return generator;
 }
 
-describe('WebLLMService', () => {
+const answers = { subject: 'A', topic: 'B', styleKey: 'survey.optionVisual' };
+const t = vi.fn((key: string) => key);
+
+describe('WebLLMService met Transformers.js', () => {
   let service: WebLLMService;
+  let generator: MockGenerator;
 
   beforeEach(() => {
     service = new WebLLMService();
-    state().engine = null;
-    state().enginePromise = null;
+    generator = createGenerator();
+    state().generator = null;
+    state().generatorPromise = null;
+    state().stoppingCriteria = null;
     state().clearingCache = false;
     state().modelCompatible = null;
     WebLLMService.streamDelayMs = 0;
-    mockCreateMLCEngine.mockReset();
-    mockCreateMLCEngine.mockResolvedValue(createEngine());
-    mockDeleteCache.mockClear();
-    mockDeleteCache.mockResolvedValue(undefined);
+    mockPipeline.mockReset();
+    mockPipeline.mockResolvedValue(generator);
   });
 
   afterEach(() => {
@@ -63,325 +90,207 @@ describe('WebLLMService', () => {
   describe('canUseModel', () => {
     it('geeft false terug als WebGPU niet beschikbaar is', async () => {
       vi.stubGlobal('navigator', {});
-      const result = await service.canUseModel();
-      expect(result).toBe(false);
+      await expect(service.canUseModel()).resolves.toBe(false);
     });
 
-    it('geeft true terug als een adapter voldoet aan de minimale limieten', async () => {
+    it('geeft true terug als WebGPU een adapter oplevert', async () => {
       vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            limits: { maxStorageBuffersPerShaderStage: 10 },
-          }),
-        },
+        gpu: { requestAdapter: vi.fn().mockResolvedValue({}) },
       });
-      const result = await service.canUseModel();
-      expect(result).toBe(true);
+      await expect(service.canUseModel()).resolves.toBe(true);
     });
 
-    it('gebruikt de gecachete WebGPU status zonder opnieuw te meten', async () => {
-      const requestAdapter = vi.fn().mockResolvedValue({
-        limits: { maxStorageBuffersPerShaderStage: 10 },
-      });
+    it('gebruikt de gecachete WebGPU status', async () => {
+      const requestAdapter = vi.fn().mockResolvedValue({});
       vi.stubGlobal('navigator', { gpu: { requestAdapter } });
 
-      await expect(service.canUseModel()).resolves.toBe(true);
-      requestAdapter.mockResolvedValue(null);
+      await service.canUseModel();
+      await service.canUseModel();
 
-      await expect(service.canUseModel()).resolves.toBe(true);
       expect(requestAdapter).toHaveBeenCalledOnce();
-    });
-
-    it('geeft false terug als requestAdapter null retourneert', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue(null),
-        },
-      });
-      const result = await service.canUseModel();
-      expect(result).toBe(false);
-    });
-
-    it('geeft false terug als requestAdapter een fout gooit', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockRejectedValue(new Error('GPU error')),
-        },
-      });
-      const result = await service.canUseModel();
-      expect(result).toBe(false);
-    });
-
-    it('geeft false terug als de adapter onvoldoende storage buffers heeft', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            limits: { maxStorageBuffersPerShaderStage: 8 },
-          }),
-        },
-      });
-      const result = await service.canUseModel();
-      expect(result).toBe(false);
     });
   });
 
   describe('detectGPU', () => {
-    it('geeft de GPU naam terug uit description', async () => {
+    it('geeft de GPU naam terug', async () => {
       vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            info: { description: 'NVIDIA GeForce RTX 4090' },
-          }),
-        },
+        gpu: { requestAdapter: vi.fn().mockResolvedValue({ info: { description: 'RTX 4090' } }) },
       });
-      const result = await service.detectGPU();
-      expect(result).toBe('NVIDIA GeForce RTX 4090');
+      await expect(service.detectGPU()).resolves.toBe('RTX 4090');
     });
 
-    it('geeft de GPU naam terug uit device als description ontbreekt', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            info: { device: 'Apple M1' },
-          }),
-        },
-      });
-      const result = await service.detectGPU();
-      expect(result).toBe('Apple M1');
-    });
+    it('valt terug op device en daarna null', async () => {
+      const requestAdapter = vi.fn()
+        .mockResolvedValueOnce({ info: { device: 'Apple M1' } })
+        .mockResolvedValueOnce(null);
+      vi.stubGlobal('navigator', { gpu: { requestAdapter } });
 
-    it('geeft null terug als er geen GPU info beschikbaar is', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            info: {},
-          }),
-        },
-      });
-      const result = await service.detectGPU();
-      expect(result).toBeNull();
-    });
-
-    it('geeft null terug als requestAdapter geen adapter oplevert', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue(null),
-        },
-      });
-      const result = await service.detectGPU();
-      expect(result).toBeNull();
-    });
-
-    it('geeft null terug bij een fout', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockRejectedValue(new Error('GPU detection failed')),
-        },
-      });
-      const result = await service.detectGPU();
-      expect(result).toBeNull();
-    });
-
-    it('geeft null terug als navigator.gpu ontbreekt', async () => {
-      vi.stubGlobal('navigator', {});
-      const result = await service.detectGPU();
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('generatePromptStream', () => {
-    const answers = { subject: 'A', topic: 'B', styleKey: 'survey.optionVisual' };
-    const t = vi.fn((key: string) => key);
-
-    it('gooit een fout als WebGPU niet beschikbaar is', async () => {
-      vi.stubGlobal('navigator', {});
-
-      const generator = service.generatePromptStream(answers, t);
-      await expect(generator.next()).rejects.toThrow('WebGPU niet beschikbaar');
-    });
-
-    it('gooit een fout als cache wissen bezig is', async () => {
-      state().clearingCache = true;
-
-      const generator = service.generatePromptStream(answers, t);
-      await expect(generator.next()).rejects.toThrow('WebLLM is bezig met cache wissen');
-    });
-
-    it('gooit een fout als een bestaande engine promise geen engine beschikbaar maakt', async () => {
-      state().modelCompatible = true;
-      state().enginePromise = Promise.resolve(createEngine());
-      const onProgress = vi.fn();
-
-      const generator = service.generatePromptStream(answers, t, onProgress);
-      await expect(generator.next()).rejects.toThrow('WebLLM engine niet geladen');
-      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.loading' }));
-    });
-
-    it('wacht tussen chunks als throttling aan staat', async () => {
-      vi.useFakeTimers();
-      async function* stream() {
-        yield { choices: [{ delta: { content: 'A' } }] };
-        yield { choices: [{ delta: { content: 'B' } }] };
-      }
-      const engine = createEngine({
-        chat: {
-          completions: {
-            create: vi.fn().mockResolvedValue(stream()),
-          },
-        },
-      });
-      state().modelCompatible = true;
-      state().engine = engine;
-      WebLLMService.streamDelayMs = 25;
-
-      const generator = service.generatePromptStream(answers, t);
-      await expect(generator.next()).resolves.toEqual({ value: 'A', done: false });
-      const next = generator.next();
-      await vi.advanceTimersByTimeAsync(25);
-      await expect(next).resolves.toEqual({ value: 'B', done: false });
-    });
-  });
-
-  describe('interruptGenerate', () => {
-    it('doet niets als er geen engine is', async () => {
-      await expect(service.interruptGenerate()).resolves.toBeUndefined();
-    });
-
-    it('onderbreekt generatie als er een engine is', async () => {
-      const engine = createEngine();
-      state().engine = engine;
-
-      await service.interruptGenerate();
-
-      expect(engine.interruptGenerate).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('resetEngine', () => {
-    it('ontlaadt de bestaande engine', () => {
-      const engine = createEngine();
-      state().engine = engine;
-      state().enginePromise = Promise.resolve(engine);
-
-      service.resetEngine();
-
-      expect(state().engine).toBeNull();
-      expect(state().enginePromise).toBeNull();
-      expect(engine.unload).toHaveBeenCalledOnce();
-    });
-
-    it('werkt ook zonder bestaande engine', () => {
-      service.resetEngine();
-
-      expect(state().engine).toBeNull();
-      expect(state().enginePromise).toBeNull();
-    });
-  });
-
-  describe('clearModelCache', () => {
-    it('doet niets als cache wissen al bezig is', async () => {
-      state().clearingCache = true;
-
-      await service.clearModelCache();
-
-      expect(deleteModelAllInfoInCache).not.toHaveBeenCalled();
-    });
-
-    it('wist de modelcache en reset de status', async () => {
-      state().modelCompatible = true;
-
-      await service.clearModelCache();
-
-      expect(deleteModelAllInfoInCache).toHaveBeenCalledOnce();
-      expect(state().modelCompatible).toBeNull();
-      expect(state().clearingCache).toBe(false);
-    });
-
-    it('gaat door als engine unload mislukt', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const engine = createEngine({ unload: vi.fn().mockRejectedValue(new Error('unload mislukt')) });
-      state().engine = engine;
-
-      await service.clearModelCache();
-
-      expect(warnSpy).toHaveBeenCalled();
-      expect(deleteModelAllInfoInCache).toHaveBeenCalledOnce();
-      expect(state().engine).toBeNull();
+      await expect(service.detectGPU()).resolves.toBe('Apple M1');
+      await expect(service.detectGPU()).resolves.toBeNull();
     });
   });
 
   describe('preloadModel', () => {
-    it('gooit een fout als cache wissen bezig is', async () => {
-      state().clearingCache = true;
+    it('laadt de geselecteerde q4 pipeline via WebGPU', async () => {
+      state().modelCompatible = true;
 
-      await expect(service.preloadModel()).rejects.toThrow('WebLLM is bezig met cache wissen');
+      await service.preloadModel();
+
+      expect(mockPipeline).toHaveBeenCalledWith(
+        'text-generation',
+        WebLLMService.getModelId(),
+        expect.objectContaining({ device: 'webgpu', dtype: 'q4' }),
+      );
+      expect(state().generator).toBe(generator);
     });
 
-    it('gooit een fout als WebGPU niet beschikbaar is', async () => {
-      vi.stubGlobal('navigator', {});
-      await expect(service.preloadModel()).rejects.toThrow('WebGPU niet beschikbaar');
-    });
-
-    it('roept onProgress aan als model al geladen is', async () => {
-      vi.stubGlobal('navigator', {
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            limits: { maxStorageBuffersPerShaderStage: 10 },
-            info: { description: 'NVIDIA GeForce RTX 4090' },
-          }),
-        },
+    it('geeft totale downloadvoortgang door', async () => {
+      state().modelCompatible = true;
+      mockPipeline.mockImplementation(async (_task: string, _model: string, options: {
+        progress_callback(report: unknown): void;
+      }) => {
+        options.progress_callback({
+          status: 'progress_total',
+          progress: 42,
+          loaded: 44_040_192,
+          total: 104_857_600,
+        });
+        options.progress_callback({
+          status: 'progress',
+          progress: 5,
+          loaded: 5_242_880,
+          total: 104_857_600,
+        });
+        return generator;
       });
       const onProgress = vi.fn();
+
       await service.preloadModel(onProgress);
-      await service.preloadModel(onProgress);
-      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ percentage: 100, isDownloading: false }));
+
+      expect(onProgress).toHaveBeenCalledOnce();
+      expect(onProgress).toHaveBeenCalledWith({
+        percentage: 42,
+        isDownloading: true,
+        fetchedMegabytes: 42,
+      });
     });
 
-    it('wacht op een bestaande engine promise', async () => {
+    it('wacht op een bestaande laadactie', async () => {
       state().modelCompatible = true;
-      const engine = createEngine();
-      state().enginePromise = Promise.resolve(engine);
+      state().generatorPromise = Promise.resolve(generator);
       const onProgress = vi.fn();
 
       await service.preloadModel(onProgress);
 
+      expect(state().generator).toBe(generator);
+      expect(mockPipeline).not.toHaveBeenCalled();
       expect(onProgress).toHaveBeenCalledWith({ percentage: 100, isDownloading: false });
-      expect(mockCreateMLCEngine).not.toHaveBeenCalled();
     });
 
-    it('geeft download progress door vanuit WebLLM', async () => {
+    it('reset de laadstatus als pipeline aanmaken mislukt', async () => {
       state().modelCompatible = true;
-      mockCreateMLCEngine.mockImplementation(async (_modelId: string, options: { initProgressCallback?: (report: unknown) => void } | undefined) => {
-        options?.initProgressCallback?.({ text: 'Fetching param cache 42MB', progress: 0.42, timeElapsed: 0 });
-        return createEngine();
-      });
+      mockPipeline.mockRejectedValue(new Error('laden mislukt'));
+
+      await expect(service.preloadModel()).rejects.toThrow('laden mislukt');
+      expect(state().generator).toBeNull();
+      expect(state().generatorPromise).toBeNull();
+    });
+  });
+
+  describe('generatePromptStream', () => {
+    it('streamt tekst en telt completion tokens', async () => {
+      generator = createGenerator(['Hallo', ' wereld']);
+      state().generator = generator;
+      state().modelCompatible = true;
+      const chunks: string[] = [];
+
+      for await (const chunk of service.generatePromptStream(answers, t)) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toEqual(['Hallo', ' wereld']);
+      expect(service.getLastCompletionTokens()).toBe(2);
+      expect(generator).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ role: 'system' }),
+          expect.objectContaining({ role: 'user' }),
+        ]),
+        expect.objectContaining({
+          max_new_tokens: 1500,
+          tokenizer_encode_kwargs: { enable_thinking: false },
+        }),
+      );
+    });
+
+    it('laadt het model wanneer generatie direct start', async () => {
+      state().modelCompatible = true;
       const onProgress = vi.fn();
 
-      await service.preloadModel(onProgress);
+      const chunks: string[] = [];
+      for await (const chunk of service.generatePromptStream(answers, t, onProgress)) {
+        chunks.push(chunk);
+      }
 
-      expect(onProgress).toHaveBeenCalledWith({ percentage: 42, isDownloading: true, fetchedMegabytes: 42 });
+      expect(mockPipeline).toHaveBeenCalledOnce();
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.loading' }));
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.generating' }));
     });
 
-    it('geeft niet downloadende progress zonder megabytes door', async () => {
-      state().modelCompatible = true;
-      mockCreateMLCEngine.mockImplementation(async (_modelId: string, options: { initProgressCallback?: (report: unknown) => void } | undefined) => {
-        options?.initProgressCallback?.({ text: '', progress: 0.1, timeElapsed: 0 });
-        return createEngine();
-      });
-      const onProgress = vi.fn();
-
-      await service.preloadModel(onProgress);
-
-      expect(onProgress).toHaveBeenCalledWith({ percentage: 10, isDownloading: false, fetchedMegabytes: undefined });
+    it('gooit een fout zonder WebGPU', async () => {
+      vi.stubGlobal('navigator', {});
+      const stream = service.generatePromptStream(answers, t);
+      await expect(stream.next()).rejects.toThrow('WebGPU niet beschikbaar');
     });
 
-    it('reset engine state als engine aanmaken mislukt', async () => {
+    it('geeft pipeline fouten door', async () => {
       state().modelCompatible = true;
-      mockCreateMLCEngine.mockRejectedValue(new Error('create mislukt'));
+      generator = createGenerator();
+      generator.mockRejectedValue(new Error('generatie mislukt'));
+      state().generator = generator;
+      const stream = service.generatePromptStream(answers, t);
 
-      await expect(service.preloadModel()).rejects.toThrow('create mislukt');
-      expect(state().engine).toBeNull();
-      expect(state().enginePromise).toBeNull();
+      await expect(stream.next()).rejects.toThrow('generatie mislukt');
+    });
+  });
+
+  describe('modelbeheer', () => {
+    it('onderbreekt de actieve stopping criteria', async () => {
+      const stoppingCriteria = { interrupt: vi.fn() };
+      state().stoppingCriteria = stoppingCriteria;
+
+      await service.interruptGenerate();
+
+      expect(stoppingCriteria.interrupt).toHaveBeenCalledOnce();
+    });
+
+    it('ontlaadt de generator bij reset', () => {
+      state().generator = generator;
+
+      service.resetEngine();
+
+      expect(state().generator).toBeNull();
+      expect(generator.dispose).toHaveBeenCalledOnce();
+    });
+
+    it('wist alleen bestanden van het geselecteerde model', async () => {
+      const deleteCachedRequest = vi.fn().mockResolvedValue(true);
+      const cache = {
+        keys: vi.fn().mockResolvedValue([
+          { url: `https://example.test/models/${WebLLMService.getModelId()}/onnx/model_q4.onnx` },
+          { url: 'https://example.test/models/other/model_q4.onnx' },
+        ]),
+        delete: deleteCachedRequest,
+      };
+      vi.stubGlobal('caches', { open: vi.fn().mockResolvedValue(cache) });
+      state().generator = generator;
+      state().modelCompatible = true;
+
+      await service.clearModelCache();
+
+      expect(generator.dispose).toHaveBeenCalledOnce();
+      expect(deleteCachedRequest).toHaveBeenCalledOnce();
+      expect(state().modelCompatible).toBeNull();
+      expect(state().clearingCache).toBe(false);
     });
   });
 });

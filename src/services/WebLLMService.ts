@@ -1,59 +1,39 @@
 /**
- * WebLLMService: lokale AI promptgeneratie via WebGPU.
+ * WebLLMService: lokale AI promptgeneratie via Transformers.js en WebGPU.
  */
-import type * as webllm from '@mlc-ai/web-llm';
+import type {
+  InterruptableStoppingCriteria,
+  TextGenerationPipeline,
+} from '@huggingface/transformers';
 import type { SurveyAnswers, IWebLLMService, ProgressInfo } from '../types';
 import { getStyleHintKey } from '../utils/styleHints';
 
-// Gebruikte model
-const MODEL_ID = 'Qwen3.5-4B-q4f32_1-MLC';
+const MODEL_ID = 'onnx-community/Qwen3.5-4B-ONNX';
+const MODEL_DTYPE = 'q4';
 
-// Model definitie
-const APP_CONFIG: webllm.AppConfig = {
-  model_list: [
-    {
-      model: 'https://huggingface.co/mlc-ai/Qwen3.5-4B-q4f32_1-MLC',
-      model_id: MODEL_ID,
-      model_lib:
-        'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_83/base/Qwen3.5-4B-q4f32_1_cs1k-webgpu.wasm',
-      // Zo laag mogelijk in belang van VRAM gebruik
-      overrides: {
-        context_window_size: 2048,
-        max_history_size: 1,
-      },
-    },
-  ],
-};
+type TransformersProgress =
+  | { status: 'initiate' | 'download' | 'done'; loaded?: number; total?: number; progress?: number }
+  | { status: 'progress' | 'progress_total'; loaded: number; total: number; progress: number }
+  | { status: 'ready' };
 
 export class WebLLMService implements IWebLLMService {
-  private static engine: webllm.MLCEngine | null = null;
-  private static enginePromise: Promise<webllm.MLCEngine> | null = null;
+  private static generator: TextGenerationPipeline | null = null;
+  private static generatorPromise: Promise<TextGenerationPipeline> | null = null;
+  private static stoppingCriteria: InterruptableStoppingCriteria | null = null;
   private static clearingCache = false;
   private static modelCompatible: boolean | null = null;
   static streamDelayMs = 0;
   private lastCompletionTokens: number | null = null;
 
   // Controleer of het gebruikers apparaat mogelijk het model kan gebruiken
-  // Sinds VRAM niet direct gemeten kan worden maken we een schatting gebaseerd op shader buffers
   async canUseModel(): Promise<boolean> {
     if (WebLLMService.modelCompatible !== null) return WebLLMService.modelCompatible;
 
     try {
       type NavGPU = { gpu: { requestAdapter(options?: { powerPreference: string }): Promise<unknown | null> } };
       const adapter = await (navigator as unknown as NavGPU).gpu.requestAdapter({ powerPreference: 'high-performance' });
-      if (!adapter) {
-        WebLLMService.modelCompatible = false;
-        return false;
-      }
-
-      const limits = (adapter as { limits: { maxStorageBuffersPerShaderStage: number } }).limits;
-      if (limits.maxStorageBuffersPerShaderStage < 10) {
-        WebLLMService.modelCompatible = false;
-        return false;
-      }
-
-      WebLLMService.modelCompatible = true;
-      return true;
+      WebLLMService.modelCompatible = adapter !== null;
+      return WebLLMService.modelCompatible;
     } catch {
       WebLLMService.modelCompatible = false;
       return false;
@@ -83,10 +63,10 @@ export class WebLLMService implements IWebLLMService {
     WebLLMService.streamDelayMs = value;
   }
 
-  // Initialiseer AI model in achtergrond
+  // Initialiseer het AI model in de achtergrond
   async preloadModel(onProgress?: (info: ProgressInfo) => void): Promise<void> {
     if (!WebLLMService.isReadyForUse()) {
-      throw new Error('WebLLM is bezig met cache wissen');
+      throw new Error('Transformers.js is bezig met cache wissen');
     }
 
     if (WebLLMService.modelCompatible === null) {
@@ -97,78 +77,87 @@ export class WebLLMService implements IWebLLMService {
       throw new Error('WebGPU niet beschikbaar');
     }
 
-    if (WebLLMService.engine) {
+    if (WebLLMService.generator) {
       onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
-    if (WebLLMService.enginePromise) {
-      await WebLLMService.enginePromise;
+    if (WebLLMService.generatorPromise) {
+      WebLLMService.generator = await WebLLMService.generatorPromise;
       onProgress?.({ percentage: 100, isDownloading: false });
       return;
     }
 
-    await WebLLMService.createEngine(onProgress);
+    WebLLMService.generator = await WebLLMService.createGenerator(onProgress);
   }
 
-  // Lazy load en configureer de WebLLM engine
-  private static async createEngine(
+  // Lazy load en configureer de Transformers.js generator
+  private static async createGenerator(
     onProgress?: (info: ProgressInfo) => void,
-  ): Promise<void> {
-    const webllmModule = await import('@mlc-ai/web-llm');
-    WebLLMService.enginePromise = webllmModule.CreateMLCEngine(MODEL_ID, {
-      appConfig: APP_CONFIG,
-      logLevel: 'ERROR',
-      initProgressCallback: (report) => {
-        onProgress?.(WebLLMService.parseProgressReport(report));
+  ): Promise<TextGenerationPipeline> {
+    const transformers = await import('@huggingface/transformers');
+    WebLLMService.generatorPromise = transformers.pipeline(
+      'text-generation',
+      MODEL_ID,
+      {
+        device: 'webgpu',
+        dtype: MODEL_DTYPE,
+        progress_callback: (report) => {
+          const progress = WebLLMService.parseProgressReport(report as TransformersProgress);
+          if (progress) onProgress?.(progress);
+        },
       },
-    });
+    );
 
     try {
-      WebLLMService.engine = await WebLLMService.enginePromise;
+      return await WebLLMService.generatorPromise;
     } catch (error) {
-      WebLLMService.enginePromise = null;
-      WebLLMService.engine = null;
+      WebLLMService.generator = null;
       throw error;
+    } finally {
+      WebLLMService.generatorPromise = null;
     }
-    WebLLMService.enginePromise = null;
   }
 
   // Bereken progressie van AI model ophalen
-  private static parseProgressReport(report: { text: string; progress: number }): ProgressInfo {
-    const progressText = report.text || '';
-    const percentage = Math.round(report.progress * 100);
-    const isDownloading = progressText.startsWith('Fetching param cache');
-    const megabyteMatch = progressText.match(/(\d+)MB/);
-    const fetchedMegabytes = megabyteMatch ? parseInt(megabyteMatch[1], 10) : undefined;
+  private static parseProgressReport(report: TransformersProgress): ProgressInfo | null {
+    if (report.status === 'ready') {
+      return { percentage: 100, isDownloading: false };
+    }
 
-    return { percentage, isDownloading, fetchedMegabytes };
+    if (report.status !== 'progress_total') return null;
+
+    return {
+      percentage: Math.round(report.progress),
+      isDownloading: true,
+      fetchedMegabytes: Math.round(report.loaded / 1024 / 1024),
+    };
   }
 
   private static isReadyForUse(): boolean {
     return !WebLLMService.clearingCache;
   }
 
-  // Verwijder model uit browser cache
+  // Verwijder het geselecteerde model uit de browser cache
   async clearModelCache(): Promise<void> {
     if (WebLLMService.clearingCache) return;
 
     WebLLMService.clearingCache = true;
 
     try {
-      if (WebLLMService.engine) {
-        try {
-          await WebLLMService.engine.unload();
-        } catch (error) {
-          console.warn('WebLLMService: engine unload bij cache wissen:', error);
-        }
-        WebLLMService.engine = null;
-      }
-      WebLLMService.enginePromise = null;
+      await WebLLMService.disposeGenerator();
       WebLLMService.modelCompatible = null;
 
-      const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
-      await deleteModelAllInfoInCache(MODEL_ID, APP_CONFIG);
+      if (typeof caches !== 'undefined') {
+        const { env } = await import('@huggingface/transformers');
+        const cache = await caches.open(env.cacheKey);
+        const requests = await cache.keys();
+        await Promise.all(
+          requests
+            .filter((request) => decodeURIComponent(request.url).includes(MODEL_ID))
+            .map((request) => cache.delete(request)),
+        );
+      }
     } finally {
       WebLLMService.clearingCache = false;
     }
@@ -180,22 +169,23 @@ export class WebLLMService implements IWebLLMService {
 
   // Stop huidige generatie
   async interruptGenerate(): Promise<void> {
-    if (WebLLMService.engine) {
-      await WebLLMService.engine.interruptGenerate();
-    }
+    WebLLMService.stoppingCriteria?.interrupt();
   }
 
-  // Reset de engine
+  // Ontlaad de generator
   resetEngine(): void {
-    const engine = WebLLMService.engine;
-    WebLLMService.engine = null;
-    WebLLMService.enginePromise = null;
-    if (engine) {
-      void engine.unload();
-    }
+    void WebLLMService.disposeGenerator();
   }
 
-  // Maak de systeem prompt met alle survey-antwoorden
+  private static async disposeGenerator(): Promise<void> {
+    const generator = WebLLMService.generator;
+    WebLLMService.generator = null;
+    WebLLMService.generatorPromise = null;
+    WebLLMService.stoppingCriteria = null;
+    if (generator) await generator.dispose();
+  }
+
+  // Maak de systeem prompt met alle survey antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = getStyleHintKey(answers.styleKey);
     return translate('prompt.systemPrompt', {
@@ -212,7 +202,7 @@ export class WebLLMService implements IWebLLMService {
     onProgress?: (info: ProgressInfo) => void,
   ): AsyncGenerator<string> {
     if (!WebLLMService.isReadyForUse()) {
-      throw new Error('WebLLM is bezig met cache wissen');
+      throw new Error('Transformers.js is bezig met cache wissen');
     }
 
     if (WebLLMService.modelCompatible === null) {
@@ -223,57 +213,98 @@ export class WebLLMService implements IWebLLMService {
       throw new Error('WebGPU niet beschikbaar');
     }
 
-    if (!WebLLMService.engine) {
-      if (WebLLMService.enginePromise) {
-        onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
-        await WebLLMService.enginePromise;
+    if (!WebLLMService.generator) {
+      onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
+      if (WebLLMService.generatorPromise) {
+        WebLLMService.generator = await WebLLMService.generatorPromise;
       } else {
-        onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
-        await WebLLMService.createEngine(onProgress);
+        WebLLMService.generator = await WebLLMService.createGenerator(onProgress);
       }
     }
 
-    if (!WebLLMService.engine) {
-      throw new Error('WebLLM engine niet geladen');
+    const generator = WebLLMService.generator;
+    if (!generator) {
+      throw new Error('Transformers.js generator niet geladen');
     }
-
-    await WebLLMService.engine.resetChat();
 
     onProgress?.({ text: translate('model.generating'), percentage: 0, isDownloading: false });
 
-    const systemPrompt = this.buildSystemPrompt(answers, translate);
+    const transformers = await import('@huggingface/transformers');
+    const stoppingCriteria = new transformers.InterruptableStoppingCriteria();
+    WebLLMService.stoppingCriteria = stoppingCriteria;
+    this.lastCompletionTokens = 0;
 
+    const chunks: string[] = [];
+    let wakeQueue: (() => void) | null = null;
+    let generationComplete = false;
+    let generationError: unknown;
+
+    const wake = () => {
+      wakeQueue?.();
+      wakeQueue = null;
+    };
+
+    const streamer = new transformers.TextStreamer(generator.tokenizer, {
+      skip_prompt: true,
+      skip_special_tokens: true,
+      callback_function: (text) => {
+        if (text) chunks.push(text);
+        wake();
+      },
+      token_callback_function: (tokens) => {
+        this.lastCompletionTokens = (this.lastCompletionTokens ?? 0) + tokens.length;
+      },
+    });
+
+    const systemPrompt = this.buildSystemPrompt(answers, translate);
     const userMessage = translate('prompt.userMessage', {
       subject: answers.subject,
       topic: answers.topic,
     });
 
-    // Stream generatie met optionele buffer tussen chunks
-    const stream = await WebLLMService.engine.chat.completions.create({
-      messages: [
+    const generation = generator(
+      [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `${userMessage}\n\n<think>\n\n</think>\n\n` },
+        { role: 'user', content: userMessage },
       ],
-      temperature: 0.4,
-      max_tokens: 1500,
-      repetition_penalty: 1.05,
-      stop: ['[EINDE]', '[END]'],
-      stream: true,
-      stream_options: { include_usage: true },
-      enable_thinking: false,
-    } as webllm.ChatCompletionRequestStreaming);
+      {
+        max_new_tokens: 1500,
+        do_sample: true,
+        temperature: 0.4,
+        repetition_penalty: 1.05,
+        streamer,
+        stopping_criteria: [stoppingCriteria],
+        tokenizer_encode_kwargs: { enable_thinking: false },
+      },
+    ).catch((error: unknown) => {
+      generationError = error;
+    }).finally(() => {
+      generationComplete = true;
+      wake();
+    });
 
-    this.lastCompletionTokens = null;
-    for await (const chunk of stream) {
-      if (chunk.usage) {
-        this.lastCompletionTokens = chunk.usage.completion_tokens ?? null;
+    try {
+      while (!generationComplete || chunks.length > 0) {
+        if (chunks.length === 0) {
+          await new Promise<void>((resolve) => {
+            wakeQueue = resolve;
+          });
+          continue;
+        }
+
+        const chunk = chunks.shift();
+        if (chunk) yield chunk;
+
+        if (WebLLMService.streamDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, WebLLMService.streamDelayMs));
+        }
       }
 
-      const content = chunk.choices[0]?.delta?.content ?? '';
-      if (content) yield content;
-
-      if (WebLLMService.streamDelayMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, WebLLMService.streamDelayMs));
+      await generation;
+      if (generationError) throw generationError;
+    } finally {
+      if (WebLLMService.stoppingCriteria === stoppingCriteria) {
+        WebLLMService.stoppingCriteria = null;
       }
     }
   }

@@ -4,7 +4,7 @@ Een Socratische AI uitleg en generatie webapplicatie gebouwd voor het ISA Lab va
 
 Gebruikers lezen over wat AI is, hoe het werkt, wat de valkuilen zijn en hoe je AI het beste kan gebruiken. Daarna vullen ze een korte vragenlijst in (onderwerp, onderdeel, leerstijl). De antwoorden worden gebruikt om een Socratische prompt te maken. 
 
-De prompt wordt lokaal gegenereerd via WebGPU met een gekwantiseerd LLM (Qwen3.5-4B-q4f32_1-MLC) of via een sjabloon als WebGPU niet beschikbaar is. Het resultaat kan worden bewerkt, gekopieerd, gedownload of naar externe AI-providers gestuurd voor onmiddellijk gebruik.
+De prompt wordt lokaal gegenereerd via Transformers.js en WebGPU met een gekwantiseerd ONNX model. Qwen3.5 4B is standaard geselecteerd. Het resultaat kan worden bewerkt, gekopieerd, gedownload of naar externe AI-providers gestuurd voor onmiddellijk gebruik.
 
 Verder bevat de website een ingebouwd benchmarksysteem die 20 verschillende scenario's langs gaat met als doel om te waarborgen dat de socratische prompts correct en veilig wordt gegenereerd.
 
@@ -35,7 +35,7 @@ powershell -c "irm bun.sh/install.ps1 | iex"
 - Testen: Vitest, React Testing Library, jsdom, V8 coverage
 - Linting: ESLint, typescript-eslint, React Hooks, React Refresh
 - Internationalisatie: i18next, react-i18next
-- Lokale AI: WebLLM, WebGPU
+- Lokale AI: Transformers.js, ONNX Runtime Web, WebGPU
 - Deployment: GitHub Actions, GitHub Pages
 
 ### Mapstructuur
@@ -44,7 +44,7 @@ powershell -c "irm bun.sh/install.ps1 | iex"
 - `src/components/`: UI componenten
 - `src/contexts/`: React Context providers en hooks
 - `src/hooks/`: React hooks voor state logica
-- `src/services/`: bedrijfslogica, storage en WebLLM integratie
+- `src/services/`: bedrijfslogica, storage en Transformers.js integratie
 - `src/types/`: TypeScript typedefinities en service interfaces
 - `src/utils/`: kleine hulpfuncties
 - `src/locales/`: vertaal JSON bestanden
@@ -61,3 +61,7 @@ powershell -c "irm bun.sh/install.ps1 | iex"
 - `bun run test`: draai alle tests via Vitest
 - `bun run test:coverage`: draai Vitest met V8 coverage reporter
 - `bun run test:benchmark`: start de dev server voor de benchmark applicatie
+
+## Benchmarkmodel kiezen
+
+De benchmark bevat een modelkiezer met alle experimentele modellen. De standaardwaarden kunnen in `benchmark/.env` worden ingesteld met `VITE_BENCHMARK_MODEL` en `VITE_BENCHMARK_DTYPE`. Ondersteunde dtype waarden zijn `q4`, `q4f16` en `fp16`.
