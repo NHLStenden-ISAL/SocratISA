@@ -68,8 +68,8 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('home_title')).toBeInTheDocument();
-    expect(screen.getByText('home_cta')).toBeInTheDocument();
+    expect(screen.getByText('home.title')).toBeInTheDocument();
+    expect(screen.getByText('home.cta')).toBeInTheDocument();
   });
 
   it('toont een preload banner als GPU beschikbaar is', () => {
@@ -88,8 +88,8 @@ describe('Home', () => {
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'home_preload_dialog_title' })).toBeInTheDocument();
-    expect(screen.getByText('home_preload_dialog_body')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'model.preloadDialogTitle' })).toBeInTheDocument();
+    expect(screen.getByText('model.preloadDialogBody')).toBeInTheDocument();
   });
 
   it('toont geen preload dialoog als GPU niet beschikbaar is', () => {
@@ -143,13 +143,13 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    const ctaButton = screen.getByLabelText('home.ctaLabel');
     fireEvent.click(ctaButton);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('home_cta_dialog_title')).toBeInTheDocument();
-    expect(screen.getByText('home_cta_dialog_ai')).toBeInTheDocument();
-    expect(screen.getByText('home_cta_dialog_fallback')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.generationTitle')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.generationAi')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.generationFallback')).toBeInTheDocument();
   });
 
   it('toont een gebruiksvriendelijke prestatietip in de keuzedialoog', () => {
@@ -167,11 +167,11 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    const ctaButton = screen.getByLabelText('home.ctaLabel');
     fireEvent.click(ctaButton);
 
-    expect(screen.getByText('home_cta_performance_tip_title')).toBeInTheDocument();
-    expect(screen.getByText('home_cta_performance_tip_body')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.generationPerformanceTipTitle')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.generationPerformanceTipBody')).toBeInTheDocument();
   });
 
   it('navigeert naar survey met GPU bij kiezen voor AI-model', () => {
@@ -189,10 +189,10 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    const ctaButton = screen.getByLabelText('home.ctaLabel');
     fireEvent.click(ctaButton);
 
-    const aiButton = screen.getByText('home_cta_dialog_ai');
+    const aiButton = screen.getByText('dialogs.generationAi');
     fireEvent.click(aiButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { canUseModel: true } });
@@ -213,10 +213,10 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const ctaButton = screen.getByLabelText('home_cta_aria_v2');
+    const ctaButton = screen.getByLabelText('home.ctaLabel');
     fireEvent.click(ctaButton);
 
-    const fallbackButton = screen.getByText('home_cta_dialog_fallback');
+    const fallbackButton = screen.getByText('dialogs.generationFallback');
     fireEvent.click(fallbackButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/survey', { state: { canUseModel: false } });
@@ -237,11 +237,11 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const dismissButton = screen.getByText('home_preload_dialog_dismiss');
+    const dismissButton = screen.getByText('model.preloadDialogDismiss');
     fireEvent.click(dismissButton);
 
-    expect(screen.getByText('home_preload_dialog_title')).toBeInTheDocument();
-    expect(screen.queryByText('home_preload_dialog_body')).not.toBeInTheDocument();
+    expect(screen.getByText('model.preloadDialogTitle')).toBeInTheDocument();
+    expect(screen.queryByText('model.preloadDialogBody')).not.toBeInTheDocument();
   });
 
   it('klapt de preload banner weer open', () => {
@@ -259,11 +259,11 @@ describe('Home', () => {
       </MemoryRouter>,
     );
 
-    const dismissButton = screen.getByText('home_preload_dialog_dismiss');
+    const dismissButton = screen.getByText('model.preloadDialogDismiss');
     fireEvent.click(dismissButton);
-    fireEvent.click(screen.getByText('home_preload_banner_expand'));
+    fireEvent.click(screen.getByText('model.preloadBannerExpand'));
 
-    expect(screen.getByText('home_preload_dialog_body')).toBeInTheDocument();
+    expect(screen.getByText('model.preloadDialogBody')).toBeInTheDocument();
   });
 
   it('start preload en toont status bij klik op confirm', async () => {
@@ -284,14 +284,14 @@ describe('Home', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const confirmButton = screen.getByText('home_preload_dialog_confirm');
+    const confirmButton = screen.getByText('model.preloadDialogConfirm');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText('home_preload_banner_progress')).toBeInTheDocument();
+      expect(screen.getByText('model.preloadBannerProgress')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('home_preload_dialog_body')).not.toBeInTheDocument();
+    expect(screen.queryByText('model.preloadDialogBody')).not.toBeInTheDocument();
     expect(mockPreload).toHaveBeenCalled();
   });
 
@@ -314,11 +314,11 @@ describe('Home', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const confirmButton = screen.getByText('home_preload_dialog_confirm');
+    const confirmButton = screen.getByText('model.preloadDialogConfirm');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      const status = screen.getAllByText('home_preload_error');
+      const status = screen.getAllByText('model.preloadError');
       expect(status).toHaveLength(2);
     });
   });
@@ -340,11 +340,11 @@ describe('Home', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const confirmButton = screen.getByText('home_preload_dialog_confirm');
+    const confirmButton = screen.getByText('model.preloadDialogConfirm');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      const status = screen.getAllByText('home_preload_ready');
+      const status = screen.getAllByText('model.preloadReady');
       expect(status).toHaveLength(2);
     });
   });

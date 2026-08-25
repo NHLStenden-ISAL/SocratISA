@@ -33,10 +33,10 @@ export const SocraticSurvey = () => {
     <div className="survey-container">
 
       {/* Survey progressie bar */}
-      <progress className="progress survey" value={step + 1} max={totalSteps} aria-label={t('survey_progress_label')} />
+      <progress className="progress survey" value={step + 1} max={totalSteps} aria-label={t('survey.progressLabel')} />
 
       {/* Annuleer knop */}
-      <button className="cancel-survey" onClick={handleCancel} aria-label={t('survey_cancel_label')}>
+      <button className="cancel-survey" onClick={handleCancel} aria-label={t('survey.cancelLabel')}>
         <FontAwesomeIcon icon={faTimes} aria-hidden="true" />
       </button>
 
@@ -44,7 +44,7 @@ export const SocraticSurvey = () => {
       <div className="survey-card-wrapper" key={step}>
         <div className="survey-card">
           <span className="step-indicator">
-            {t('survey_step', { current: step + 1, total: totalSteps })}
+            {t('survey.step', { current: step + 1, total: totalSteps })}
           </span>
           <h1 id="survey-question" tabIndex={-1}>
             {t(currentQuestion.questionKey)}
@@ -68,7 +68,7 @@ export const SocraticSurvey = () => {
                   type="text"
                   inputMode="text"
                   autoComplete="off"
-                  placeholder={t('survey_input_placeholder')}
+                  placeholder={t('survey.inputPlaceholder')}
                   aria-labelledby="survey-question"
                   aria-describedby={inputError ? 'survey-error' : 'survey-hint'}
                   aria-invalid={inputError}
@@ -76,7 +76,7 @@ export const SocraticSurvey = () => {
                 />
 
                 {/* Volgende vraag knop */}
-                <button type="submit" className="submit-btn" aria-label={t('survey_submit_label')}>
+                <button type="submit" className="submit-btn" aria-label={t('survey.submitLabel')}>
                   <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
                 </button>
               </form>
@@ -101,10 +101,10 @@ export const SocraticSurvey = () => {
             <>
               {inputError && (
                 <div className="survey-error" id="survey-error" role="alert">
-                  {t('survey_input_error')}
+                  {t('survey.inputError')}
                 </div>
               )}
-              <div className="hint" id="survey-hint">{t('survey_input_hint')}</div>
+              <div className="hint" id="survey-hint">{t('survey.inputHint')}</div>
             </>
           )}
 
@@ -113,10 +113,10 @@ export const SocraticSurvey = () => {
             <button
               className="back-btn"
               onClick={handleBack}
-              aria-label={t('survey_back_label')}
+              aria-label={t('survey.backLabel')}
             >
               <FontAwesomeIcon icon={faArrowLeft} aria-hidden="true" />
-              <span>{t('survey_back')}</span>
+              <span>{t('survey.back')}</span>
             </button>
           )}
         </div>

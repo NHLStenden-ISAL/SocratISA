@@ -168,16 +168,16 @@ function PromptResultView({
     setIsCopyingStats(true);
     try {
       const text = [
-        `${t('result_stat_ttft')} ${formatMs(stats.ttft)}`,
-        `${t('result_stat_tps')} ${stats.tps}`,
-        `${t('result_stat_generate')} ${formatMs(stats.totalTime - stats.ttft)}`,
-        `${t('result_stat_total')} ${formatMs(stats.totalTime)}`,
-        `GPU: ${modelStatus.gpuName ?? t('status_webgpu_supported')}`,
+        `${t('result.statTtft')} ${formatMs(stats.ttft)}`,
+        `${t('result.statTps')} ${stats.tps}`,
+        `${t('result.statGenerate')} ${formatMs(stats.totalTime - stats.ttft)}`,
+        `${t('result.statTotal')} ${formatMs(stats.totalTime)}`,
+        `GPU: ${modelStatus.gpuName ?? t('model.webGpuSupported')}`,
       ].join('\n');
       await navigator.clipboard.writeText(text);
-      showStatsCopyFeedback(t('result_stats_copied'));
+      showStatsCopyFeedback(t('result.statsCopied'));
     } catch {
-      showStatsCopyFeedback(t('result_stats_copy_failed'));
+      showStatsCopyFeedback(t('result.statsCopyFailed'));
     } finally {
       setIsCopyingStats(false);
     }
@@ -188,38 +188,38 @@ function PromptResultView({
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h1 tabIndex={-1} autoFocus>{t('result_title')}</h1>
+          <h1 tabIndex={-1} autoFocus>{t('result.title')}</h1>
         </div>
 
         {/* Generatie statistieken */}
         {stats && (
           <>
-            <div className="generation-stats" role="region" aria-label={t('result_stats_aria')}>
+            <div className="generation-stats" role="region" aria-label={t('result.statsAria')}>
               <div className="stat-item">
-                <span className="stat-label" data-tip={t('result_stat_ttft_tip')}>{t('result_stat_ttft')}</span>
+                <span className="stat-label" data-tip={t('result.statTtftTip')}>{t('result.statTtft')}</span>
                 <span className="stat-value">{formatMs(stats.ttft)}</span>
               </div>
               <div className="stat-item">
-                <span className="stat-label" data-tip={t('result_stat_tps_tip')}>{t('result_stat_tps')}</span>
+                <span className="stat-label" data-tip={t('result.statTpsTip')}>{t('result.statTps')}</span>
                 <span className="stat-value">{stats.tps}</span>
               </div>
               <div className="stat-item">
-                <span className="stat-label" data-tip={t('result_stat_generate_tip')}>{t('result_stat_generate')}</span>
+                <span className="stat-label" data-tip={t('result.statGenerateTip')}>{t('result.statGenerate')}</span>
                 <span className="stat-value">{formatMs(stats.totalTime - stats.ttft)}</span>
               </div>
               <div className="stat-item">
-                <span className="stat-label" data-tip={t('result_stat_total_tip')}>{t('result_stat_total')}</span>
+                <span className="stat-label" data-tip={t('result.statTotalTip')}>{t('result.statTotal')}</span>
                 <span className="stat-value">{formatMs(stats.totalTime)}</span>
               </div>
               <button
                 className="stats-copy-btn"
                 onClick={handleCopyStats}
                 disabled={isCopyingStats}
-                aria-label={t('result_stats_copy_aria')}
-                title={t('result_stats_copy_aria')}
+                aria-label={t('result.statsCopyAria')}
+                title={t('result.statsCopyAria')}
                 type="button"
               >
-                <FontAwesomeIcon icon={statsCopyFeedback === t('result_stats_copied') ? faCheck : faCopy} aria-hidden="true" />
+                <FontAwesomeIcon icon={statsCopyFeedback === t('result.statsCopied') ? faCheck : faCopy} aria-hidden="true" />
               </button>
             </div>
             {statsCopyFeedback && (
@@ -242,7 +242,7 @@ function PromptResultView({
             <textarea
               ref={textareaRef}
               className="prompt-textarea"
-              aria-label={t('result_textarea_label')}
+              aria-label={t('result.textareaLabel')}
               value={displayPrompt}
               onChange={(event) => setEditedPrompt(event.target.value)}
               rows={Math.max(8, displayPrompt.split('\n').length + 2)}
@@ -256,9 +256,9 @@ function PromptResultView({
 
         {/* Teken/Woorden/Token statistieken */}
         <div className="prompt-meta">
-          {t('result_meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
+          {t('result.meta', { chars: displayPrompt.length, words: displayPrompt.split(/\s+/).filter(Boolean).length })}
           {!isEditing && displayPrompt === prompt && stats?.completionTokens !== undefined && (
-            <> · {t('result_meta_tokens', { tokens: stats.completionTokens })}</>
+            <> · {t('result.metaTokens', { tokens: stats.completionTokens })}</>
           )}
         </div>
 
@@ -268,26 +268,26 @@ function PromptResultView({
             <button
               className="action-btn secondary"
               onClick={handleDone}
-              aria-label={t('result_done_aria')}
+              aria-label={t('result.doneLabel')}
             >
-              {t('result_done')}
+              {t('result.done')}
             </button>
           ) : (
             <button
               className="action-btn secondary"
               onClick={handleEdit}
-              aria-label={t('result_edit_aria')}
+              aria-label={t('result.editLabel')}
             >
-              {t('result_edit')}
+              {t('result.edit')}
             </button>
           )}
           <button
             className="action-btn primary"
             onClick={handleCopy}
             disabled={isCopying}
-            aria-label={t('result_copy_aria')}
+            aria-label={t('result.copyLabel')}
           >
-            {t('result_copy')}
+            {t('result.copy')}
           </button>
         </div>
 
@@ -296,23 +296,23 @@ function PromptResultView({
 
         {/* AI-provider knoppen */}
         <div className="provider-section">
-          <p className="provider-cta">{t('result_cta')}</p>
+          <p className="provider-cta">{t('result.cta')}</p>
           <div className="provider-grid">
             {providers.map(provider => (
               <button
                 key={provider.name}
                 className="provider-btn"
                 onClick={() => openProviderDialog(provider)}
-                aria-label={t('result_provider_aria', { provider: provider.name })}
+                aria-label={t('result.providerLabel', { provider: provider.name })}
               >
                 {provider.name}
               </button>
             ))}
           </div>
-          <p className="provider-cta">{t('result_download_or')}</p>
+          <p className="provider-cta">{t('result.downloadOr')}</p>
           <div className="download-row">
-            <button className="download-txt-btn" onClick={handleDownload} aria-label={t('result_download_aria')}>
-              <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> {t('result_download')}
+            <button className="download-txt-btn" onClick={handleDownload} aria-label={t('result.downloadLabel')}>
+              <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> {t('result.download')}
             </button>
           </div>
         </div>
@@ -321,23 +321,23 @@ function PromptResultView({
         <Dialog
           isOpen={showProviderDialog}
           onClose={closeProviderDialog}
-          title={t('provider_dialog_title')}
+          title={t('dialogs.providerTitle')}
           titleId="provider-dialog-title"
           actions={
             <>
               <button className="dialog-btn secondary" onClick={closeProviderDialog}>
-                {t('provider_dialog_cancel')}
+                {t('common.cancel')}
               </button>
               <button className="dialog-btn primary" onClick={confirmProvider}>
-                {t('provider_dialog_confirm')}
+                {t('dialogs.providerConfirm')}
               </button>
             </>
           }
         >
           {pendingProvider?.clipboardOnly ? (
-            <p>{t('provider_dialog_body_clipboard', { provider: pendingProvider.name })}</p>
+            <p>{t('dialogs.providerBodyClipboard', { provider: pendingProvider.name })}</p>
           ) : (
-            <p>{t('provider_dialog_body', { provider: pendingProvider?.name ?? '' })}</p>
+            <p>{t('dialogs.providerBody', { provider: pendingProvider?.name ?? '' })}</p>
           )}
         </Dialog>
 
@@ -345,7 +345,7 @@ function PromptResultView({
         {canUseModel && (
           <div className="footer-warning" role="note">
             <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />
-            <span>{t('result_leave_warning')}</span>
+            <span>{t('result.leaveWarning')}</span>
           </div>
         )}
         <div className="result-footer">
@@ -356,27 +356,27 @@ function PromptResultView({
             } else {
               setShowRetryDialog(true);
             }
-          }} aria-label={t('result_retry_aria_v2')}>
-            <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result_retry')}
+          }} aria-label={t('result.retryLabel')}>
+            <FontAwesomeIcon icon={faRedo} aria-hidden="true" /> {t('result.retry')}
           </button>
-          <button className="footer-btn" onClick={handleHome} aria-label={t('result_home_aria_v2')}>
-            <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('result_home')}
+          <button className="footer-btn" onClick={handleHome} aria-label={t('result.homeLabel')}>
+            <FontAwesomeIcon icon={faHome} aria-hidden="true" /> {t('common.backToStart')}
           </button>
           {canUseModel && (
             <button
               className="footer-btn"
               onClick={() => { if (clearCacheStatus === 'idle' || clearCacheStatus === 'done' || clearCacheStatus === 'error') setShowClearCacheDialog(true); }}
               disabled={clearCacheStatus === 'clearing'}
-              aria-label={t('home_clear_cache')}
+              aria-label={t('model.clearCache')}
             >
-              <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('home_clear_cache')}
+              <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" /> {t('model.clearCache')}
             </button>
           )}
         </div>
 
         {clearCacheStatus !== 'idle' && (
           <span className="cache-status-text" role="status" aria-live="polite">
-            {clearCacheStatus === 'clearing' ? t('home_clearing_cache') : (t(clearCacheStatus === 'done' ? 'home_cache_cleared' : 'home_cache_clear_error'))}
+            {clearCacheStatus === 'clearing' ? t('model.clearingCache') : (t(clearCacheStatus === 'done' ? 'model.cacheCleared' : 'model.cacheClearError'))}
           </span>
         )}
       </div>
@@ -385,15 +385,15 @@ function PromptResultView({
       <Dialog
         isOpen={showRetryDialog}
         onClose={() => setShowRetryDialog(false)}
-        title={t('home_cta_dialog_title')}
+        title={t('dialogs.generationTitle')}
         titleId="retry-dialog-title"
         actions={
           <button className="dialog-btn secondary" onClick={() => setShowRetryDialog(false)}>
-            {t('provider_dialog_cancel')}
+            {t('common.cancel')}
           </button>
         }
       >
-        <p>{t('home_cta_dialog_body')}</p>
+        <p>{t('dialogs.generationBody')}</p>
         <div className="cta-choice-options">
           <button
             className="cta-choice-btn ai"
@@ -403,8 +403,8 @@ function PromptResultView({
               navigate('/survey', { state: { canUseModel: true } });
             }}
           >
-            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
-            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+            <span className="cta-choice-label">{t('dialogs.generationAi')}</span>
+            <span className="cta-choice-desc">{t('dialogs.generationAiDescription')}</span>
           </button>
           <button
             className="cta-choice-btn fallback"
@@ -414,8 +414,8 @@ function PromptResultView({
               navigate('/survey', { state: { canUseModel: false } });
             }}
           >
-            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
-            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+            <span className="cta-choice-label">{t('dialogs.generationFallback')}</span>
+            <span className="cta-choice-desc">{t('dialogs.generationFallbackDescription')}</span>
           </button>
         </div>
       </Dialog>
@@ -425,20 +425,20 @@ function PromptResultView({
         <Dialog
           isOpen={showClearCacheDialog}
           onClose={() => setShowClearCacheDialog(false)}
-          title={t('home_clear_cache_dialog_title')}
+          title={t('model.clearCacheDialogTitle')}
           titleId="clear-cache-dialog-title"
           actions={
             <>
               <button className="dialog-btn secondary" onClick={() => setShowClearCacheDialog(false)}>
-                {t('home_preload_dialog_dismiss')}
+                {t('model.preloadDialogDismiss')}
               </button>
               <button className="dialog-btn primary" onClick={handleClearCache}>
-                {t('home_clear_cache_dialog_confirm')}
+                {t('model.clearCacheDialogConfirm')}
               </button>
             </>
           }
         >
-          <p>{t('home_clear_cache_dialog_body')}</p>
+          <p>{t('model.clearCacheDialogBody')}</p>
         </Dialog>
       )}
     </div>

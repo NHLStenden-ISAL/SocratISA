@@ -15,27 +15,27 @@ export const Footer = () => {
 
           {/* Privacy */}
           <div className="footer-block">
-            <h3>{t('footer_privacy_title')}</h3>
-            <p>{t('footer_privacy_body')}</p>
+            <h3>{t('footer.privacyTitle')}</h3>
+            <p>{t('footer.privacyBody')}</p>
           </div>
 
           {/* Lokale Verwerking */}
           <div className="footer-block">
-            <h3>{t('footer_local_title')}</h3>
-            <p>{t('footer_local_body')}</p>
+            <h3>{t('footer.localTitle')}</h3>
+            <p>{t('footer.localBody')}</p>
           </div>
 
           {/* Disclaimer */}
           <div className="footer-block">
-            <h3>{t('footer_disclaimer_title')}</h3>
-            <p>{t('footer_disclaimer_body')}</p>
+            <h3>{t('footer.disclaimerTitle')}</h3>
+            <p>{t('footer.disclaimerBody')}</p>
           </div>
         </div>
 
         {/* Copyright */}
         <div className="footer-bottom">
           <p className="footer-copy">
-            {t('footer_attribution', { year })}
+            {t('footer.attribution', { year })}
           </p>
         </div>
       </div>

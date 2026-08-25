@@ -61,7 +61,7 @@ function createGenerator(chunks: string[] = []): MockGenerator {
   return generator;
 }
 
-const answers = { subject: 'A', topic: 'B', styleKey: 'survey_option_visual' };
+const answers = { subject: 'A', topic: 'B', styleKey: 'survey.optionVisual' };
 const t = vi.fn((key: string) => key);
 
 describe('WebLLMService met Transformers.js', () => {
@@ -232,8 +232,8 @@ describe('WebLLMService met Transformers.js', () => {
       }
 
       expect(mockPipeline).toHaveBeenCalledOnce();
-      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'webllm_progress_loading' }));
-      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'webllm_progress_generating' }));
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.loading' }));
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.generating' }));
     });
 
     it('gooit een fout zonder WebGPU', async () => {

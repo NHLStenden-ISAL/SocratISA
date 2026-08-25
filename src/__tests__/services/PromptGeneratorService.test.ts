@@ -46,7 +46,7 @@ const t = vi.fn((key: string, options?: Record<string, string>) => {
 const answers: SurveyAnswers = {
   subject: 'Wiskunde',
   topic: 'Algebra',
-  styleKey: 'survey_option_visual',
+  styleKey: 'survey.optionVisual',
 };
 
 describe('PromptGeneratorService', () => {

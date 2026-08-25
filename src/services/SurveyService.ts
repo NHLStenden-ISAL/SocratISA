@@ -7,27 +7,27 @@ export const SURVEY_QUESTIONS: Question[] = [
   // Subject vraag
   {
     id: 'subject',
-    questionKey: 'survey_q_subject',
-    descriptionKey: 'survey_q_subject_desc',
+    questionKey: 'survey.subjectQuestion',
+    descriptionKey: 'survey.subjectDescription',
     type: 'text',
   },
   // Onderwerp vraag
   {
     id: 'topic',
-    questionKey: 'survey_q_topic',
-    descriptionKey: 'survey_q_topic_desc',
+    questionKey: 'survey.topicQuestion',
+    descriptionKey: 'survey.topicDescription',
     type: 'text',
   },
   // Leerstijl vraag
   {
     id: 'style',
-    questionKey: 'survey_q_style',
-    descriptionKey: 'survey_q_style_desc',
+    questionKey: 'survey.styleQuestion',
+    descriptionKey: 'survey.styleDescription',
     optionKeys: [
-      'survey_option_visual',
-      'survey_option_step',
-      'survey_option_conceptual',
-      'survey_option_practical',
+      'survey.optionVisual',
+      'survey.optionStep',
+      'survey.optionConceptual',
+      'survey.optionPractical',
     ],
     type: 'select',
   },

@@ -188,7 +188,7 @@ export class WebLLMService implements IWebLLMService {
   // Maak de systeem prompt met alle survey antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = getStyleHintKey(answers.styleKey);
-    return translate('webllm_system_prompt', {
+    return translate('prompt.systemPrompt', {
       subject: answers.subject,
       topic: answers.topic,
       styleHint: translate(styleHintKey),
@@ -214,7 +214,7 @@ export class WebLLMService implements IWebLLMService {
     }
 
     if (!WebLLMService.generator) {
-      onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
+      onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
       if (WebLLMService.generatorPromise) {
         WebLLMService.generator = await WebLLMService.generatorPromise;
       } else {
@@ -227,7 +227,7 @@ export class WebLLMService implements IWebLLMService {
       throw new Error('Transformers.js generator niet geladen');
     }
 
-    onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
+    onProgress?.({ text: translate('model.generating'), percentage: 0, isDownloading: false });
 
     const transformers = await import('@huggingface/transformers');
     const stoppingCriteria = new transformers.InterruptableStoppingCriteria();
@@ -257,7 +257,7 @@ export class WebLLMService implements IWebLLMService {
     });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
-    const userMessage = translate('webllm_user_message', {
+    const userMessage = translate('prompt.userMessage', {
       subject: answers.subject,
       topic: answers.topic,
     });

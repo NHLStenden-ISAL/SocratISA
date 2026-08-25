@@ -5,7 +5,7 @@ import type { SurveyAnswers } from '../../types';
 describe('FallbackService', () => {
   const service = new FallbackService();
   const t = vi.fn((key: string, options?: Record<string, string>) => {
-    if (key === 'prompt_template') {
+    if (key === 'prompt.template') {
       return `Onderwerp: ${options?.subject}, Topic: ${options?.topic}, Stijl: ${options?.styleHint}`;
     }
     return key;
@@ -19,32 +19,32 @@ describe('FallbackService', () => {
     const answers: SurveyAnswers = {
       subject: 'Wiskunde',
       topic: 'Algebra',
-      styleKey: 'survey_option_visual',
+      styleKey: 'survey.optionVisual',
     };
 
     service.generatePrompt(answers, t);
 
-    expect(t).toHaveBeenCalledWith('style_hint_visual');
-    expect(t).toHaveBeenCalledWith('prompt_template', {
+    expect(t).toHaveBeenCalledWith('prompt.hintVisual');
+    expect(t).toHaveBeenCalledWith('prompt.template', {
       subject: 'Wiskunde',
       topic: 'Algebra',
-      styleHint: 'style_hint_visual',
+      styleHint: 'prompt.hintVisual',
     });
   });
 
   it('gebruft de juiste stijlhint voor elke bekende stijl', () => {
     const styleKeys = [
-      'survey_option_visual',
-      'survey_option_step',
-      'survey_option_conceptual',
-      'survey_option_practical',
+      'survey.optionVisual',
+      'survey.optionStep',
+      'survey.optionConceptual',
+      'survey.optionPractical',
     ];
 
     styleKeys.forEach((styleKey) => {
       t.mockClear();
       const answers: SurveyAnswers = { subject: 'A', topic: 'B', styleKey };
       service.generatePrompt(answers, t);
-      const expectedHint = styleKey.replace('survey_option_', 'style_hint_');
+      const expectedHint = styleKey.replace('survey.option', 'prompt.hint');
       expect(t).toHaveBeenCalledWith(expectedHint);
     });
   });
@@ -58,23 +58,23 @@ describe('FallbackService', () => {
 
     service.generatePrompt(answers, t);
 
-    expect(t).toHaveBeenCalledWith('style_hint_default');
+    expect(t).toHaveBeenCalledWith('prompt.hintDefault');
   });
 
   it('roept t aan met de juiste opties', () => {
     const answers: SurveyAnswers = {
       subject: 'Natuurkunde',
       topic: 'Quantum',
-      styleKey: 'survey_option_practical',
+      styleKey: 'survey.optionPractical',
     };
 
     service.generatePrompt(answers, t);
 
-    expect(t).toHaveBeenCalledWith('style_hint_practical');
-    expect(t).toHaveBeenCalledWith('prompt_template', {
+    expect(t).toHaveBeenCalledWith('prompt.hintPractical');
+    expect(t).toHaveBeenCalledWith('prompt.template', {
       subject: 'Natuurkunde',
       topic: 'Quantum',
-      styleHint: 'style_hint_practical',
+      styleHint: 'prompt.hintPractical',
     });
   });
 });

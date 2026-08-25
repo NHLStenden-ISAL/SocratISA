@@ -80,7 +80,7 @@ describe('PromptGenerator', () => {
     );
 
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText('result_generating')).toBeInTheDocument();
+    expect(screen.getByText('result.generating')).toBeInTheDocument();
   });
 
   it('start generatie als er nog geen generatie loopt', () => {
@@ -115,7 +115,7 @@ describe('PromptGenerator', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText('result_generating')).not.toBeInTheDocument();
+      expect(screen.queryByText('result.generating')).not.toBeInTheDocument();
     });
 
     expect(screen.getByText('Hallo')).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('PromptGenerator', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('result_error_title')).toBeInTheDocument();
+      expect(screen.getByText('result.errorTitle')).toBeInTheDocument();
     });
   });
 
@@ -185,7 +185,7 @@ describe('PromptGenerator', () => {
   it('geeft waarschuwing door met warning als generatie al voltooid is', () => {
     mockGetIsComplete.mockReturnValue(true);
     mockGetCurrentText.mockReturnValue('Al voltooid');
-    mockGetLastWarning.mockReturnValue('memory_warning');
+    mockGetLastWarning.mockReturnValue('model.memoryWarning');
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/generator', state: { answers: { subject: 'A', topic: 'B', styleKey: 'C' }, canUseModel: true } }]}>
@@ -198,7 +198,7 @@ describe('PromptGenerator', () => {
     expect(mockOnComplete).toHaveBeenCalledWith(
       expect.stringContaining('Al voltooid'),
       undefined,
-      'memory_warning',
+      'model.memoryWarning',
     );
   });
 

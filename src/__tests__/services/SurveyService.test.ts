@@ -25,11 +25,11 @@ describe('SurveyService', () => {
     it('mapt antwoorden naar de SurveyAnswers vorm', () => {
       service.setAnswer('subject', 'Natuurkunde');
       service.setAnswer('topic', 'Quantum');
-      service.setAnswer('style', 'survey_option_step');
+      service.setAnswer('style', 'survey.optionStep');
       expect(service.toSurveyAnswers()).toEqual({
         subject: 'Natuurkunde',
         topic: 'Quantum',
-        styleKey: 'survey_option_step',
+        styleKey: 'survey.optionStep',
       });
     });
   });
@@ -38,7 +38,7 @@ describe('SurveyService', () => {
     it('wist alle antwoorden', () => {
       service.setAnswer('subject', 'Wiskunde');
       service.setAnswer('topic', 'Algebra');
-      service.setAnswer('style', 'survey_option_visual');
+      service.setAnswer('style', 'survey.optionVisual');
 
       service.reset();
 

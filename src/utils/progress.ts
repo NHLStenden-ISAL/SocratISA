@@ -12,13 +12,13 @@ export function formatProgressText(
   // Generieke laadscherm voor geen proggressie
   const showProgress = progressInfo && progressInfo.percentage > 0;
   if (!showProgress) {
-    return progressInfo?.text || t(loadingKey || 'generic_loading');
+    return progressInfo?.text || t(loadingKey || 'common.loading');
   }
 
   // Download/Cache text
   const action = progressInfo.isDownloading
-    ? t('home_preload_downloading')
-    : t('home_preload_cache');
+    ? t('model.preloadDownloading')
+    : t('model.preloadCache');
 
   // MB gedownload/opgehaald text
   const megabytesText = progressInfo.fetchedMegabytes != null

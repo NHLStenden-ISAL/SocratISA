@@ -35,8 +35,8 @@ function App() {
   useEffect(function updateDocumentTitle() {
     const titles: Record<string, string> = {
       '/': 'SocratISA',
-      '/survey': t('title_survey'),
-      '/result': t('title_result'),
+      '/survey': t('navigation.surveyPageTitle'),
+      '/result': t('navigation.resultPageTitle'),
     };
     document.title = titles[location.pathname] ?? 'SocratISA';
   }, [location.pathname, t]);
@@ -111,27 +111,27 @@ function App() {
         {/* Model beschikbaarheid */}
         <span className="status-text">
           {isChecking
-            ? t('status_checking_gpu')
+            ? t('model.checkingGpu')
             : canUseModel
-              ? t('status_webgpu', { name: gpuName ?? 'GPU' })
-              : t('status_fallback')}
+              ? t('model.webGpu', { name: gpuName ?? 'GPU' })
+              : t('model.fallback')}
         </span>
       </div>
 
       {/* Taal/Thema knoppen */}
-      <nav className="top-nav" aria-label={t('nav_controls_label')}>
+      <nav className="top-nav" aria-label={t('navigation.controlsLabel')}>
         <button
           className="toggle-btn"
           onClick={handleLanguageToggle}
           disabled={isGenerating}
-          aria-label={t('aria_switch_lang_v2', {
+          aria-label={t('navigation.switchLanguageLabel', {
             visible: language === 'nl' ? 'EN' : 'NL',
             lang: language === 'nl' ? 'English' : 'Nederlands',
           })}
         >
           {language === 'nl' ? 'EN' : 'NL'}
         </button>
-        <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'aria_dark_mode' : 'aria_light_mode')}>
+        <button className="toggle-btn" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'navigation.darkModeLabel' : 'navigation.lightModeLabel')}>
           <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} aria-hidden="true" />
         </button>
       </nav>
@@ -140,35 +140,35 @@ function App() {
       <Dialog
         isOpen={showLanguageDialog}
         onClose={closeLanguageDialog}
-        title={t('lang_dialog_title')}
+        title={t('dialogs.languageTitle')}
         titleId="lang-dialog-title"
         actions={
           <>
             <button className="dialog-btn secondary" onClick={() => setShowLanguageDialog(false)}>
-              {t('lang_dialog_cancel')}
+              {t('common.cancel')}
             </button>
             <button className="dialog-btn primary" onClick={confirmLanguageToggle}>
-              {t('lang_dialog_confirm')}
+              {t('dialogs.languageConfirm')}
             </button>
           </>
         }
       >
-        <p>{t('lang_dialog_body')}</p>
+        <p>{t('dialogs.languageBody')}</p>
       </Dialog>
 
       {/* Popup voor AI-model/fallback generatie keuze na taalswitch */}
       <Dialog
         isOpen={showCTADialog}
         onClose={() => setShowCTADialog(false)}
-        title={t('home_cta_dialog_title')}
+        title={t('dialogs.generationTitle')}
         titleId="cta-dialog-title"
         actions={
           <button className="dialog-btn secondary" onClick={() => setShowCTADialog(false)}>
-            {t('provider_dialog_cancel')}
+            {t('common.cancel')}
           </button>
         }
       >
-        <p>{t('home_cta_dialog_body')}</p>
+        <p>{t('dialogs.generationBody')}</p>
         <div className="cta-choice-options">
           <button
             className="cta-choice-btn ai"
@@ -178,8 +178,8 @@ function App() {
               navigate('/survey', { state: { canUseModel: true } });
             }}
           >
-            <span className="cta-choice-label">{t('home_cta_dialog_ai')}</span>
-            <span className="cta-choice-desc">{t('home_cta_dialog_ai_desc')}</span>
+            <span className="cta-choice-label">{t('dialogs.generationAi')}</span>
+            <span className="cta-choice-desc">{t('dialogs.generationAiDescription')}</span>
           </button>
           <button
             className="cta-choice-btn fallback"
@@ -189,8 +189,8 @@ function App() {
               navigate('/survey', { state: { canUseModel: false } });
             }}
           >
-            <span className="cta-choice-label">{t('home_cta_dialog_fallback')}</span>
-            <span className="cta-choice-desc">{t('home_cta_dialog_fallback_desc')}</span>
+            <span className="cta-choice-label">{t('dialogs.generationFallback')}</span>
+            <span className="cta-choice-desc">{t('dialogs.generationFallbackDescription')}</span>
           </button>
         </div>
       </Dialog>

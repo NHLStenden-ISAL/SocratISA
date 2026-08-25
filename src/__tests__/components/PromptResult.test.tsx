@@ -127,7 +127,7 @@ describe('PromptResult', () => {
     );
 
     expect(screen.getByText('Gegenereerde prompt tekst')).toBeInTheDocument();
-    expect(screen.getByText('result_title')).toBeInTheDocument();
+    expect(screen.getByText('result.title')).toBeInTheDocument();
   });
 
   it('roept handleEdit aan bij klik op bewerk knop', () => {
@@ -141,7 +141,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_edit_aria'));
+    fireEvent.click(screen.getByLabelText('result.editLabel'));
     expect(mockHandleEdit).toHaveBeenCalled();
   });
 
@@ -156,7 +156,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('result_textarea_label')).toBeInTheDocument();
+    expect(screen.getByLabelText('result.textareaLabel')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Gegenereerde prompt tekst')).toBeInTheDocument();
   });
 
@@ -171,7 +171,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_done_aria'));
+    fireEvent.click(screen.getByLabelText('result.doneLabel'));
     expect(mockHandleDone).toHaveBeenCalled();
   });
 
@@ -186,7 +186,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_copy_aria'));
+    fireEvent.click(screen.getByLabelText('result.copyLabel'));
     await waitFor(() => {
       expect(mockHandleCopy).toHaveBeenCalled();
     });
@@ -203,9 +203,9 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.click(screen.getByLabelText('result.providerLabel'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('provider_dialog_body')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.providerBody')).toBeInTheDocument();
     expect(mockHandleProvider).not.toHaveBeenCalled();
   });
 
@@ -224,9 +224,9 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.click(screen.getByLabelText('result.providerLabel'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('provider_dialog_body_clipboard')).toBeInTheDocument();
+    expect(screen.getByText('dialogs.providerBodyClipboard')).toBeInTheDocument();
   });
 
   it('roept handleProvider aan na bevestigen in de dialog', () => {
@@ -240,8 +240,8 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_provider_aria'));
-    fireEvent.click(screen.getByText('provider_dialog_confirm'));
+    fireEvent.click(screen.getByLabelText('result.providerLabel'));
+    fireEvent.click(screen.getByText('dialogs.providerConfirm'));
     expect(mockHandleProvider).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'ChatGPT' }),
     );
@@ -258,9 +258,9 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.click(screen.getByLabelText('result.providerLabel'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('provider_dialog_cancel'));
+    fireEvent.click(screen.getByText('common.cancel'));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(mockHandleProvider).not.toHaveBeenCalled();
   });
@@ -324,7 +324,7 @@ describe('PromptResult', () => {
         </MemoryRouter>,
       );
 
-      fireEvent.click(screen.getByLabelText('result_download_aria'));
+      fireEvent.click(screen.getByLabelText('result.downloadLabel'));
 
       expect(createObjectURL).toHaveBeenCalledOnce();
       expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
@@ -363,7 +363,7 @@ describe('PromptResult', () => {
         </MemoryRouter>,
       );
 
-      fireEvent.click(screen.getByLabelText('result_download_aria'));
+      fireEvent.click(screen.getByLabelText('result.downloadLabel'));
 
       expect(errors[0]).toEqual(new Error('Download mislukt'));
       expect(URL.revokeObjectURL).not.toHaveBeenCalled();
@@ -375,7 +375,7 @@ describe('PromptResult', () => {
   });
 
   it('toont copyFeedback voor een mislukte clipboard aanroep', () => {
-    setupMockPromptResult({ copyFeedback: 'result_copy_failed' });
+    setupMockPromptResult({ copyFeedback: 'result.copyFailed' });
 
     render(
       <MemoryRouter>
@@ -385,7 +385,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('status')).toHaveTextContent('result_copy_failed');
+    expect(screen.getByRole('status')).toHaveTextContent('result.copyFailed');
   });
 
   it('annuleert de provider waarschuwing zonder provider te openen', () => {
@@ -399,7 +399,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_provider_aria'));
+    fireEvent.click(screen.getByLabelText('result.providerLabel'));
     fireEvent(screen.getByRole('dialog'), new Event('cancel'));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -418,7 +418,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole('region', { name: 'result_stats_aria' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'result.statsAria' })).not.toBeInTheDocument();
   });
 
   it('kopieert statistieken en toont succescopyFeedback', async () => {
@@ -436,10 +436,10 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_stats_copy_aria'));
+    fireEvent.click(screen.getByLabelText('result.statsCopyAria'));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('result_stats_copied');
+      expect(screen.getByRole('status')).toHaveTextContent('result.statsCopied');
     });
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('GPU: RTX'));
   });
@@ -458,10 +458,10 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_stats_copy_aria'));
+    fireEvent.click(screen.getByLabelText('result.statsCopyAria'));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('result_stats_copy_failed');
+      expect(screen.getByRole('status')).toHaveTextContent('result.statsCopyFailed');
     });
   });
 
@@ -478,7 +478,7 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_retry_aria_v2'));
+    fireEvent.click(screen.getByLabelText('result.retryLabel'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/survey');
     expect(sessionStorage.getItem('socratisa_model_choice')).toBe('false');
@@ -497,8 +497,8 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('result_retry_aria_v2'));
-    fireEvent.click(screen.getByText('home_cta_dialog_ai'));
+    fireEvent.click(screen.getByLabelText('result.retryLabel'));
+    fireEvent.click(screen.getByText('dialogs.generationAi'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/survey');
     expect(sessionStorage.getItem('socratisa_model_choice')).toBe('true');
@@ -523,11 +523,11 @@ describe('PromptResult', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('home_clear_cache'));
-    fireEvent.click(screen.getByText('home_clear_cache_dialog_confirm'));
+    fireEvent.click(screen.getByLabelText('model.clearCache'));
+    fireEvent.click(screen.getByText('model.clearCacheDialogConfirm'));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('home_cache_clear_error');
+      expect(screen.getByRole('status')).toHaveTextContent('model.cacheClearError');
     });
   });
 
@@ -570,10 +570,10 @@ describe('PromptResult', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('result_error_title')).toBeInTheDocument();
+      expect(screen.getByText('result.errorTitle')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('result_error_retry'));
+    fireEvent.click(screen.getByText('result.errorRetry'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/survey');
   });
