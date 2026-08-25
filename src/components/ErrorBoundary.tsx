@@ -20,14 +20,14 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="panel error-boundary" role="alert">
-          <h2>{t('error_boundary_title')}</h2>
+          <h2>{t('errors.boundaryTitle')}</h2>
 
           {/* Home knop */}
           <button
             className="socratic-button"
             onClick={() => window.location.assign(import.meta.env.BASE_URL)}
           >
-            {t('error_boundary_button')}
+            {t('common.backToStart')}
           </button>
         </div>
       );

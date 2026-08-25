@@ -12,38 +12,38 @@ export const Info = () => {
 
   return (
     <div className="article">
-      <h1>{t('info_title')}</h1>
+      <h1>{t('info.title')}</h1>
 
       <section className="article-text">
-        <p>{t('info_intro')}</p>
+        <p>{t('info.intro')}</p>
       </section>
 
-      <h2>{t('info_practice_title')}</h2>
+      <h2>{t('info.practiceTitle')}</h2>
       <section className="article-text">
-        <p>{t('info_practice_1')}</p>
-        <p>{t('info_practice_2')}</p>
+        <p>{t('info.practice1')}</p>
+        <p>{t('info.practice2')}</p>
       </section>
 
-      <h2>{t('info_apps_title')}</h2>
+      <h2>{t('info.appsTitle')}</h2>
       <section className="article-text">
-        <p>{t('info_apps_intro')}</p>
+        <p>{t('info.appsIntro')}</p>
       </section>
-      <section className="example-grid" aria-label={t('info_apps_title')}>
+      <section className="example-grid" aria-label={t('info.appsTitle')}>
         <div className="example-box">
-          <h3>{t('info_app_rag_title')}</h3>
-          <p>{t('info_app_rag_desc')}</p>
+          <h3>{t('info.imageTitle')}</h3>
+          <p>{t('info.imageDescription')}</p>
         </div>
         <div className="example-box">
-          <h3>{t('info_app_cv_title')}</h3>
-          <p>{t('info_app_cv_desc')}</p>
+          <h3>{t('info.audioTitle')}</h3>
+          <p>{t('info.audioDescription')}</p>
         </div>
         <div className="example-box">
-          <h3>{t('info_app_tool_title')}</h3>
-          <p>{t('info_app_tool_desc')}</p>
+          <h3>{t('info.videoTitle')}</h3>
+          <p>{t('info.videoDescription')}</p>
         </div>
       </section>
       <section className="article-text">
-        <p>{t('info_apps_outro')}</p>
+        <p>{t('info.appsOutro')}</p>
       </section>
 
       <div className="button-container">
@@ -51,7 +51,7 @@ export const Info = () => {
           className="socratic-button"
           onClick={() => navigate('/', { state: { scrollToInfoLink: true } })}
         >
-          {t('info_cta_back')}
+          {t('info.backToHome')}
         </button>
       </div>
     </div>

@@ -117,17 +117,17 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
       <div className="result-container">
         <div className="result-card">
           <div className="result-header">
-            <h1>{t('result_error_title')}</h1>
+            <h1>{t('result.errorTitle')}</h1>
           </div>
           <div className="prompt-display">
-            <div className="prompt-text">{t('result_error_body')}</div>
+            <div className="prompt-text">{t('result.errorBody')}</div>
           </div>
           <div className="prompt-actions">
             <button className="action-btn secondary" onClick={() => navigate('/')}>
-              {t('result_error_home')}
+              {t('result.errorHome')}
             </button>
             <button className="action-btn primary" onClick={() => navigate('/survey')}>
-              {t('result_error_retry')}
+              {t('result.errorRetry')}
             </button>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
   const speedControl = canUseModel && (
     <div className="generation-setting">
       <div className="slider-header">
-        <span className="slider-title">{t('generation_speed_label')}</span>
+        <span className="slider-title">{t('model.speedTitle')}</span>
         <span className="slider-value">{streamDelayMs} ms</span>
       </div>
       <input
@@ -153,11 +153,11 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
           const parsedStreamDelayMs = parseInt(event.target.value, 10);
           setStreamDelayMs(parsedStreamDelayMs);
         }}
-        aria-label={t('generation_speed_aria')}
+        aria-label={t('model.speedLabel')}
       />
       <div className="slider-labels-row">
-        <span>{t('generation_speed_fast')}</span>
-        <span>{t('generation_speed_eco')}</span>
+        <span>{t('model.speedFast')}</span>
+        <span>{t('model.speedEco')}</span>
       </div>
     </div>
   );
@@ -170,10 +170,10 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
           <div className="spinner" aria-hidden="true"></div>
           {progressInfo && <progress className="progress loading" value={progressInfo.percentage} max={100} />}
           {progressInfo?.isDownloading && (
-            <p className="loading-eta">{t('home_preload_eta')}</p>
+            <p className="loading-eta">{t('model.preloadEta')}</p>
           )}
           <p>
-            {formatProgressText(progressInfo, t, 'result_generating')}
+            {formatProgressText(progressInfo, t, 'result.generating')}
           </p>
         </div>
       </div>
@@ -185,7 +185,7 @@ export function PromptGenerator({ onComplete }: PromptGeneratorProps) {
     <div className="result-container">
       <div className="result-card">
         <div className="result-header">
-          <h1>{t('result_title')}</h1>
+          <h1>{t('result.title')}</h1>
         </div>
         {speedControl}
         <div className="prompt-display">

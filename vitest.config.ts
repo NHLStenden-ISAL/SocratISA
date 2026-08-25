@@ -16,6 +16,7 @@ export default defineConfig({
         'src/App.tsx',
         'src/routes.tsx',
         'src/i18n.ts',
+        'src/locales/',
         'src/**/*.d.ts',
         'src/types/i18n-keys.ts',
         'src/__tests__/',

@@ -74,9 +74,9 @@ export function usePromptResult(initialPrompt: string) {
     setIsCopying(true);
     try {
       await navigator.clipboard.writeText(prompt);
-      showCopyFeedback(t('result_copied'));
+      showCopyFeedback(t('result.copied'));
     } catch {
-      showCopyFeedback(t('result_copy_failed'));
+      showCopyFeedback(t('result.copyFailed'));
     } finally {
       setIsCopying(false);
     }
@@ -101,7 +101,7 @@ export function usePromptResult(initialPrompt: string) {
     if (provider.clipboardOnly) {
       navigator.clipboard.writeText(prompt).then(openUrl).catch(() => {
         openUrl();
-        showCopyFeedback(t('result_copy_failed'));
+        showCopyFeedback(t('result.copyFailed'));
       });
     } else {
       openUrl();

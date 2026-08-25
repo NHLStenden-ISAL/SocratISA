@@ -24,8 +24,8 @@ import { useSurvey } from '../../hooks';
 function setupMockSurvey(overrides: Partial<ReturnType<typeof useSurvey>> = {}) {
   const defaultQuestion: Question = {
     id: 'subject',
-    questionKey: 'survey_q_subject',
-    descriptionKey: 'survey_q_subject_desc',
+    questionKey: 'survey.subjectQuestion',
+    descriptionKey: 'survey.subjectDescription',
     type: 'text',
   };
 
@@ -62,20 +62,20 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'survey_q_subject' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('survey_input_placeholder')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'survey.subjectQuestion' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('survey.inputPlaceholder')).toBeInTheDocument();
   });
 
   it('rendert een selectie vraag met opties', () => {
     setupMockSurvey({
       currentQuestion: {
         id: 'style',
-        questionKey: 'survey_q_style',
-        descriptionKey: 'survey_q_style_desc',
+        questionKey: 'survey.styleQuestion',
+        descriptionKey: 'survey.styleDescription',
         type: 'select',
         optionKeys: [
-          'survey_option_visual',
-          'survey_option_step',
+          'survey.optionVisual',
+          'survey.optionStep',
         ],
       },
     });
@@ -88,8 +88,8 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('survey_option_visual')).toBeInTheDocument();
-    expect(screen.getByText('survey_option_step')).toBeInTheDocument();
+    expect(screen.getByText('survey.optionVisual')).toBeInTheDocument();
+    expect(screen.getByText('survey.optionStep')).toBeInTheDocument();
   });
 
   it('roept handleNext aan bij formulier verzending', () => {
@@ -103,7 +103,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    const input = screen.getByPlaceholderText('survey_input_placeholder');
+    const input = screen.getByPlaceholderText('survey.inputPlaceholder');
     fireEvent.change(input, { target: { value: 'Wiskunde' } });
 
     const form = input.closest('form');
@@ -116,10 +116,10 @@ describe('SocraticSurvey', () => {
     setupMockSurvey({
       currentQuestion: {
         id: 'style',
-        questionKey: 'survey_q_style',
-        descriptionKey: 'survey_q_style_desc',
+        questionKey: 'survey.styleQuestion',
+        descriptionKey: 'survey.styleDescription',
         type: 'select',
-        optionKeys: ['survey_option_visual'],
+        optionKeys: ['survey.optionVisual'],
       },
     });
 
@@ -131,10 +131,10 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    const option = screen.getByText('survey_option_visual');
+    const option = screen.getByText('survey.optionVisual');
     fireEvent.click(option);
 
-    expect(mockHandleOptionSelect).toHaveBeenCalledWith('survey_option_visual');
+    expect(mockHandleOptionSelect).toHaveBeenCalledWith('survey.optionVisual');
   });
 
   it('toont een foutmelding bij inputError', () => {
@@ -148,7 +148,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('survey_input_error');
+    expect(screen.getByRole('alert')).toHaveTextContent('survey.inputError');
   });
 
   it('toont de terug knop na stap 0', () => {
@@ -162,7 +162,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('survey_back_label')).toBeInTheDocument();
+    expect(screen.getByLabelText('survey.backLabel')).toBeInTheDocument();
   });
 
   it('roept handleBack aan bij terug knop klik', () => {
@@ -176,7 +176,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('survey_back_label'));
+    fireEvent.click(screen.getByLabelText('survey.backLabel'));
     expect(mockHandleBack).toHaveBeenCalled();
   });
 
@@ -191,7 +191,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText('survey_cancel_label'));
+    fireEvent.click(screen.getByLabelText('survey.cancelLabel'));
     expect(mockHandleCancel).toHaveBeenCalled();
   });
 
@@ -237,7 +237,7 @@ describe('SocraticSurvey', () => {
       </MemoryRouter>,
     );
 
-    const input = screen.getByPlaceholderText('survey_input_placeholder');
+    const input = screen.getByPlaceholderText('survey.inputPlaceholder');
     fireEvent.change(input, { target: { value: 'a' } });
 
     expect(mockSetInputError).toHaveBeenCalledWith(false);

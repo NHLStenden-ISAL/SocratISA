@@ -8,7 +8,7 @@ export class FallbackService implements IFallbackService {
   // Geef survey-antwoorden door aan template
   generatePrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = getStyleHintKey(answers.styleKey);
-    return translate('prompt_template', {
+    return translate('prompt.template', {
       subject: answers.subject,
       topic: answers.topic,
       styleHint: translate(styleHintKey),

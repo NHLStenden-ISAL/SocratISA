@@ -198,7 +198,7 @@ export class WebLLMService implements IWebLLMService {
   // Maak de systeem prompt met alle survey-antwoorden
   private buildSystemPrompt(answers: SurveyAnswers, translate: (key: string, options?: Record<string, string>) => string): string {
     const styleHintKey = getStyleHintKey(answers.styleKey);
-    return translate('webllm_system_prompt', {
+    return translate('prompt.systemPrompt', {
       subject: answers.subject,
       topic: answers.topic,
       styleHint: translate(styleHintKey),
@@ -225,10 +225,10 @@ export class WebLLMService implements IWebLLMService {
 
     if (!WebLLMService.engine) {
       if (WebLLMService.enginePromise) {
-        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
+        onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
         await WebLLMService.enginePromise;
       } else {
-        onProgress?.({ text: translate('webllm_progress_loading'), percentage: 0, isDownloading: false });
+        onProgress?.({ text: translate('model.loading'), percentage: 0, isDownloading: false });
         await WebLLMService.createEngine(onProgress);
       }
     }
@@ -239,11 +239,11 @@ export class WebLLMService implements IWebLLMService {
 
     await WebLLMService.engine.resetChat();
 
-    onProgress?.({ text: translate('webllm_progress_generating'), percentage: 0, isDownloading: false });
+    onProgress?.({ text: translate('model.generating'), percentage: 0, isDownloading: false });
 
     const systemPrompt = this.buildSystemPrompt(answers, translate);
 
-    const userMessage = translate('webllm_user_message', {
+    const userMessage = translate('prompt.userMessage', {
       subject: answers.subject,
       topic: answers.topic,
     });

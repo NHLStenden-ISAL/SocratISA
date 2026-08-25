@@ -213,7 +213,7 @@ export class PromptGeneratorService implements IPromptGeneratorService {
   ): Promise<void> {
     console.warn('PromptGeneratorService: model generatie mislukt, valt terug naar fallback', error);
     this.webLLMService.resetEngine();
-    const warning: string | undefined = 'memory_warning';
+    const warning: string | undefined = 'model.memoryWarning';
 
     try {
       this.runFallbackGeneration(answers, translate, warning);

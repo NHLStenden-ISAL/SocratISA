@@ -12,8 +12,8 @@ mockI18n.use(initReactI18next).init({
   fallbackLng: 'nl',
   interpolation: { escapeValue: false },
   resources: {
-    nl: { translation: { result_meta: '{{chars}} tekens · {{words}} woorden' } },
-    en: { translation: { result_meta: '{{chars}} characters · {{words}} words' } },
+    nl: { translation: { result: { meta: '{{chars}} tekens · {{words}} woorden' } } },
+    en: { translation: { result: { meta: '{{chars}} characters · {{words}} words' } } },
   },
 });
 

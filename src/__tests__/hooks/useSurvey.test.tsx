@@ -21,7 +21,7 @@ const mockGetAnswer = vi.fn().mockReturnValue('');
 const mockToSurveyAnswers = vi.fn().mockReturnValue({
   subject: 'Wiskunde',
   topic: 'Algebra',
-  styleKey: 'survey_option_visual',
+  styleKey: 'survey.optionVisual',
 });
 
 vi.mock('react-router-dom', async () => {
@@ -151,10 +151,10 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
-    expect(mockSetAnswer).toHaveBeenCalledWith('style', 'survey_option_visual');
+    expect(mockSetAnswer).toHaveBeenCalledWith('style', 'survey.optionVisual');
   });
 
   it('start generatie bij de laatste stap', () => {
@@ -169,7 +169,7 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
     expect(mockReset).toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
     expect(eventHandler).not.toBeNull();
@@ -209,7 +209,7 @@ describe('useSurvey', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/result', {
       state: {
-        answers: { subject: 'Wiskunde', topic: 'Algebra', styleKey: 'survey_option_visual' },
+        answers: { subject: 'Wiskunde', topic: 'Algebra', styleKey: 'survey.optionVisual' },
         canUseModel: true,
       },
     });
@@ -232,7 +232,7 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
     act(() => {
@@ -261,7 +261,7 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
     act(() => {
@@ -306,7 +306,7 @@ describe('useSurvey', () => {
       result.current.handleNext('Algebra');
     });
     act(() => {
-      result.current.handleOptionSelect('survey_option_visual');
+      result.current.handleOptionSelect('survey.optionVisual');
     });
 
     expect(mockStart).toHaveBeenCalledWith(

@@ -24,7 +24,7 @@ export const LoadingScreen = ({ progressInfo }: LoadingScreenProps) => {
 
         {/* Laad tijd schatting */}
         {progressInfo?.isDownloading && (
-          <p className="loading-eta">{t('home_preload_eta')}</p>
+          <p className="loading-eta">{t('model.preloadEta')}</p>
         )}
 
         {/* Laad progressie tekst */}

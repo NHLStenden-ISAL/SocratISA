@@ -190,7 +190,7 @@ describe('WebLLMService', () => {
   });
 
   describe('generatePromptStream', () => {
-    const answers = { subject: 'A', topic: 'B', styleKey: 'survey_option_visual' };
+    const answers = { subject: 'A', topic: 'B', styleKey: 'survey.optionVisual' };
     const t = vi.fn((key: string) => key);
 
     it('gooit een fout als WebGPU niet beschikbaar is', async () => {
@@ -214,7 +214,7 @@ describe('WebLLMService', () => {
 
       const generator = service.generatePromptStream(answers, t, onProgress);
       await expect(generator.next()).rejects.toThrow('WebLLM engine niet geladen');
-      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'webllm_progress_loading' }));
+      expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ text: 'model.loading' }));
     });
 
     it('wacht tussen chunks als throttling aan staat', async () => {
